@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP Methods Tester — Security Toolbox</title>
+<meta name="description" content="Test which HTTP methods (GET, POST, PUT, DELETE, PATCH, OPTIONS, TRACE) are allowed on a URL. Identify risky methods and misconfigurations.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for security researchers & developers</span>
+  <nav>
+    <a href="../index.html#tools">Tools</a>
+    <a href="../about.html">About</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
+  </nav>
+  <span class="badge">26 tools</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>HTTP Methods Tester</h2>
+  <p class="desc">Test which HTTP methods are accepted by a URL. Risky methods like PUT, DELETE, TRACE, and CONNECT should be restricted in production.</p>
+
+  <label for="hm-url">URL</label>
+  <input type="text" id="hm-url" placeholder="https://example.com/path" value="https://httpbin.org/anything">
+  <div class="actions">
+    <button onclick="testMethods()">Test Methods</button>
+    <button class="secondary" onclick="clearOutput()">Clear</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Results</h3>
+  <div id="hm-output" class="output">Enter a URL and click Test Methods.</div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+  </div>
+  <p>Open source · All processing client-side · No tracking</p>
+</footer>
+
+<script>
+const METHODS = [
+  { method: 'GET', risk: 'low', desc: 'Retrieve resource' },
+  { method: 'POST', risk: 'low', desc: 'Create resource' },
+  { method: 'HEAD', risk: 'low', desc: 'Retrieve headers only' },
+  { method: 'OPTIONS', risk: 'low', desc: 'List allowed methods' },
+  { method: 'PUT', risk: 'high', desc: 'Upload/replace resource' },
+  { method: 'DELETE', risk: 'high', desc: 'Delete resource' },
+  { method: 'PATCH', risk: 'medium', desc: 'Partial modification' },
+  { method: 'TRACE', risk: 'critical', desc: 'Echo request (XST attack)' },
+  { method: 'CONNECT', risk: 'medium', desc: 'Tunnel connection' },
+];
+
+function riskColor(risk) {
+  switch (risk) {
+    case 'critical': return '#e04040';
+    case 'high':     return '#e08040';
+    case 'medium':   return '#e0b040';
+    case 'low':      return '#40c060';
+    default:         return '#a0a0a0';
+  }
+}
+
+function riskLabel(risk) {
+  switch (risk) {
+    case 'critical': return 'CRITICAL';
+    case 'high':     return 'HIGH';
+    case 'medium':   return 'MEDIUM';
+    case 'low':      return 'LOW';
+    default:         return 'INFO';
+  }
+}
+
+function cleanOutput() {
+  const el = document.getElementById('hm-output');
+  el.className = 'output';
+  el.innerHTML = '';
+  return el;
+}
+
+function appendLine(el, text, color) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  if (color) div.style.color = color;
+  el.appendChild(div);
+}
+
+async function testMethods() {
+  const url = document.getElementById('hm-url').value.trim();
+  const output = cleanOutput();
+
+  if (!url) {
+    output.textContent = 'Enter a URL.';
+    output.className = 'output error';
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
+  } catch (_) {
+    output.textContent = 'Invalid URL. Must start with http:// or https://';
+    output.className = 'output error';
+    return;
+  }
+
+  appendLine(output, `Testing methods on: ${url}`);
+  appendLine(output, '');
+
+  const proxyUrl = 'https://api.allorigins.win/raw';
+  let optsStatus = null;
+  let optsAllow = null;
+
+  // First, check OPTIONS for allowed methods
+  try {
+    const optsResp = await fetch(`${proxyUrl}?url=${encodeURIComponent(url)}`, {
+      method: 'OPTIONS'
+    });
+    optsStatus = optsResp.status;
+    optsAllow = optsResp.headers.get('Allow') || optsResp.headers.get('access-control-allow-methods');
+  } catch {}
+
+  if (optsStatus) {
+    appendLine(output, `OPTIONS returned ${optsStatus}`, '#a0a0a0');
+    if (optsAllow) {
+      appendLine(output, `Allowed (from server): ${optsAllow}`, '#a0a0a0');
+    } else {
+      appendLine(output, 'No Allow header in response', '#a0a0a0');
+    }
+    appendLine(output, '');
+  } else {
+    appendLine(output, 'OPTIONS not available (CORS)', '#a0a0a0');
+    appendLine(output, '');
+  }
+
+  appendLine(output, `── Method-by-Method Results ──`);
+
+  const results = [];
+  const CONCURRENCY = 3;
+
+  for (let i = 0; i < METHODS.length; i += CONCURRENCY) {
+    const batch = METHODS.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.all(batch.map(async ({ method, risk, desc }) => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+
+        const resp = await fetch(`${proxyUrl}?url=${encodeURIComponent(url)}`, {
+          method: method,
+          signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+
+        return {
+          method, risk, desc,
+          status: resp.status,
+          statusText: resp.statusText,
+          error: null
+        };
+      } catch (e) {
+        return {
+          method, risk, desc,
+          status: null,
+          statusText: null,
+          error: e.message.includes('abort') ? 'timeout' : e.message
+        };
+      }
+    }));
+
+    results.push(...batchResults);
+  }
+
+  let highCount = 0;
+  let mediumCount = 0;
+
+  results.forEach(r => {
+    const icon = r.error ? '❌' : r.status < 400 ? '✅' : '⚠️';
+    const statusLine = r.status ? `HTTP ${r.status}` : r.error === 'timeout' ? 'Timeout' : `Error: ${r.error}`;
+    const color = r.error ? '#a0a0a0' : riskColor(r.risk);
+    const label = `[${riskLabel(r.risk)}]`;
+
+    appendLine(output, `${icon} ${r.method} (${label}) — ${statusLine}`, color);
+    if (r.status && r.status < 400 && r.risk !== 'low') {
+      if (r.risk === 'critical') highCount++;
+      else if (r.risk === 'high') highCount++;
+      else if (r.risk === 'medium') mediumCount++;
+    }
+  });
+
+  appendLine(output, '');
+  appendLine(output, `── Security Assessment ──`);
+
+  if (highCount > 0) {
+    appendLine(output, `❌ ${highCount} risky method(s) allowed`, '#e06060');
+  }
+  if (mediumCount > 0) {
+    appendLine(output, `⚠️ ${mediumCount} medium-risk method(s) allowed`, '#e0b040');
+  }
+  if (highCount === 0 && mediumCount === 0) {
+    appendLine(output, '✅ No risky methods detected', '#40c060');
+  }
+  appendLine(output, '');
+
+  appendLine(output, `Note: Results depend on CORS proxy and server configuration.`, '#a0a0a0');
+  appendLine(output, `A 405/403 for risky methods is expected — means they're blocked.`, '#a0a0a0');
+}
+
+function clearOutput() {
+  const el = document.getElementById('hm-output');
+  el.className = 'output';
+  el.textContent = 'Enter a URL and click Test Methods.';
+}
+</script>
+</body>
+</html>

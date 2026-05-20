@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subdomain Takeover Checker — Security Toolbox</title>
+<meta name="description" content="Check subdomains for potential takeover vulnerabilities. Detects unclaimed AWS S3, GitHub Pages, Heroku, Azure, and 20+ other services.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for security researchers & developers</span>
+  <nav>
+    <a href="../index.html#tools">Tools</a>
+    <a href="../about.html">About</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
+  </nav>
+  <span class="badge">26 tools</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Subdomain Takeover Checker</h2>
+  <p class="desc">Check a subdomain for potential takeover by analyzing DNS records and HTTP responses. Detects unclaimed services across AWS, GitHub, Heroku, Azure, and more.</p>
+
+  <label for="takeover-url">Subdomain URL</label>
+  <input type="text" id="takeover-url" placeholder="https://subdomain.example.com" value="https://nonexistent.s3.amazonaws.com">
+  <div class="actions">
+    <button onclick="checkTakeover()">Check</button>
+    <button class="secondary" onclick="clearOutput()">Clear</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Results</h3>
+  <div id="takeover-output" class="output">Enter a subdomain URL and click Check.</div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+  </div>
+  <p>Open source · All processing client-side · No tracking</p>
+</footer>
+
+<script>
+const TAKEOVER_SIGNATURES = [
+  { service: 'AWS S3 Bucket', fingerprints: ['NoSuchBucket', 'The specified bucket does not exist', 'NoSuchWebsiteConfiguration', 'The specified key does not exist'] },
+  { service: 'AWS CloudFront', fingerprints: 'the bucket you are attempting to access must be addressed using the specified endpoint|The CNAME you provided does not exist|x-amz-bucket-region'.split('|') },
+  { service: 'GitHub Pages', fingerprints: ['There isn\'t a GitHub Pages site', 'Repository not found', 'Page not found', '404: Not Found', 'Your site is not yet available'] },
+  { service: 'Heroku', fingerprints: ['There is no app hosted at this URL', 'No such app', 'The page you are looking for doesn\'t exist', 'Heroku | No such app'] },
+  { service: 'Azure Azure Websites', fingerprints: ['The site you are looking for could not be found', '404 Not Found (Server)', 'Azure Web Apps'] },
+  { service: 'Azure Traffic Manager', fingerprints: ['The resource you are looking for has been removed'] },
+  { service: 'Cloudflare', fingerprints: ['DNS points to prohibited IP', 'This site is not available', 'Domain does not resolve to a known Cloudflare'] },
+  { service: 'Shopify', fingerprints: ['Sorry, this shop is currently unavailable', 'No shop found', 'This page is not available on this store'] },
+  { service: 'WordPress', fingerprints: ['The site you are looking for could not be found', 'No site configured', 'Domain not mapped'] },
+  { service: 'Bitbucket Cloud', fingerprints: ['Account not found', 'The repository you are looking for does not exist'] },
+  { service: 'Squarespace', fingerprints: ['No site found', 'This domain is not configured'] },
+  { service: 'Tumblr', fingerprints: ['There\'s nothing here', 'The page you requested was not found'] },
+  { service: 'Strikingly', fingerprints: ['The requested URL was not found on this server'] },
+  { service: 'Pantheon', fingerprints: ['The page you are looking for is not found', 'No such site'] },
+  { service: 'Unbounce', fingerprints: ['The page you are looking for doesn\'t exist'] },
+  { service: 'Surge.sh', fingerprints: ['project not found'] },
+  { service: 'Tilda', fingerprints: ['Page not found', 'The requested URL was not found on this server'] },
+  { service: 'Cargo Collective', fingerprints: ['Site not found', 'The site you are looking for was not found'] },
+  { service: 'Fly.io', fingerprints: ['The page you are looking for does not exist', 'This app is not available'] },
+  { service: 'Netlify', fingerprints: ['Not Found - Netlify', 'The page could not be found'] },
+  { service: 'Vercel', fingerprints: ['The deployment could not be found', 'Not Found', '404: This page could not be found'] },
+  { service: 'Render', fingerprints: ['No such service', 'The requested resource was not found'] },
+  { service: 'Firebase', fingerprints: ['This host is not configured', 'Firebase Hosting site not found'] },
+  { service: 'Fastly', fingerprints: ['Fastly error: unknown domain', 'The requested URL was not found'] },
+  { service: 'Read the Docs', fingerprints: ['The page you specified does not exist', 'Read the Docs - Not Found'] },
+  { service: 'Help Scout', fingerprints: ['No site found', 'Help Scout does not have a site configured'] },
+  { service: 'Zendesk', fingerprints: ['The page you were looking for doesn\'t exist. You may have mistyped the address'] },
+  { service: 'Freshdesk', fingerprints: ['The page you are looking for was not found', 'Domain not found'] },
+  { service: 'Kinsta', fingerprints: ['No site configured', 'The site you are looking for could not be found'] },
+];
+
+const CNAME_FINGERPRINTS = [
+  { service: 'AWS S3', cname: ['s3.amazonaws.com', 's3-website', 's3-'] },
+  { service: 'AWS CloudFront', cname: ['cloudfront.net'] },
+  { service: 'GitHub Pages', cname: ['github.io'] },
+  { service: 'Heroku', cname: ['herokuapp.com', 'herokussl.com'] },
+  { service: 'Azure', cname: ['azurewebsites.net', 'trafficmanager.net', 'cloudapp.net'] },
+  { service: 'Shopify', cname: ['myshopify.com'] },
+  { service: 'Squarespace', cname: ['squarespace.com'] },
+  { service: 'Tumblr', cname: ['tumblr.com'] },
+  { service: 'Pantheon', cname: ['pantheonsite.io'] },
+  { service: 'Unbounce', cname: ['unbouncepages.com'] },
+  { service: 'Surge.sh', cname: ['surge.sh'] },
+  { service: 'Cargo Collective', cname: ['cargocollective.com'] },
+  { service: 'Fly.io', cname: ['fly.io'] },
+  { service: 'Netlify', cname: ['netlify.app', 'netlify.com'] },
+  { service: 'Vercel', cname: ['vercel.app', 'now.sh'] },
+  { service: 'Render', cname: ['onrender.com'] },
+  { service: 'Firebase', cname: ['firebaseapp.com', 'web.app'] },
+  { service: 'Fastly', cname: ['fastly.net'] },
+  { service: 'Read the Docs', cname: ['readthedocs.io'] },
+  { service: 'Help Scout', cname: ['helpscoutdocs.com'] },
+  { service: 'Zendesk', cname: ['zendesk.com'] },
+  { service: 'Freshdesk', cname: ['freshdesk.com'] },
+  { service: 'Bitbucket', cname: ['bitbucket.io'] },
+  { service: 'Strikingly', cname: ['strikinglycdn.com'] },
+];
+
+function cleanOutput() {
+  const el = document.getElementById('takeover-output');
+  el.className = 'output';
+  el.innerHTML = '';
+  return el;
+}
+
+function appendLine(el, text, color) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  if (color) div.style.color = color;
+  el.appendChild(div);
+}
+
+function appendSection(el, title) {
+  const div = document.createElement('div');
+  div.textContent = title;
+  div.style.marginTop = '10px';
+  div.style.fontWeight = '700';
+  div.style.color = '#e0e0e0';
+  el.appendChild(div);
+}
+
+async function dnsQuery(name, type) {
+  try {
+    const resp = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=${type}`, {
+      headers: { 'Accept': 'application/dns-json' }
+    });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    return data.Answer || [];
+  } catch {
+    return [];
+  }
+}
+
+async function checkTakeover() {
+  const url = document.getElementById('takeover-url').value.trim();
+  const output = cleanOutput();
+
+  if (!url) {
+    output.textContent = 'Enter a subdomain URL.';
+    output.className = 'output error';
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
+  } catch (_) {
+    output.textContent = 'Invalid URL. Must start with http:// or https://';
+    output.className = 'output error';
+    return;
+  }
+
+  const hostname = parsed.hostname;
+
+  // Extract root domain for CNAME check
+  const parts = hostname.split('.');
+  const isSubdomain = parts.length > 2;
+
+  appendLine(output, `Checking: ${hostname}`);
+  appendLine(output, '');
+
+  // Step 1: DNS CNAME check
+  appendSection(output, '🔍 DNS Analysis');
+  appendLine(output, `Querying CNAME records for ${hostname}...`);
+
+  const cnameRecords = await dnsQuery(hostname, 'CNAME');
+  if (cnameRecords.length > 0) {
+    appendLine(output, `CNAME records found:`);
+    cnameRecords.forEach(r => {
+      const target = r.data.replace(/\.$/, '');
+      appendLine(output, `  → ${target}`);
+
+      // Check against known takeover-vulnerable services
+      for (const fp of CNAME_FINGERPRINTS) {
+        if (fp.cname.some(c => target.includes(c))) {
+          appendLine(output, `     ⚠️  Points to ${fp.service} — potential takeover risk`, '#e0b040');
+        }
+      }
+    });
+  } else {
+    appendLine(output, 'No CNAME records found (may have A/AAAA records)');
+    const aRecords = await dnsQuery(hostname, 'A');
+    if (aRecords.length > 0) {
+      appendLine(output, `${aRecords.length} A record(s) found — subdomain resolves to IP`);
+    } else {
+      appendLine(output, '⚠️ No DNS records found — domain may not exist', '#e0b040');
+    }
+  }
+
+  // Step 2: HTTP response check
+  appendLine(output, '');
+  appendSection(output, '🌐 HTTP Response Analysis');
+  appendLine(output, `Fetching ${url}...`);
+
+  try {
+    const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, {
+      method: 'GET'
+    });
+
+    const status = resp.status;
+    appendLine(output, `HTTP ${status} ${resp.statusText}`, status >= 400 ? '#e0b040' : '#a0a0a0');
+
+    if (status >= 400) {
+      appendLine(output, '⚠️ Non-2xx status — potential for takeover', '#e0b040');
+    }
+
+    // Try to get response text for fingerprinting
+    const text = await resp.text().catch(() => '');
+    const bodySample = text.substring(0, 3000);
+
+    const matches = [];
+    for (const sig of TAKEOVER_SIGNATURES) {
+      for (const fp of sig.fingerprints) {
+        if (bodySample.includes(fp)) {
+          matches.push(sig.service);
+          break;
+        }
+      }
+    }
+
+    if (matches.length > 0) {
+      appendLine(output, '');
+      const uniqueMatches = [...new Set(matches)];
+      appendLine(output, `❌ TAKEOVER VULNERABILITY DETECTED: ${uniqueMatches.join(', ')}`, '#e06060');
+      appendLine(output, `Response body contains fingerprint matching unclaimed ${uniqueMatches.join('/')} service`, '#e06060');
+    } else if (status >= 400) {
+      appendLine(output, '');
+      appendLine(output, '⚠️ HTTP error response but no known takeover fingerprint detected', '#e0b040');
+      appendLine(output, '   Manual review recommended', '#e0b040');
+    } else {
+      appendLine(output, '');
+      appendLine(output, '✅ Service appears to be active (HTTP 2xx)', '#40c060');
+    }
+
+  } catch (e) {
+    appendLine(output, `Error fetching URL: ${e.message}`, '#a0a0a0');
+    appendLine(output, '⚠️ Could not fetch URL — DNS-only analysis available', '#e0b040');
+  }
+
+  // Step 3: Summary
+  appendLine(output, '');
+  appendSection(output, '📋 Summary');
+  if (!isSubdomain) {
+    appendLine(output, 'ℹ️ Not a subdomain — takeover is for subdomains pointing to unclaimed services');
+  }
+  appendLine(output, 'Next steps if vulnerable:');
+  appendLine(output, '  1. Claim the service on the respective platform');
+  appendLine(output, '  2. Or remove the DNS record pointing to the unclaimed service');
+  appendLine(output, '  3. For bug bounty: document the full chain and report');
+}
+
+function clearOutput() {
+  const el = document.getElementById('takeover-output');
+  el.className = 'output';
+  el.textContent = 'Enter a subdomain URL and click Check.';
+}
+</script>
+</body>
+</html>
