@@ -34,7 +34,7 @@
     <a href="../index.html#tools">Tools</a>
     <a href="../about.html">About</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
-    <button id="theme-toggle" onclick="toggleTheme()">☀️</button>
+    <button id="theme-toggle">☀️</button>
   </nav>
   <span class="badge">29 tools</span>
 </header>
@@ -94,22 +94,23 @@ async function runEmailCheck() {
   try {
     progress.textContent = '⏳ Checking SPF...';
     var txtRecs = await dnsQuery(domain, 'TXT');
-    var spfMatches = txtRecs.filter(function(r) { return r.data.replace(/\s/g,'').toLowerCase().startsWith('v=spf1'); });
-    spf = spfMatches.length ? spfMatches[0].data : null;
+    var stripTxt = function(d) { return d.replace(/^"(.*)"$/, '$1').replace(/""/g, '"'); };
+    var spfMatches = txtRecs.filter(function(r) { return stripTxt(r.data).replace(/\s/g,'').toLowerCase().startsWith('v=spf1'); });
+    spf = spfMatches.length ? stripTxt(spfMatches[0].data) : null;
   } catch(e) { spf = null; }
 
   try {
     progress.textContent = '⏳ Checking DMARC...';
     var dmarcRecs = await dnsQuery('_dmarc.' + domain, 'TXT');
-    var dmarcMatches = dmarcRecs.filter(function(r) { return r.data.replace(/\s/g,'').toLowerCase().startsWith('v=dmarc1'); });
-    dmarc = dmarcMatches.length ? dmarcMatches[0].data : null;
+    var dmarcMatches = dmarcRecs.filter(function(r) { return stripTxt(r.data).replace(/\s/g,'').toLowerCase().startsWith('v=dmarc1'); });
+    dmarc = dmarcMatches.length ? stripTxt(dmarcMatches[0].data) : null;
   } catch(e) { dmarc = null; }
 
   try {
     progress.textContent = '⏳ Checking BIMI...';
     var bimiRecs = await dnsQuery('default._bimi.' + domain, 'TXT');
-    var bimiMatches = bimiRecs.filter(function(r) { return r.data.replace(/\s/g,'').toLowerCase().startsWith('v=bimi1'); });
-    bimi = bimiMatches.length ? bimiMatches[0].data : null;
+    var bimiMatches = bimiRecs.filter(function(r) { return stripTxt(r.data).replace(/\s/g,'').toLowerCase().startsWith('v=bimi1'); });
+    bimi = bimiMatches.length ? stripTxt(bimiMatches[0].data) : null;
   } catch(e) { bimi = null; }
 
   try {
@@ -118,7 +119,7 @@ async function runEmailCheck() {
       var sel = DKIM_SELECTORS[i];
       try {
         var recs = await dnsQuery(sel + '._domainkey.' + domain, 'TXT');
-        if (recs.some(function(r) { return r.data.toLowerCase().includes('v=dkim1'); })) {
+        if (recs.some(function(r) { return stripTxt(r.data).toLowerCase().includes('v=dkim1'); })) {
           dkimSelectors.push(sel);
         }
       } catch(e) {}

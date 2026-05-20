@@ -135,7 +135,7 @@
     <a href="../index.html#tools">Tools</a>
     <a href="../about.html">About</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
-    <button id="theme-toggle" onclick="toggleTheme()">☀️</button>
+    <button id="theme-toggle">☀️</button>
   </nav>
   <span class="badge">29 tools</span>
 </header>
@@ -396,18 +396,18 @@ async function runAudit() {
   // ── Email Security (SPF/DKIM/DMARC/BIMI) ──
   markProgress('emailsec', 'running');
   try {
+    function stripTxtQuotes(data) { return data.replace(/^"(.*)"$/, '$1').replace(/""/g, '"'); }
     const txtRecs = await dnsQuery(hostname, 'TXT');
-    const spf = txtRecs.filter(r => r.data.startsWith('v=spf1')).map(r => r.data.replace(/\.$/,''));
+    const spf = txtRecs.map(r => stripTxtQuotes(r.data)).filter(r => r.startsWith('v=spf1')).map(r => r.replace(/\.$/,''));
     const dmarcRecs = await dnsQuery('_dmarc.' + hostname, 'TXT');
-    const dmarc = dmarcRecs.filter(r => r.data.startsWith('v=DMARC1')).map(r => r.data.replace(/\.$/,''));
+    const dmarc = dmarcRecs.map(r => stripTxtQuotes(r.data)).filter(r => r.startsWith('v=DMARC1')).map(r => r.replace(/\.$/,''));
     const bimiRecs = await dnsQuery('default._bimi.' + hostname, 'TXT');
-    const bimi = bimiRecs.filter(r => r.data.startsWith('v=BIMI1')).map(r => r.data.replace(/\.$/,''));
-    // DKIM: check common selectors
+    const bimi = bimiRecs.map(r => stripTxtQuotes(r.data)).filter(r => r.startsWith('v=BIMI1')).map(r => r.replace(/\.$/,''));
     const dkimSelectors = ['default', 'google', 'protonmail', 'dkim', 's1', 's2', 'selector1', 'selector2'];
     const dkimFound = [];
     for (const sel of dkimSelectors) {
       const recs = await dnsQuery(sel + '._domainkey.' + hostname, 'TXT');
-      if (recs.some(r => r.data.includes('v=DKIM1'))) dkimFound.push(sel);
+      if (recs.some(r => stripTxtQuotes(r.data).includes('v=DKIM1'))) dkimFound.push(sel);
     }
     report.emailSecurity = { spf: spf[0] || null, dmarc: dmarc[0] || null, bimi: bimi[0] || null, dkimSelectors: dkimFound };
     markProgress('emailsec', 'done');
@@ -587,15 +587,15 @@ async function runAudit() {
 
   // ── HTTP Features ──
   markProgress('httpf', 'running');
+  try {
   const httpFeatures = {};
-  // Check if HTTP redirects to HTTPS
+  const hdrList = report.headers && report.headers.results ? report.headers.results : [];
   if (redirectChain.length >= 2 && redirectChain[0].url.startsWith('http://') && redirectChain[redirectChain.length-1].url.startsWith('https://')) {
     httpFeatures.httpsRedirect = true;
   } else { httpFeatures.httpsRedirect = false; }
-  // HSTS preload eligibility (from header check)
-  const hsts = report.headers ? report.headers.find(h => h.name.toLowerCase() === 'strict-transport-security') : null;
+  const hsts = hdrList.find(h => h.key === 'strict-transport-security');
   if (hsts) {
-    const val = hsts.value;
+    const val = hsts.value || '';
     const matchAge = val.match(/max-age=(\d+)/i);
     const maxAge = matchAge ? parseInt(matchAge[1]) : 0;
     httpFeatures.hstsMaxAge = maxAge;
@@ -603,14 +603,13 @@ async function runAudit() {
     httpFeatures.hstsPreload = val.toLowerCase().includes('preload');
     httpFeatures.hstsPreloadReady = maxAge >= 31536000 && httpFeatures.hstsIncludeSub && httpFeatures.hstsPreload;
   } else { httpFeatures.hstsMaxAge = 0; httpFeatures.hstsPreloadReady = false; }
-  // Server header
-  const serverH = report.headers ? report.headers.find(h => h.name.toLowerCase() === 'server') : null;
-  httpFeatures.server = serverH ? serverH.value : null;
-  // X-Content-Type-Options
-  const xcto = report.headers ? report.headers.find(h => h.name.toLowerCase() === 'x-content-type-options') : null;
-  httpFeatures.xctoNoSniff = xcto && xcto.value.toLowerCase().trim() === 'nosniff';
+  const serverH = hdrList.find(h => h.key === 'server');
+  httpFeatures.server = serverH ? serverH.value : (report.headers_raw && report.headers_raw.server ? report.headers_raw.server : null);
+  const xcto = hdrList.find(h => h.key === 'x-content-type-options');
+  httpFeatures.xctoNoSniff = xcto && xcto.value && xcto.value.toLowerCase().trim() === 'nosniff';
   report.httpFeatures = httpFeatures;
   markProgress('httpf', 'done');
+  } catch(e) { markProgress('httpf', 'error'); }
 
   // ── Build Report ──
   renderReport(report, url);
