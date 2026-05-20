@@ -108,7 +108,11 @@ function clearInput() {
 
 function copyOutput() {
   const pld = document.getElementById('payload-output').textContent;
-  if (pld) navigator.clipboard.writeText(pld);
+  if (pld) { navigator.clipboard.writeText(pld); return; }
+  const btn = document.querySelector('.actions button:last-child');
+  const orig = btn.textContent;
+  btn.textContent = 'Nothing to copy';
+  setTimeout(function() { btn.textContent = orig; }, 1200);
 }
 
 // Auto-decode on paste

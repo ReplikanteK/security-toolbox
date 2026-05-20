@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SSL/TLS Checker — Security Toolbox</title>
-<meta name="description" content="SSL/TLS certificate security audit. Check certificate chain, expiration, issuer, HSTS, and security headers. Free client-side TLS checker for bug hunters.">
+<title>HTTPS Checker — Security Toolbox</title>
+<meta name="description" content="Check if a site supports HTTPS, inspect response headers, and detect security configurations. Client-side HTTP checker via CORS proxy.">
 <link rel="stylesheet" href="../css/style.css">
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 </head>
@@ -28,8 +28,8 @@
 
 <div class="tool-page">
   <a href="../index.html" class="back">← Back to tools</a>
-  <h2>SSL/TLS Checker</h2>
-  <p class="desc">Check SSL certificate details. Analyzes certificate chain, expiration, issuer, and security headers. Uses CORS proxy — the domain is visible to the proxy.</p>
+  <h2>HTTPS Checker</h2>
+  <p class="desc">Check HTTPS availability and response headers. Detects HSTS, CSP, Server header, and redirect behavior via CORS proxy. Note: real SSL certificate inspection requires a server-side tool.</p>
 
   <label for="ssl-domain">Domain</label>
   <input type="text" id="ssl-domain" placeholder="example.com" value="github.com">

@@ -58,12 +58,12 @@
   gap: .5rem;
 }
 .report-section .finding { font-size: .82rem; margin-bottom: .3rem; padding-left: .5rem; }
-.report-section .finding.critical { color: #e04040; border-left: 2px solid #e04040; }
+.report-section .finding.critical { color: var(--red); border-left: 2px solid var(--red); }
 .report-section .finding.high { color: #e08040; border-left: 2px solid #e08040; }
-.report-section .finding.medium { color: #e0b040; border-left: 2px solid #e0b040; }
-.report-section .finding.low { color: #a0a0a0; border-left: 2px solid #a0a0a0; }
-.report-section .finding.info { color: #6090c0; border-left: 2px solid #6090c0; }
-.report-section .finding.good { color: #40c060; border-left: 2px solid #40c060; }
+.report-section .finding.medium { color: var(--orange); border-left: 2px solid var(--orange); }
+.report-section .finding.low { color: var(--text2); border-left: 2px solid var(--text2); }
+.report-section .finding.info { color: var(--accent2); border-left: 2px solid var(--accent2); }
+.report-section .finding.good { color: var(--green); border-left: 2px solid var(--green); }
 
 .score-circle {
   display: inline-flex;
@@ -99,10 +99,10 @@
   font-size: .82rem;
   border-left: 3px solid;
 }
-.rec-critical { background: rgba(224,64,64,.1); border-color: #e04040; }
+.rec-critical { background: rgba(224,64,64,.1); border-color: var(--red); }
 .rec-high { background: rgba(224,128,64,.1); border-color: #e08040; }
-.rec-medium { background: rgba(224,176,64,.1); border-color: #e0b040; }
-.rec-low { background: rgba(160,160,160,.1); border-color: #a0a0a0; }
+.rec-medium { background: rgba(224,176,64,.1); border-color: var(--orange); }
+.rec-low { background: rgba(160,160,160,.1); border-color: var(--text2); }
 
 .copy-btn, .print-btn {
   font-size: .75rem;
@@ -124,12 +124,12 @@
   .report-section { background: #f5f5f5; border-color: #ccc; break-inside: avoid; }
   .report-section h4 { color: #000; }
   .report-section .finding { color: #333 !important; }
-  .report-section .finding.critical { border-color: #e04040; color: #c03030 !important; }
+  .report-section .finding.critical { border-color: var(--red); color: #c03030 !important; }
   .report-section .finding.high { border-color: #e08040; color: #c07030 !important; }
-  .report-section .finding.medium { border-color: #d0a030; color: #a08020 !important; }
-  .report-section .finding.good { border-color: #30a040; color: #208030 !important; }
-  .report-section .finding.info { border-color: #4080b0; color: #306090 !important; }
-  .report-section .finding.low { border-color: #909090; color: #707070 !important; }
+  .report-section .finding.medium { border-color: var(--orange); color: #a08020 !important; }
+  .report-section .finding.good { border-color: var(--green); color: #208030 !important; }
+  .report-section .finding.info { border-color: var(--accent2); color: #306090 !important; }
+  .report-section .finding.low { border-color: var(--text2); color: #707070 !important; }
   .summary-card { background: #eee; border-color: #ccc; }
   .recommendation { background: #fafafa; }
   .score-circle { border-color: #333 !important; color: #000 !important; background: #eee !important; }
