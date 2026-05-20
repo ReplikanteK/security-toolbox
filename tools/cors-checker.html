@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CORS Checker — Security Toolbox</title>
+<meta name="description" content="Test CORS (Cross-Origin Resource Sharing) configuration of any URL. Check for misconfigurations, wildcard origins, and credential exposure.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>CORS Checker</h2>
+  <p class="desc">Test CORS configuration of a URL. Checks for wildcard origins, credential misconfigurations, and reflected origins. Uses a CORS proxy — the target is visible to the proxy.</p>
+
+  <label for="cors-url">URL to test</label>
+  <input type="text" id="cors-url" placeholder="https://api.example.com/endpoint" value="https://api.github.com">
+  <div class="actions">
+    <button onclick="checkCORS()">Check</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Results</h3>
+  <div id="cors-output" class="output">Enter a URL and click Check</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> &middot; CORS proxy-based &middot; For reference only</p>
+</footer>
+
+<script>
+async function checkCORS() {
+  const url = document.getElementById('cors-url').value.trim();
+  const output = document.getElementById('cors-output');
+
+  if (!url) {
+    output.className = 'output error';
+    output.textContent = 'Enter a URL to test';
+    return;
+  }
+
+  output.className = 'output';
+  output.textContent = 'Testing CORS configuration...\n';
+
+  try {
+    // Test with a reflective origin
+    const testOrigin = 'https://evil-attacker.com';
+    const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, {
+      headers: { 'Origin': testOrigin }
+    });
+
+    const acao = resp.headers.get('access-control-allow-origin');
+    const acac = resp.headers.get('access-control-allow-credentials');
+    const acah = resp.headers.get('access-control-allow-headers');
+    const acam = resp.headers.get('access-control-allow-methods');
+    const aceh = resp.headers.get('access-control-expose-headers');
+    const maxAge = resp.headers.get('access-control-max-age');
+    const vary = resp.headers.get('vary');
+
+    const lines = [
+      `Target:       ${url}`,
+      `Status:       ${resp.status}`,
+      `Test Origin:  ${testOrigin}`,
+      '',
+      '── CORS Headers ──',
+      `ACAO: ${acao || '(not set)'}`,
+      `ACAC: ${acac || '(not set)'}`,
+      `ACAH: ${acah || '(not set)'}`,
+      `ACAM: ${acam || '(not set)'}`,
+      `ACEH: ${aceh || '(not set)'}`,
+      `Max-Age: ${maxAge || '(not set)'}`,
+      `Vary: ${vary || '(not set)'}`,
+      '',
+    ];
+
+    // Security analysis
+    lines.push('── Risk Assessment ──');
+
+    if (!acao) {
+      lines.push('  ✅ No CORS headers — default same-origin policy (safe)');
+    } else {
+      if (acao === '*') {
+        lines.push('  🟠 ACAO: * — Open to all origins');
+        if (acac === 'true') {
+          lines.push('  🔴 CRITICAL: Wildcard origin WITH credentials!');
+        }
+      } else if (acao === testOrigin) {
+        lines.push('  🔴 Origin reflection detected — server echoes back any origin!');
+        if (acac === 'true') {
+          lines.push('  🔴 CRITICAL: Reflected origin WITH credentials!');
+        }
+      } else {
+        lines.push(`  ✅ Specific origin: ${acao}`);
+      }
+
+      if (acac === 'true') {
+        lines.push('  🟠 Credentials allowed (cookies/auth headers may be accessible)');
+      }
+    }
+
+    // Verb detection
+    const via = resp.headers.get('via') || resp.headers.get('x-cache') || '';
+    lines.push('', '── Notes ──');
+    lines.push('This check uses a CORS proxy. Actual CORS behavior');
+    lines.push('may differ. Always verify with curl:');
+    lines.push(`  curl -H "Origin: ${testOrigin}" -I ${url}`);
+
+    output.className = 'output';
+    output.textContent = lines.join('\n');
+
+  } catch (e) {
+    output.className = 'output error';
+    output.textContent = `Error: ${e.message}\n\nTip: Some servers block CORS proxies. Use curl to verify:\n  curl -H "Origin: https://evil.com" -I ${url}`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('cors-url').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkCORS();
+  });
+});
+</script>
+</body>
+</html>

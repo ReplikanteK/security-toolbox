@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>URL Extractor — Security Toolbox</title>
+<meta name="description" content="Extract, parse, and analyze URLs from text. Filter by domain, scheme, or pattern. Useful for recon and data analysis.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>URL Extractor</h2>
+  <p class="desc">Extract, parse, and analyze URLs from any text. Finds HTTP links, domains, paths, and query parameters. Useful for recon and data analysis.</p>
+
+  <label for="url-input">Text with URLs</label>
+  <textarea id="url-input" rows="6" placeholder="Paste text containing URLs...">Check out https://example.com/path?q=search and http://admin.internal.dev/login?token=abc123 for more info. Also visit https://api.github.com/users/ReplikanteK/repos or ftp://files.example.org/download/file.zip. Contact us at https://mail.example.com/support?ticket=12345#section.</textarea>
+  <div class="actions">
+    <button onclick="extractURLs()">Extract</button>
+    <button class="secondary" onclick="document.getElementById('url-input').value=''">Clear</button>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="url-filter-scheme">Filter by scheme</label>
+      <select id="url-filter-scheme" onchange="extractURLs()">
+        <option value="all">All schemes</option>
+        <option value="http">http / https only</option>
+        <option value="https">https only</option>
+        <option value="other">Other (ftp, etc)</option>
+      </select>
+    </div>
+    <div>
+      <label for="url-filter-domain">Filter by domain</label>
+      <input type="text" id="url-filter-domain" placeholder="e.g. example.com" oninput="extractURLs()">
+    </div>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Extracted URLs</h3>
+  <div id="url-output" class="output">Enter text and click Extract</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> &middot; All processing client-side</p>
+</footer>
+
+<script>
+function extractURLs() {
+  const input = document.getElementById('url-input').value;
+  const filterScheme = document.getElementById('url-filter-scheme').value;
+  const filterDomain = document.getElementById('url-filter-domain').value.trim().toLowerCase();
+  const output = document.getElementById('url-output');
+
+  if (!input) {
+    output.className = 'output';
+    output.textContent = 'Enter text containing URLs';
+    return;
+  }
+
+  // Comprehensive URL regex
+  const urlRegex = /(https?:\/\/[^\s<>"']+|ftp:\/\/[^\s<>"']+|\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s<>"']*)?)/gi;
+  const raw = input.match(urlRegex) || [];
+
+  // Parse and filter
+  const urls = raw.map(u => {
+    try {
+      const hasScheme = /^https?:\/\//i.test(u) || /^ftp:\/\//i.test(u);
+      const url = hasScheme ? new URL(u) : new URL('http://' + u);
+      return {
+        full: hasScheme ? u : 'http://' + u,
+        original: u,
+        scheme: url.protocol.replace(':', ''),
+        host: url.hostname,
+        port: url.port || (url.protocol === 'https:' ? '443' : url.protocol === 'http:' ? '80' : ''),
+        path: url.pathname,
+        query: url.search,
+        hash: url.hash,
+        params: url.searchParams,
+      };
+    } catch {
+      return null;
+    }
+  }).filter(Boolean);
+
+  // Apply filters
+  let filtered = urls;
+  if (filterScheme === 'http') filtered = filtered.filter(u => u.scheme === 'http' || u.scheme === 'https');
+  else if (filterScheme === 'https') filtered = filtered.filter(u => u.scheme === 'https');
+  else if (filterScheme === 'other') filtered = filtered.filter(u => u.scheme !== 'http' && u.scheme !== 'https');
+
+  if (filterDomain) filtered = filtered.filter(u => u.host.includes(filterDomain));
+
+  if (filtered.length === 0) {
+    output.className = 'output';
+    output.textContent = `No URLs found${filterDomain ? ` matching "${filterDomain}"` : ''}.`;
+    return;
+  }
+
+  // Stats
+  const domains = [...new Set(filtered.map(u => u.host))];
+  const withQuery = filtered.filter(u => u.query).length;
+  const withHash = filtered.filter(u => u.hash).length;
+
+  const lines = [
+    `Found ${filtered.length} URL(s) (${urls.length} total, ${filtered.length - urls.length} filtered out):`,
+    `Unique domains: ${domains.length}`,
+    `URLs with params: ${withQuery}`,
+    `URLs with hash: ${withHash}`,
+    '',
+    '── Unique Domains ──',
+    ...domains.map(d => `  🌐 ${d}`),
+    '',
+    '── Extracted URLs ──',
+    ...filtered.map((u, i) => {
+      let line = `  [${i}] ${u.full}`;
+      if (u.path && u.path !== '/') line += `\n       Path: ${u.path}`;
+      if (u.query) line += `\n       Query: ${u.query}`;
+      if (u.hash) line += `\n       Hash: ${u.hash}`;
+      return line;
+    }),
+  ];
+
+  output.className = 'output';
+  output.textContent = lines.join('\n');
+}
+
+// Re-extract on input change with debounce
+let timer;
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('url-input').addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(extractURLs, 300);
+  });
+});
+</script>
+</body>
+</html>

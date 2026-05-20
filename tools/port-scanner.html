@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Port Scanner — Security Toolbox</title>
+<meta name="description" content="Scan common ports on a target host. Checks HTTP, HTTPS, SSH, FTP, DNS, and other common services via connection probes.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Port Scanner</h2>
+  <p class="desc">Scan common ports on a target host. Attempts HTTP/S connections to detect open ports. For deeper scans, use nmap locally.</p>
+
+  <label for="ps-target">Target host</label>
+  <input type="text" id="ps-target" placeholder="example.com" value="scanme.nmap.org">
+  <div class="actions">
+    <button onclick="scanPorts()">Scan ports</button>
+    <button class="secondary" onclick="stopPortScan()">Stop</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Results</h3>
+  <div id="ps-output" class="output">Enter a host and click Scan ports</div>
+  <div id="ps-counter" style="font-size:.75rem;color:var(--text2);margin-top:.3rem"></div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> &middot; HTTP/S probe-based &middot; Limited vs nmap</p>
+</footer>
+
+<script>
+const COMMON_PORTS = [
+  { port: 21, name: 'FTP' },
+  { port: 22, name: 'SSH' },
+  { port: 23, name: 'Telnet' },
+  { port: 25, name: 'SMTP' },
+  { port: 53, name: 'DNS' },
+  { port: 80, name: 'HTTP' },
+  { port: 110, name: 'POP3' },
+  { port: 143, name: 'IMAP' },
+  { port: 389, name: 'LDAP' },
+  { port: 443, name: 'HTTPS' },
+  { port: 445, name: 'SMB' },
+  { port: 993, name: 'IMAPS' },
+  { port: 995, name: 'POP3S' },
+  { port: 1433, name: 'MSSQL' },
+  { port: 1521, name: 'Oracle DB' },
+  { port: 2049, name: 'NFS' },
+  { port: 2375, name: 'Docker' },
+  { port: 2376, name: 'Docker TLS' },
+  { port: 3000, name: 'Dev Server' },
+  { port: 3306, name: 'MySQL' },
+  { port: 3389, name: 'RDP' },
+  { port: 5432, name: 'PostgreSQL' },
+  { port: 5900, name: 'VNC' },
+  { port: 5985, name: 'WinRM HTTP' },
+  { port: 5986, name: 'WinRM HTTPS' },
+  { port: 6379, name: 'Redis' },
+  { port: 6443, name: 'K8s API' },
+  { port: 8000, name: 'HTTP Alt' },
+  { port: 8001, name: 'K8s Dashboard' },
+  { port: 8080, name: 'HTTP Proxy' },
+  { port: 8443, name: 'HTTPS Alt' },
+  { port: 9000, name: 'App Server' },
+  { port: 9090, name: 'Prometheus' },
+  { port: 9200, name: 'Elasticsearch' },
+  { port: 9418, name: 'Git' },
+  { port: 11211, name: 'Memcached' },
+  { port: 27017, name: 'MongoDB' },
+];
+
+let scanRunning = false;
+let abortController = null;
+
+async function scanPorts() {
+  const target = document.getElementById('ps-target').value.trim();
+  const output = document.getElementById('ps-output');
+  const counter = document.getElementById('ps-counter');
+
+  if (!target) {
+    output.className = 'output error';
+    output.textContent = 'Enter a target host';
+    return;
+  }
+
+  scanRunning = true;
+  abortController = new AbortController();
+  output.className = 'output';
+  output.textContent = `Scanning ${target}...\nChecking ${COMMON_PORTS.length} ports via HTTP/S probes.\n`;
+  counter.textContent = '';
+
+  const found = [];
+
+  for (let i = 0; i < COMMON_PORTS.length && scanRunning; i++) {
+    const p = COMMON_PORTS[i];
+    const status = await checkPort(target, p.port, abortController.signal);
+
+    if (status) found.push({ ...p, service: status });
+
+    const progress = `${i + 1}/${COMMON_PORTS.length} (${found.length} open)`;
+    counter.textContent = progress;
+
+    // Update output periodically
+    if (found.length > 0) {
+      output.textContent = [
+        `Scanning ${target}... (${progress})`,
+        '',
+        'Open / responding ports:',
+        ...found.map(f => `  ✅ Port ${f.port} (${f.name}) — ${f.service}`),
+      ].join('\n');
+    }
+
+    // Rate limit
+    if (scanRunning) await sleep(300);
+  }
+
+  scanRunning = false;
+
+  const lines = [
+    found.length > 0
+      ? `Found ${found.length} open/responding port(s) on ${target}:`
+      : `No common ports detected on ${target} via HTTP/S probes.`,
+    '',
+    ...found.map(f => `  ✅ ${f.port}/${f.name.padEnd(15)} ${f.service}`),
+    '',
+    '── Notes ──',
+    'This scanner uses HTTP/S probes only. Many services',
+    'won\'t respond to HTTP. Not a substitute for nmap:',
+    `  nmap -sV ${target}`,
+  ];
+
+  output.className = 'output';
+  output.textContent = lines.join('\n');
+}
+
+async function checkPort(host, port, signal) {
+  try {
+    const httpUrl = port === 443 || port > 1023
+      ? `https://${host}:${port}`
+      : `http://${host}:${port}`;
+
+    const resp = await fetch(httpUrl, {
+      signal,
+      mode: 'no-cors',
+      cache: 'no-cache',
+    }).catch(() => null);
+
+    // no-cors means we get opaque response but can still detect connectivity
+    if (resp && resp.type === 'opaque') return 'Responds (no-cors)';
+    if (resp && resp.ok) return `HTTP ${resp.status} ${resp.statusText}`;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function stopPortScan() {
+  scanRunning = false;
+  if (abortController) abortController.abort();
+  document.getElementById('ps-output').textContent += '\n\n⚠️ Scan stopped by user.';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>

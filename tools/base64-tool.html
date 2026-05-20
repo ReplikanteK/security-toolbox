@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Base64 Tool — Security Toolbox</title>
+<meta name="description" content="Encode and decode Base64 with support for standard, URL-safe, and base64url variants. Detect encoded data in text.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Base64 Tool</h2>
+  <p class="desc">Encode and decode Base64. Supports standard, URL-safe variants, and automatic detection of encoded data.</p>
+
+  <label for="b64-input">Input</label>
+  <textarea id="b64-input" rows="5" placeholder="Text or Base64 data..."></textarea>
+
+  <div class="row" style="margin-top:.5rem">
+    <div>
+      <label for="b64-mode">Direction</label>
+      <select id="b64-mode">
+        <option value="encode">Encode → Base64</option>
+        <option value="decode">Decode ← from Base64</option>
+      </select>
+    </div>
+    <div>
+      <label for="b64-variant">Variant</label>
+      <select id="b64-variant">
+        <option value="standard">Standard (with + /)</option>
+        <option value="urlsafe">URL-safe (with - _)</option>
+      </select>
+    </div>
+  </div>
+  <div class="actions">
+    <button onclick="convertB64()">Convert</button>
+    <button class="secondary" onclick="swapB64()">Swap direction</button>
+    <button class="secondary" onclick="detectB64()">Detect in text</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Output</h3>
+  <div id="b64-output" class="output">Enter data and click Convert</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> &middot; All processing client-side</p>
+</footer>
+
+<script>
+function convertB64() {
+  const input = document.getElementById('b64-input').value;
+  const mode = document.getElementById('b64-mode').value;
+  const variant = document.getElementById('b64-variant').value;
+  const output = document.getElementById('b64-output');
+
+  if (!input) {
+    output.className = 'output';
+    output.textContent = 'Enter data to convert';
+    return;
+  }
+
+  try {
+    let result;
+    if (mode === 'encode') {
+      const encoded = btoa(input);
+      result = variant === 'urlsafe'
+        ? encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+        : encoded;
+      output.className = 'output';
+      output.textContent = `${result}\n\n── Info ──\nInput length: ${input.length} chars\nOutput length: ${result.length} chars\nOverhead: ${input.length > 0 ? ((result.length / input.length - 1) * 100).toFixed(1) : 0}%`;
+    } else {
+      let clean = input.trim();
+      if (variant === 'urlsafe') {
+        clean = clean.replace(/-/g, '+').replace(/_/g, '/');
+        while (clean.length % 4 !== 0) clean += '=';
+      }
+      result = atob(clean);
+      try {
+        // Try UTF-8 decode
+        const bytes = Uint8Array.from(result, c => c.charCodeAt(0));
+        const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+        if (utf8) result = utf8;
+      } catch {}
+      output.className = 'output';
+      output.textContent = `${result}\n\n── Info ──\nInput length: ${input.trim().length} chars\nOutput length: ${result.length} chars\nDecoded: ${result.length} bytes`;
+    }
+  } catch (e) {
+    output.className = 'output error';
+    output.textContent = `Error: ${e.message}\n\nCheck that the input is valid for the selected mode.`;
+  }
+}
+
+function swapB64() {
+  const sel = document.getElementById('b64-mode');
+  sel.value = sel.value === 'encode' ? 'decode' : 'encode';
+  // Auto-populate example
+  const input = document.getElementById('b64-input');
+  if (!input.value) {
+    input.value = sel.value === 'encode' ? 'Hello, Security Toolbox!' : 'SGVsbG8sIFNlY3VyaXR5IFRvb2xib3gh';
+  }
+  convertB64();
+}
+
+function detectB64() {
+  const input = document.getElementById('b64-input').value;
+  const output = document.getElementById('b64-output');
+
+  if (!input) {
+    output.className = 'output';
+    output.textContent = 'Enter text to scan for Base64 patterns';
+    return;
+  }
+
+  const b64Regex = /(?:[A-Za-z0-9+/]{4}){2,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgwsww==]{2})?|[A-Za-z0-9+/]{4,}(?:[A-Za-z0-9+/]{2}==)?/g;
+  const matches = input.match(b64Regex);
+
+  if (!matches || matches.length === 0) {
+    output.className = 'output';
+    output.textContent = 'No Base64 patterns detected in the text.';
+    return;
+  }
+
+  const valid = matches.filter(m => {
+    try { atob(m); return true; } catch { return false; }
+  });
+
+  const lines = [`Found ${matches.length} potential Base64 string(s), ${valid.length} valid:\n`];
+  valid.slice(0, 10).forEach((m, i) => {
+    let decoded = '';
+    try { decoded = atob(m); } catch {}
+    lines.push(`[${i}] ${m.substring(0, 60)}${m.length > 60 ? '...' : ''}`);
+    lines.push(`     → "${decoded.substring(0, 80)}"`);
+  });
+  if (valid.length > 10) lines.push(`\n... and ${valid.length - 10} more.`);
+
+  output.className = 'output';
+  output.textContent = lines.join('\n');
+}
+</script>
+</body>
+</html>
