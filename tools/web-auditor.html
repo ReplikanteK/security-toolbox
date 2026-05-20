@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Web Auditor — Security Toolbox</title>
-<meta name="description" content="Comprehensive security audit for any website. Checks DNS, SSL/TLS, security headers, CORS, WAF, HTTP methods, redirects, and more. Generates a full report with prioritized fixes.">
+<meta name="description" content="Comprehensive security audit for any website. Checks DNS, SSL/TLS, security headers, CORS, WAF, tech stack, cookies, CSP, TTFB, and more. Generates a full PDF-ready report with prioritized fixes.">
 <link rel="stylesheet" href="../css/style.css">
 <style>
 .progress-bar {
@@ -57,12 +57,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: 700;
-  margin: 0 auto 1rem;
+  margin: 0 auto .8rem;
 }
 .summary-grid {
   display: grid;
@@ -92,7 +92,7 @@
 .rec-medium { background: rgba(224,176,64,.1); border-color: #e0b040; }
 .rec-low { background: rgba(160,160,160,.1); border-color: #a0a0a0; }
 
-.copy-btn {
+.copy-btn, .print-btn {
   font-size: .75rem;
   padding: .3rem .8rem;
   background: var(--bg3);
@@ -102,7 +102,27 @@
   cursor: pointer;
   margin-top: .5rem;
 }
-.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+.copy-btn:hover, .print-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ── Print styles (PDF export) ── */
+@media print {
+  header, footer, .back, .actions, .progress-bar, .copy-btn, .print-btn, #audit-status { display: none !important; }
+  body { background: white; color: #000; }
+  .tool-page { max-width: 100%; padding: 0; }
+  .report-section { background: #f5f5f5; border-color: #ccc; break-inside: avoid; }
+  .report-section h4 { color: #000; }
+  .report-section .finding { color: #333 !important; }
+  .report-section .finding.critical { border-color: #e04040; color: #c03030 !important; }
+  .report-section .finding.high { border-color: #e08040; color: #c07030 !important; }
+  .report-section .finding.medium { border-color: #d0a030; color: #a08020 !important; }
+  .report-section .finding.good { border-color: #30a040; color: #208030 !important; }
+  .report-section .finding.info { border-color: #4080b0; color: #306090 !important; }
+  .report-section .finding.low { border-color: #909090; color: #707070 !important; }
+  .summary-card { background: #eee; border-color: #ccc; }
+  .recommendation { background: #fafafa; }
+  .score-circle { border-color: #333 !important; color: #000 !important; background: #eee !important; }
+  @page { margin: 1.5cm; }
+}
 </style>
 </head>
 <body>
@@ -115,13 +135,13 @@
     <a href="../about.html">About</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
   </nav>
-  <span class="badge">27 tools</span>
+  <span class="badge">28 tools</span>
 </header>
 
 <div class="tool-page">
   <a href="../index.html" class="back">← Back to tools</a>
   <h2>Web Auditor</h2>
-  <p class="desc">Comprehensive security audit for any URL. Runs DNS, SSL/TLS, security headers, CORS, WAF, HTTP methods, redirect chain, and more — then generates a full report with prioritized recommendations.</p>
+  <p class="desc">Comprehensive security audit for any URL. Runs DNS, SSL/TLS, security headers (A+ grade), CORS, WAF, tech stack detection, cookie analysis, CSP deep evaluation, TTFB, HTTP methods, redirect chain — then generates a full PDF-ready report with prioritized recommendations.</p>
 
   <label for="audit-url">Target URL</label>
   <input type="text" id="audit-url" placeholder="https://example.com" value="https://example.com" onkeydown="if(event.key==='Enter')runAudit()">
@@ -132,7 +152,7 @@
 
   <div id="audit-progress" class="progress-bar" style="display:none"></div>
   <div id="audit-report"></div>
-  <div id="audit-status" class="output" style="margin-top:1.5rem">Enter a URL and click Run Audit. The audit checks DNS, SSL, headers, CORS, WAF, methods, and redirects. Results update as each check completes.</div>
+  <div id="audit-status" class="output" style="margin-top:1.5rem">Enter a URL and click Run Audit. The audit checks DNS, SSL, headers, CORS, WAF, tech stack, cookies, CSP, performance, methods, and redirects. Results include a full report with prioritized recommendations. Use the Print button to export as PDF.</div>
 </div>
 
 <footer>
@@ -150,7 +170,11 @@ const CHECKS = [
   { id: 'ssl', label: 'SSL/TLS', icon: '🔒' },
   { id: 'headers', label: 'Security Headers', icon: '🛡️' },
   { id: 'cors', label: 'CORS', icon: '🌍' },
+  { id: 'cookies', label: 'Cookies', icon: '🍪' },
+  { id: 'csp', label: 'CSP Deep', icon: '📋' },
   { id: 'waf', label: 'WAF Detection', icon: '🔥' },
+  { id: 'tech', label: 'Tech Stack', icon: '⚙️' },
+  { id: 'perf', label: 'Performance', icon: '⏱️' },
   { id: 'methods', label: 'HTTP Methods', icon: '🔧' },
   { id: 'redirect', label: 'Redirect Chain', icon: '↪️' },
 ];
@@ -167,17 +191,97 @@ const HEADER_WEIGHTS = {
 };
 
 const WAF_SIGNATURES = [
-  { name: 'Cloudflare', headers: { 'server': 'cloudflare', 'cf-ray': null }, body: ['Attention Required! | Cloudflare'] },
-  { name: 'AWS WAF', headers: { 'x-amz-cf-id': null, 'x-amzn-requestid': null }, body: ['Request Blocked by AWS WAF'] },
-  { name: 'Akamai', headers: { 'x-akamai-transformed': null }, body: ['AkamaiGHost'] },
-  { name: 'Fastly', headers: { 'x-fastly-request-id': null }, body: [] },
-  { name: 'Imperva', headers: { 'x-iinfo': null }, body: ['Incapsula incident'] },
+  { name: 'Cloudflare', headers: { 'server': 'cloudflare', 'cf-ray': null }, body: ['Attention Required! | Cloudflare', 'cf-error-page'] },
+  { name: 'AWS WAF', headers: { 'x-amz-cf-id': null, 'x-amzn-requestid': null }, body: ['Request Blocked by AWS WAF', 'AWSWAF'] },
+  { name: 'Akamai', headers: { 'x-akamai-transformed': null }, body: ['AkamaiGHost', 'Akamai Image Server'] },
+  { name: 'Fastly', headers: { 'x-fastly-request-id': null, 'x-served-by': null }, body: [] },
+  { name: 'Imperva', headers: { 'x-iinfo': null }, body: ['Incapsula incident', '_Incapsula_Resource'] },
+  { name: 'Cloudfront', headers: { 'x-amz-cf-pop': null, 'x-amz-cf-id': null }, body: [] },
+  { name: 'Sucuri', headers: { 'x-sucuri-id': null, 'x-sucuri-cache': null }, body: [] },
+  { name: 'F5 BIG-IP', headers: { 'x-application-context': null }, body: ['The requested URL was rejected'] },
+  { name: 'Barracuda', headers: {}, body: ['Barracuda Network'] },
+  { name: 'Wordfence', headers: {}, body: ['Generated by Wordfence'] },
+  { name: 'Stackpath', headers: { 'x-stack-requestid': null }, body: [] },
+  { name: 'ModSecurity', headers: {}, body: ['This error was generated by Mod_Security'] },
 ];
 
-const TAKEOVER_SIGNATURES = [
-  { service: 'AWS S3', fps: ['NoSuchBucket', 'The specified bucket does not exist'] },
-  { service: 'GitHub Pages', fps: ['There isn\'t a GitHub Pages site', 'Repository not found'] },
-  { service: 'Heroku', fps: ['There is no app hosted at this URL', 'No such app'] },
+// ── Tech stack detection signatures ──
+const TECH_SIGNATURES = [
+  // Servers
+  { name: 'Nginx', category: 'Server', probe: h => h['server']?.toLowerCase().includes('nginx') },
+  { name: 'Apache', category: 'Server', probe: h => h['server']?.toLowerCase().includes('apache') },
+  { name: 'IIS', category: 'Server', probe: h => h['server']?.toLowerCase().includes('iis') || h['x-powered-by']?.includes('ASP.NET') },
+  { name: 'Caddy', category: 'Server', probe: h => h['server']?.toLowerCase().includes('caddy') },
+  { name: 'OpenResty', category: 'Server', probe: h => h['server']?.toLowerCase().includes('openresty') },
+
+  // Programming languages / frameworks
+  { name: 'PHP', category: 'Language', probe: h => h['x-powered-by']?.includes('PHP') || h['set-cookie']?.includes('PHPSESSID') },
+  { name: 'ASP.NET', category: 'Language', probe: h => h['x-powered-by']?.includes('ASP.NET') || h['set-cookie']?.includes('ASP.NET_SessionId') },
+  { name: 'Java', category: 'Language', probe: h => h['set-cookie']?.includes('JSESSIONID') || h['x-powered-by']?.includes('Servlet') },
+  { name: 'Express', category: 'Framework', probe: h => h['x-powered-by']?.includes('Express') },
+  { name: 'Next.js', category: 'Framework', probe: (h, b) => b?.includes('__NEXT_DATA__') || b?.includes('next/dist') },
+  { name: 'Nuxt.js', category: 'Framework', probe: (h, b) => b?.includes('__NUXT__') },
+  { name: 'Gatsby', category: 'Framework', probe: (h, b) => b?.includes('___GATSBY') },
+  { name: 'Django', category: 'Framework', probe: h => h['set-cookie']?.includes('csrftoken') || h['x-frame-options'] === 'DENY' },
+  { name: 'Flask', category: 'Framework', probe: h => h['set-cookie']?.includes('session=') && !h['set-cookie']?.includes('PHPSESSID') },
+  { name: 'Ruby on Rails', category: 'Framework', probe: h => h['set-cookie']?.includes('_session_id') || h['x-powered-by']?.includes('Phusion') },
+  { name: 'Laravel', category: 'Framework', probe: h => h['set-cookie']?.includes('laravel_session') || h['x-powered-by']?.includes('Laravel') },
+  { name: 'Symfony', category: 'Framework', probe: h => h['set-cookie']?.includes('symfony') },
+  { name: 'Spring Boot', category: 'Framework', probe: h => h['set-cookie']?.includes('SESSION') || h['x-application-context'] },
+  { name: 'WordPress', category: 'CMS', probe: (h, b) => b?.includes('wp-content') || b?.includes('wp-json') || b?.includes('wp-includes') || b?.includes('WordPress ') },
+  { name: 'Drupal', category: 'CMS', probe: (h, b) => b?.includes('Drupal.settings') || b?.includes('Drupal.extensions') },
+  { name: 'Joomla', category: 'CMS', probe: (h, b) => b?.includes('joomla') || b?.includes('Joomla') },
+  { name: 'Shopify', category: 'E-commerce', probe: (h, b) => b?.includes('myshopify') || h['x-shopid'] || b?.includes('Shopify.theme') },
+  { name: 'Magento', category: 'E-commerce', probe: h => h['set-cookie']?.includes('mage-') || h['x-magento'] },
+  { name: 'WooCommerce', category: 'E-commerce', probe: (h, b) => b?.includes('woocommerce') || b?.includes('WooCommerce') },
+  { name: 'Ghost', category: 'CMS', probe: h => h['x-powered-by']?.includes('Ghost') },
+  { name: 'Cloudflare', category: 'CDN', probe: h => h['server']?.includes('cloudflare') || h['cf-ray'] },
+  { name: 'Fastly', category: 'CDN', probe: h => h['x-fastly-request-id'] || h['x-served-by'] },
+  { name: 'Cloudfront', category: 'CDN', probe: h => h['x-amz-cf-pop'] || h['x-amz-cf-id'] },
+  { name: 'Vercel', category: 'Hosting', probe: h => h['x-vercel-id'] || h['x-vercel-cache'] },
+  { name: 'Netlify', category: 'Hosting', probe: h => h['server']?.includes('Netlify') || h['x-nf-request-id'] },
+  { name: 'GitHub Pages', category: 'Hosting', probe: h => h['server']?.includes('GitHub.com') },
+  { name: 'Heroku', category: 'Hosting', probe: h => h['x-powered-by']?.includes('Heroku') || h['via']?.includes('Heroku') },
+  { name: 'Google Cloud', category: 'Cloud', probe: h => h['via']?.includes('Google') || h['x-cloud-trace-context'] },
+  { name: 'Algolia', category: 'Search', probe: h => h['x-algolia-api'] },
+  { name: 'Cloudflare Analytics', category: 'Analytics', probe: (h, b) => b?.includes('cloudflare-insights') },
+  { name: 'Google Analytics', category: 'Analytics', probe: (h, b) => b?.includes('analytics.js') || b?.includes('gtag(') || b?.includes('ga(') },
+  { name: 'Hotjar', category: 'Analytics', probe: (h, b) => b?.includes('hotjar') },
+  { name: 'Mixpanel', category: 'Analytics', probe: (h, b) => b?.includes('mixpanel') },
+  { name: 'Sentry', category: 'Monitoring', probe: (h, b) => b?.includes('sentry') && b?.includes('dsn') },
+  { name: 'New Relic', category: 'Monitoring', probe: (h, b) => b?.includes('newrelic') || b?.includes('NREUM') },
+  { name: 'Datadog', category: 'Monitoring', probe: (h, b) => b?.includes('datadog') && b?.includes('RUM') },
+  { name: 'Bootstrap', category: 'CSS Framework', probe: (h, b) => b?.includes('bootstrap') && (b?.includes('min.css') || b?.includes('bootstrap.js')) },
+  { name: 'Tailwind CSS', category: 'CSS Framework', probe: (h, b) => b?.includes('tailwind') },
+  { name: 'jQuery', category: 'JavaScript Library', probe: (h, b) => b?.includes('jQuery') || b?.includes('jquery') },
+  { name: 'React', category: 'JavaScript Library', probe: (h, b) => b?.includes('react') || b?.includes('React') || b?.includes('__REACT_DEVTOOLS') },
+  { name: 'Vue.js', category: 'JavaScript Library', probe: (h, b) => b?.includes('vue') || b?.includes('__VUE__') },
+  { name: 'Angular', category: 'JavaScript Library', probe: (h, b) => b?.includes('ng-version') || b?.includes('angular') },
+  { name: 'Alpine.js', category: 'JavaScript Library', probe: (h, b) => b?.includes('alpinejs') || b?.includes('x-data') },
+  { name: 'htmx', category: 'JavaScript Library', probe: (h, b) => b?.includes('htmx') },
+  { name: 'Stripe', category: 'Payment', probe: (h, b) => b?.includes('stripe') && (b?.includes('stripe.js') || b?.includes('Stripe(')) },
+  { name: 'reCAPTCHA', category: 'Security', probe: (h, b) => b?.includes('recaptcha') || b?.includes('g-recaptcha') },
+  { name: 'hCaptcha', category: 'Security', probe: (h, b) => b?.includes('hcaptcha') },
+  { name: 'Tally', category: 'Form', probe: (h, b) => b?.includes('tally.so') },
+  { name: 'Typekit/Adobe Fonts', category: 'Fonts', probe: (h, b) => b?.includes('typekit') || b?.includes('use.typekit') },
+  { name: 'Google Fonts', category: 'Fonts', probe: (h, b) => b?.includes('fonts.googleapis') },
+  { name: 'Font Awesome', category: 'Icons', probe: (h, b) => b?.includes('font-awesome') || b?.includes('fontawesome') },
+  { name: 'Polyfill.io', category: 'Polyfill', probe: (h, b) => b?.includes('polyfill.io') },
+  { name: 'jsDelivr', category: 'CDN', probe: (h, b) => b?.includes('cdn.jsdelivr') },
+  { name: 'unpkg', category: 'CDN', probe: (h, b) => b?.includes('unpkg.com') },
+  { name: 'Prismic', category: 'CMS', probe: (h, b) => b?.includes('prismic.io') },
+  { name: 'Contentful', category: 'CMS', probe: (h, b) => b?.includes('contentful') },
+  { name: 'Socket.io', category: 'WebSocket', probe: (h, b) => b?.includes('socket.io') || b?.includes('io(') },
+  { name: 'Mapbox', category: 'Maps', probe: (h, b) => b?.includes('mapbox') },
+  { name: 'Leaflet', category: 'Maps', probe: (h, b) => b?.includes('leaflet') },
+  { name: 'OpenStreetMap', category: 'Maps', probe: (h, b) => b?.includes('openstreetmap') },
+  { name: 'Disqus', category: 'Comments', probe: (h, b) => b?.includes('disqus') },
+  { name: 'Vimeo', category: 'Video', probe: (h, b) => b?.includes('player.vimeo') },
+  { name: 'YouTube', category: 'Video', probe: (h, b) => b?.includes('youtube.com/embed') || b?.includes('youtube.com/watch') },
+  { name: 'Twitch', category: 'Video', probe: (h, b) => b?.includes('twitch.tv') },
+  { name: 'Cookiebot', category: 'Consent', probe: (h, b) => b?.includes('cookiebot') },
+  { name: 'CookieYes', category: 'Consent', probe: (h, b) => b?.includes('cookieyes') },
+  { name: 'OneTrust', category: 'Consent', probe: (h, b) => b?.includes('onetrust') || b?.includes('Optanon') },
 ];
 
 function qs(s) { return document.getElementById(s); }
@@ -204,11 +308,14 @@ const SECURITY_HEADER_CHECKS = [
     grade: v => !v ? { s: 0, d: 'Missing — XSS protection relies entirely on developer discipline', sev: 'high' }
       : v.includes("'unsafe-inline'") && !v.includes("'nonce-")
         ? { s: 5, d: "Weak — allows 'unsafe-inline' without nonce", sev: 'high' }
+        : v.includes("'unsafe-eval'") ? { s: 10, d: 'Allows unsafe-eval', sev: 'high' }
+        : v.includes("https:") || v.includes("'self'") ? { s: 20, d: 'Set with reasonable restrictions ✓', sev: 'good' }
         : { s: 20, d: 'Set ✓', sev: 'good' } },
   { key: 'x-frame-options', name: 'X-Frame-Options', weight: 15,
     grade: v => !v ? { s: 0, d: 'Missing — clickjacking risk', sev: 'high' }
       : v.toLowerCase() === 'deny' ? { s: 15, d: 'DENY ✓', sev: 'good' }
-      : { s: 10, d: `Set to ${v}`, sev: 'low' } },
+      : v.toLowerCase() === 'sameorigin' ? { s: 12, d: 'SAMEORIGIN ✓', sev: 'good' }
+      : { s: 5, d: `Weak: ${v}`, sev: 'low' } },
   { key: 'x-content-type-options', name: 'X-Content-Type-Options', weight: 10,
     grade: v => !v ? { s: 0, d: 'Missing — MIME sniffing risk', sev: 'medium' }
       : { s: 10, d: 'nosniff ✓', sev: 'good' } },
@@ -220,11 +327,12 @@ const SECURITY_HEADER_CHECKS = [
   { key: 'permissions-policy', name: 'Permissions-Policy', weight: 5,
     grade: v => !v ? { s: 0, d: 'Missing', sev: 'low' } : { s: 5, d: 'Set ✓', sev: 'good' } },
   { key: 'x-xss-protection', name: 'X-XSS-Protection', weight: 5,
-    grade: v => !v ? { s: 0, d: 'Deprecated but still used by some browsers', sev: 'low' }
+    grade: v => !v ? { s: 3, d: 'Deprecated but still used by some browsers', sev: 'low' }
       : { s: 5, d: 'Set ✓', sev: 'good' } },
   { key: 'access-control-allow-origin', name: 'CORS ACAO', weight: 5,
     grade: v => !v ? { s: 5, d: 'Not exposed (non-API) ✓', sev: 'good' }
       : v === '*' ? { s: 0, d: 'Wildcard — any origin can read', sev: 'medium' }
+      : v.includes(origin) ? { s: 1, d: `Reflects origin: ${v}`, sev: 'medium' }
       : { s: 3, d: `Restricted to ${v}`, sev: 'info' } },
 ];
 
@@ -238,7 +346,7 @@ async function dnsQuery(name, type) {
 }
 
 function severityFromScore(s, max) {
-  const pct = (s / max) * 100;
+  const pct = max > 0 ? (s / max) * 100 : 0;
   if (pct >= 90) return { grade: 'A+', color: '#40c060' };
   if (pct >= 80) return { grade: 'A', color: '#60c040' };
   if (pct >= 70) return { grade: 'B', color: '#80c040' };
@@ -255,7 +363,7 @@ async function runAudit() {
     parsed = new URL(url);
     if (!['http:','https:'].includes(parsed.protocol)) throw Error();
   } catch(_) {
-    qs('audit-status').textContent = 'Invalid URL';
+    qs('audit-status').textContent = 'Invalid URL. Please enter a valid HTTP or HTTPS URL.';
     qs('audit-status').className = 'output error';
     return;
   }
@@ -264,8 +372,9 @@ async function runAudit() {
   qs('audit-status').style.display = 'none';
   setProgress();
 
-  const report = {};
+  const report = { targetUrl: url, timestamp: new Date().toISOString() };
   const hostname = parsed.hostname;
+  let body = '';
 
   // ── DNS ──
   markProgress('dns', 'running');
@@ -280,45 +389,36 @@ async function runAudit() {
     markProgress('dns', Object.keys(dnsRecs).length ? 'done' : 'skip');
   } catch { markProgress('dns', 'error'); }
 
-  // ── SSL (via HTTPS check) ──
+  // ── SSL + Performance ──
   markProgress('ssl', 'running');
+  markProgress('perf', 'running');
   try {
-    // Check if HTTPS is available
     const httpsUrl = url.replace(/^http:/, 'https:');
     const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 8000);
-    const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(httpsUrl)}`, { method: 'HEAD', signal: ctrl.signal });
+    const perfStart = performance.now();
+    setTimeout(() => ctrl.abort(), 10000);
+    const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(httpsUrl)}`, { method: 'GET', signal: ctrl.signal });
+    const perfTime = Math.round(performance.now() - perfStart);
+
+    report.performance = { ttfb: perfTime };
+
     const hsts = resp.headers.get('strict-transport-security');
     const server = resp.headers.get('server') || '—';
-    const certInfo = resp.headers.get('x-proxy-ssl') || null;
-    report.ssl = { https: true, hsts: !!hsts, hstsValue: hsts, server, certInfo };
+    report.ssl = { https: true, hsts: !!hsts, hstsValue: hsts, server };
     markProgress('ssl', 'done');
-  } catch {
-    report.ssl = { https: false, hsts: false, server: '—' };
-    // Try HTTP fallback
-    if (url.startsWith('http://')) {
-      try {
-        const ctrl2 = new AbortController();
-        setTimeout(() => ctrl2.abort(), 5000);
-        await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { method: 'HEAD', signal: ctrl2.signal });
-        report.ssl.httpAvailable = true;
-      } catch {}
-    }
-    markProgress('ssl', 'done');
-  }
+    markProgress('perf', 'done');
 
-  // ── Security Headers + CORS + WAF ──
-  markProgress('headers', 'running');
-  markProgress('cors', 'running');
-  markProgress('waf', 'running');
-  try {
-    const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { method: 'GET' });
+    // Read body for analysis
+    body = await resp.text().catch(() => '');
     report.status = resp.status;
 
     const hdrs = {};
     resp.headers.forEach((v,k) => { hdrs[k.toLowerCase()] = v; });
+    report.headers_raw = hdrs;
+    report.fullBodySample = body.substring(0, 50000);
 
-    // Headers analysis
+    // ── Security Headers ──
+    markProgress('headers', 'running');
     const secResults = SECURITY_HEADER_CHECKS.map(c => {
       const val = hdrs[c.key];
       const g = c.grade(val);
@@ -328,15 +428,63 @@ async function runAudit() {
     const maxScore = secResults.reduce((a,r) => a+r.max, 0);
     const hGrade = severityFromScore(totalScore, maxScore);
     report.headers = { results: secResults, totalScore, maxScore, grade: hGrade.grade, gradeColor: hGrade.color };
+    markProgress('headers', 'done');
 
-    // CORS
+    // ── CORS ──
+    markProgress('cors', 'running');
     const acao = hdrs['access-control-allow-origin'];
     const acac = hdrs['access-control-allow-credentials'];
     const acam = hdrs['access-control-allow-methods'];
-    report.cors = { acao, acac, acam };
+    const aceh = hdrs['access-control-expose-headers'];
+    const acah = hdrs['access-control-allow-headers'];
+    report.cors = { acao, acac, acam, aceh, acah };
+    markProgress('cors', 'done');
 
-    // WAF
-    const body = await resp.text().catch(() => '');
+    // ── Cookie Analysis ──
+    markProgress('cookies', 'running');
+    const setCookie = resp.headers.get('set-cookie');
+    const allCookies = [];
+    if (setCookie) {
+      const cookieHeaders = setCookie.split(/\n|(?<=Expires=[^;]+)/);
+      cookieHeaders.forEach(raw => {
+        if (!raw.trim()) return;
+        const parts = raw.split(';').map(s => s.trim());
+        const nameVal = parts[0].split('=');
+        const cookie = {
+          name: nameVal[0],
+          value: nameVal.slice(1).join('='),
+          secure: raw.toLowerCase().includes('secure'),
+          httponly: raw.toLowerCase().includes('httponly'),
+          samesite: (raw.match(/samesite=(\w+)/i) || [,null])[1],
+          domain: (raw.match(/domain=([^;]+)/i) || [,null])[1],
+          path: (raw.match(/path=([^;]+)/i) || [,null])[1],
+          maxAge: (raw.match(/max-age=(\d+)/i) || [,null])[1],
+          expires: (raw.match(/expires=([^;]+)/i) || [,null])[1],
+          raw
+        };
+        allCookies.push(cookie);
+      });
+    }
+    report.cookies = allCookies;
+    markProgress('cookies', 'done');
+
+    // ── CSP Deep Analysis ──
+    markProgress('csp', 'running');
+    const cspValue = hdrs['content-security-policy'];
+    if (cspValue) {
+      const directives = {};
+      cspValue.split(';').forEach(d => {
+        const parts = d.trim().split(/\s+/);
+        if (parts.length) directives[parts[0]] = parts.slice(1);
+      });
+      report.cspDeep = { raw: cspValue, directives };
+    } else {
+      report.cspDeep = null;
+    }
+    markProgress('csp', 'done');
+
+    // ── WAF Detection ──
+    markProgress('waf', 'running');
     const bodySample = body.substring(0, 3000);
     const wafDetected = [];
     for (const sig of WAF_SIGNATURES) {
@@ -354,15 +502,29 @@ async function runAudit() {
       if (match) wafDetected.push(sig.name);
     }
     report.waf = wafDetected;
+    markProgress('waf', 'done');
 
-    markProgress('headers', 'done');
-    markProgress('cors', 'done');
-    markProgress('waf', wafDetected.length ? 'done' : 'done');
+    // ── Tech Stack Detection ──
+    markProgress('tech', 'running');
+    const techFound = [];
+    for (const tech of TECH_SIGNATURES) {
+      try {
+        if (tech.probe(hdrs, body)) techFound.push(tech);
+      } catch {}
+    }
+    report.tech = techFound;
+    markProgress('tech', 'done');
+
   } catch(e) {
-    report.headersError = e.message;
+    report.ssl = { https: false, hsts: false };
+    markProgress('ssl', 'error');
+    markProgress('perf', 'error');
     markProgress('headers', 'error');
     markProgress('cors', 'error');
+    markProgress('cookies', 'error');
+    markProgress('csp', 'error');
     markProgress('waf', 'error');
+    markProgress('tech', 'error');
   }
 
   // ── HTTP Methods ──
@@ -407,56 +569,124 @@ function renderReport(r, url) {
   const container = qs('audit-report');
   container.innerHTML = '';
 
-  // ── Summary ──
-  const criticalCount = [];
-  const highCount = [];
-  const mediumCount = [];
-  const goodCount = [];
+  const criticalIssues = [];
+  const highIssues = [];
+  const mediumIssues = [];
+  const lowIssues = [];
+  const goodItems = [];
+  let scoreDenom = 0;
 
-  // Count from headers
+  // Collect findings
   if (r.headers) {
     r.headers.results.forEach(hr => {
-      if (hr.severity === 'high') highCount.push(hr);
-      else if (hr.severity === 'medium') mediumCount.push(hr);
-      else if (hr.severity === 'good') goodCount.push(hr);
+      if (hr.severity === 'high') highIssues.push(hr.detail);
+      else if (hr.severity === 'medium') mediumIssues.push(hr.detail);
+      else if (hr.severity === 'low') lowIssues.push(hr.detail);
+      else if (hr.severity === 'good') goodItems.push(hr.detail);
     });
   }
 
-  // SSL
-  if (r.ssl && !r.ssl.https) highCount.push({ name: 'HTTPS not available' });
+  if (r.ssl && !r.ssl.https) { criticalIssues.push('HTTPS not available'); scoreDenom += 20; }
 
-  // CORS
-  if (r.cors && r.cors.acao === '*') mediumCount.push({ name: 'CORS wildcard' });
+  if (r.cookies) {
+    r.cookies.forEach(c => {
+      if (!c.secure && c.name.toLowerCase() !== '') mediumIssues.push(`Cookie "${c.name}" missing Secure flag`);
+      if (!c.httponly) lowIssues.push(`Cookie "${c.name}" missing HttpOnly flag`);
+      if (!c.samesite) mediumIssues.push(`Cookie "${c.name}" missing SameSite attribute`);
+    });
+  }
 
-  // WAF
-  const wafText = r.waf && r.waf.length ? r.waf.join(', ') : 'None detected';
+  if (r.cspDeep === null) {
+    highIssues.push('CSP not configured — no XSS protection');
+  } else if (r.cspDeep.directives) {
+    if (r.cspDeep.directives['script-src']?.some(s => s.includes("'unsafe-inline'"))) {
+      highIssues.push("CSP script-src allows 'unsafe-inline'");
+    }
+    if (r.cspDeep.directives['script-src']?.some(s => s.includes("'unsafe-eval'"))) {
+      highIssues.push("CSP script-src allows 'unsafe-eval'");
+    }
+    if (!r.cspDeep.directives['base-uri']) {
+      mediumIssues.push('CSP missing base-uri — script injection via <base> tag');
+    }
+    if (!r.cspDeep.directives['object-src']) {
+      lowIssues.push('CSP missing object-src — Flash/plugin injection risk');
+    }
+    if (r.cspDeep.directives['default-src']?.includes("'none'")) {
+      goodItems.push('CSP uses strict default-src: none ✓');
+    }
+  }
 
-  // Methods
+  if (r.cors) {
+    if (r.cors.acao === '*') mediumIssues.push('CORS wildcard ACAO — any origin can read');
+    if (r.cors.acac === 'true') highIssues.push('CORS credentials allowed with wildcard — sensitive data at risk');
+  }
+
   const riskyMethods = r.methods ? r.methods.filter(m => m.allowed && !['GET','POST','HEAD','OPTIONS'].includes(m.method)) : [];
 
-  // Redirects
+  if (riskyMethods.length) {
+    riskyMethods.forEach(m => highIssues.push(`HTTP ${m.method} enabled on production`));
+  }
+
   const redirectCount = r.redirectChain ? r.redirectChain.length - 1 : 0;
   const hasDowngrade = r.redirectChain && r.redirectChain.some(h => h.url && h.url.startsWith('http://'));
+  const hasCrossDomain = r.redirectChain && r.redirectChain.some((h, i) => {
+    if (i === 0) return false;
+    try { return new URL(h.url).hostname !== new URL(url).hostname; } catch { return false; }
+  });
 
-  const totalIssues = criticalCount.length + highCount.length + mediumCount.length;
-  const overallScore = r.headers ? Math.round((r.headers.totalScore / r.headers.maxScore) * 100) : 50;
+  if (hasDowngrade) highIssues.push('HTTPS → HTTP protocol downgrade in redirect chain');
+  if (hasCrossDomain) lowIssues.push('Cross-domain redirect detected (potential open redirect)');
+
+  // ── Calculate Score ──
+  const baseScore = r.headers ? r.headers.totalScore : 0;
+  const baseMax = r.headers ? r.headers.maxScore : 100;
+  let deduction = criticalIssues.length * 25 + highIssues.length * 10 + mediumIssues.length * 5 + lowIssues.length * 2;
+  deduction = Math.min(deduction, baseMax);
+  const rawScore = Math.max(0, baseScore - deduction);
+  const overallScore = Math.round((rawScore / baseMax) * 100);
   const scoreColor = overallScore >= 80 ? '#40c060' : overallScore >= 55 ? '#e0b040' : '#e08040';
+  const scoreGrade = severityFromScore(overallScore, 100).grade;
 
-  let summaryHtml = `<div class="report-section" style="text-align:center">
+  const totalIssues = criticalIssues.length + highIssues.length + mediumIssues.length;
+  const wafText = r.waf && r.waf.length ? r.waf.join(', ') : 'None detected';
+  const techCount = r.tech ? r.tech.length : 0;
+  const cookieCount = r.cookies ? r.cookies.length : 0;
+
+  // ── Executive Summary ──
+  container.innerHTML = `<div class="report-section" style="text-align:center" id="report-summary">
     <h4>📊 Executive Summary</h4>
     <div class="score-circle" style="background:${scoreColor}22;color:${scoreColor};border:3px solid ${scoreColor}">
-      ${overallScore}%
+      ${scoreGrade}
     </div>
     <div class="summary-grid">
-      <div class="summary-card"><div class="val" style="color:${scoreColor}">${r.headers ? r.headers.grade : '—'}</div><div class="lbl">Headers Grade</div></div>
-      <div class="summary-card"><div class="val" style="color:${r.ssl && r.ssl.https ? '#40c060' : '#e08040'}">${r.ssl && r.ssl.https ? 'Yes' : 'No'}</div><div class="lbl">HTTPS</div></div>
+      <div class="summary-card"><div class="val" style="color:${scoreColor}">${overallScore}%</div><div class="lbl">Security Score</div></div>
+      <div class="summary-card"><div class="val" style="color:${totalIssues ? '#e08040' : '#40c060'}">${totalIssues}</div><div class="lbl">Issues Found</div></div>
+      <div class="summary-card"><div class="val" style="color:${r.ssl && r.ssl.https ? '#40c060' : '#e04040'}">${r.ssl && r.ssl.https ? 'Yes' : 'No'}</div><div class="lbl">HTTPS</div></div>
+      <div class="summary-card"><div class="val">${r.headers ? r.headers.grade : '—'}</div><div class="lbl">Headers Grade</div></div>
       <div class="summary-card"><div class="val">${wafText}</div><div class="lbl">WAF</div></div>
+      <div class="summary-card"><div class="val">${techCount}</div><div class="lbl">Technologies</div></div>
+      <div class="summary-card"><div class="val">${cookieCount}</div><div class="lbl">Cookies</div></div>
       <div class="summary-card"><div class="val" style="color:${riskyMethods.length ? '#e08040' : '#40c060'}">${riskyMethods.length || 0}</div><div class="lbl">Risky Methods</div></div>
-      <div class="summary-card"><div class="val">${redirectCount}</div><div class="lbl">Redirects</div></div>
-      <div class="summary-card"><div class="val" style="color:${highCount.length ? '#e08040' : '#40c060'}">${highCount.length}</div><div class="lbl">High Issues</div></div>
+      <div class="summary-card"><div class="val" style="color:${r.performance ? '' : 'var(--text2)'}">${r.performance ? r.performance.ttfb + 'ms' : '—'}</div><div class="lbl">TTFB</div></div>
     </div>
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
   </div>`;
-  container.innerHTML += summaryHtml;
+
+  // ── Tech Stack ──
+  if (r.tech && r.tech.length) {
+    const categories = {};
+    r.tech.forEach(t => {
+      if (!categories[t.category]) categories[t.category] = [];
+      categories[t.category].push(t.name);
+    });
+    let techHtml = `<div class="report-section"><h4>⚙️ Technology Stack (${r.tech.length} detected)</h4>`;
+    for (const [cat, techs] of Object.entries(categories)) {
+      techHtml += `<div class="finding info"><strong>${cat}:</strong> ${techs.join(', ')}</div>`;
+    }
+    techHtml += `<div class="finding low">Note: Detection is based on headers and HTML patterns. Some technologies may not be detected.</div>`;
+    techHtml += `</div>`;
+    container.innerHTML += techHtml;
+  }
 
   // ── DNS ──
   if (r.dns) {
@@ -478,12 +708,11 @@ function renderReport(r, url) {
     let sslHtml = `<div class="report-section"><h4>🔒 SSL/TLS</h4>`;
     if (r.ssl.https) {
       sslHtml += `<div class="finding good">HTTPS available ✓</div>`;
-      if (r.ssl.hsts) sslHtml += `<div class="finding good">HSTS enabled ✓</div>`;
+      if (r.ssl.hsts) sslHtml += `<div class="finding good">HSTS enabled ✓ ${r.ssl.hstsValue ? '(' + r.ssl.hstsValue + ')' : ''}</div>`;
       else sslHtml += `<div class="finding high">HSTS not set — cookie hijacking risk on HTTP</div>`;
       if (r.ssl.server && r.ssl.server !== '—') sslHtml += `<div class="finding info">Server: ${r.ssl.server}</div>`;
     } else {
-      sslHtml += `<div class="finding high">HTTPS not available — all data transmitted in plaintext</div>`;
-      if (r.ssl.httpAvailable) sslHtml += `<div class="finding info">HTTP version is accessible</div>`;
+      sslHtml += `<div class="finding critical">HTTPS not available — all data transmitted in plaintext</div>`;
     }
     sslHtml += `</div>`;
     container.innerHTML += sslHtml;
@@ -493,23 +722,68 @@ function renderReport(r, url) {
   if (r.headers) {
     let hHtml = `<div class="report-section"><h4>🛡️ Security Headers — Grade: <span style="color:${r.headers.gradeColor}">${r.headers.grade}</span> (${r.headers.totalScore}/${r.headers.maxScore})</h4>`;
     r.headers.results.forEach(hr => {
-      hHtml += `<div class="finding ${hr.severity}">${hr.name}: ${hr.detail}</div>`;
+      const icon = hr.severity === 'good' ? '✅' : hr.severity === 'info' ? 'ℹ️' : '⚠️';
+      hHtml += `<div class="finding ${hr.severity}">${icon} <strong>${hr.name}:</strong> ${hr.detail} <span style="opacity:.5">[${hr.score}/${hr.max}]</span></div>`;
     });
     hHtml += `</div>`;
     container.innerHTML += hHtml;
+  }
+
+  // ── CSP Deep ──
+  if (r.cspDeep) {
+    let cspHtml = `<div class="report-section"><h4>📋 Content Security Policy — Deep Analysis</h4>`;
+    for (const [dir, vals] of Object.entries(r.cspDeep.directives)) {
+      const v = vals.join(' ');
+      const issues = [];
+      if (dir === 'script-src') {
+        if (vals.includes("'unsafe-inline'")) issues.push("⚠️ Allows 'unsafe-inline'");
+        if (vals.includes("'unsafe-eval'")) issues.push("⚠️ Allows 'unsafe-eval'");
+      }
+      if (dir === 'object-src' && v === "'none'") issues.push('✅ Properly restricted');
+      if (dir === 'base-uri' && v === "'none'") issues.push('✅ Prevents base tag injection');
+      const note = issues.length ? ' — ' + issues.join('; ') : '';
+      cspHtml += `<div class="finding info"><strong>${dir}</strong>: ${v}${note}</div>`;
+    }
+    const missing = [];
+    if (!r.cspDeep.directives['base-uri']) missing.push('base-uri');
+    if (!r.cspDeep.directives['object-src']) missing.push('object-src');
+    if (!r.cspDeep.directives['frame-ancestors']) missing.push('frame-ancestors');
+    if (!r.cspDeep.directives['form-action']) missing.push('form-action');
+    if (missing.length) cspHtml += `<div class="finding medium">Missing directives that would strengthen CSP: ${missing.join(', ')}</div>`;
+    cspHtml += `</div>`;
+    container.innerHTML += cspHtml;
+  } else {
+    container.innerHTML += `<div class="report-section"><h4>📋 Content Security Policy</h4><div class="finding high">CSP not configured — no XSS protection</div></div>`;
   }
 
   // ── CORS ──
   if (r.cors) {
     let corsHtml = `<div class="report-section"><h4>🌍 CORS Configuration</h4>`;
     if (r.cors.acao) {
-      if (r.cors.acao === '*') corsHtml += `<div class="finding medium">Access-Control-Allow-Origin: * — any origin can read responses</div>`;
+      if (r.cors.acao === '*') corsHtml += `<div class="finding medium">⚠️ Access-Control-Allow-Origin: * — any origin can read responses</div>`;
       else corsHtml += `<div class="finding info">ACAO: ${r.cors.acao}</div>`;
     } else corsHtml += `<div class="finding good">ACAO not exposed (standard for non-API origins) ✓</div>`;
-    if (r.cors.acac === 'true') corsHtml += `<div class="finding medium">Credentials allowed with CORS — sensitive data at risk</div>`;
+    if (r.cors.acac === 'true') corsHtml += `<div class="finding high">⚠️ Credentials allowed with CORS — sensitive data at risk</div>`;
     if (r.cors.acam) corsHtml += `<div class="finding info">Allowed methods: ${r.cors.acam}</div>`;
+    if (r.cors.acah) corsHtml += `<div class="finding info">Allowed headers: ${r.cors.acah}</div>`;
     corsHtml += `</div>`;
     container.innerHTML += corsHtml;
+  }
+
+  // ── Cookie Analysis ──
+  if (r.cookies && r.cookies.length) {
+    let cookieHtml = `<div class="report-section"><h4>🍪 Cookie Security Analysis (${r.cookies.length} cookies)</h4>`;
+    r.cookies.forEach(c => {
+      const flags = [];
+      if (c.secure) flags.push('Secure ✓'); else flags.push('Secure ✗');
+      if (c.httponly) flags.push('HttpOnly ✓'); else flags.push('HttpOnly ✗');
+      if (c.samesite) flags.push(`SameSite=${c.samesite}`); else flags.push('SameSide ✗');
+      cookieHtml += `<div class="finding ${!c.secure || !c.httponly ? 'medium' : 'good'}"><strong>${c.name}</strong> — ${flags.join(', ')}${c.domain ? ' Domain: ' + c.domain : ''}${c.path ? ' Path: ' + c.path : ''}${c.maxAge ? ' Max-Age: ' + c.maxAge + 's' : ''}</div>`;
+    });
+    cookieHtml += `</div>`;
+    container.innerHTML += cookieHtml;
+  } else if (r.cookies !== undefined) {
+    container.innerHTML += `<div class="report-section"><h4>🍪 Cookie Security Analysis</h4><div class="finding info">No cookies set by this page</div></div>`;
   }
 
   // ── WAF ──
@@ -518,7 +792,7 @@ function renderReport(r, url) {
     if (r.waf.length) {
       r.waf.forEach(w => wafHtml += `<div class="finding info">${w} detected</div>`);
     } else {
-      wafHtml += `<div class="finding low">No WAF/CDN detected based on current fingerprints</div>`;
+      wafHtml += `<div class="finding low">No WAF/CDN detected based on current fingerprints (${WAF_SIGNATURES.length} signatures checked)</div>`;
     }
     wafHtml += `</div>`;
     container.innerHTML += wafHtml;
@@ -531,12 +805,12 @@ function renderReport(r, url) {
     const allowed = r.methods.filter(m => m.allowed);
     const risky = allowed.filter(m => !['GET','POST','HEAD','OPTIONS'].includes(m.method));
     if (risky.length) {
-      risky.forEach(m => mHtml += `<div class="finding high">${m.method} — allowed (HTTP ${m.status})</div>`);
+      risky.forEach(m => mHtml += `<div class="finding high">⚠️ ${m.method} — allowed (HTTP ${m.status})</div>`);
     }
     if (blocked.length) {
       blocked.forEach(m => mHtml += `<div class="finding good">${m.method} — blocked (HTTP ${m.status}) ✓</div>`);
     }
-    if (!risky.length) mHtml += `<div class="finding good">No risky methods allowed ✓</div>`;
+    if (!risky.length) mHtml += `<div class="finding good">No risky methods allowed (only GET/POST/HEAD/OPTIONS) ✓</div>`;
     mHtml += `</div>`;
     container.innerHTML += mHtml;
   }
@@ -552,35 +826,47 @@ function renderReport(r, url) {
       const crossDomain = i > 0 && hopDomain !== startDomain;
       redirHtml += `<div class="finding ${crossDomain && isRedir ? 'medium' : 'info'}">Hop ${i+1}: HTTP ${h.status} → ${h.url}${crossDomain && isRedir ? ' (cross-domain)' : ''}</div>`;
     });
-    if (hasDowngrade) redirHtml += `<div class="finding high">Protocol downgrade detected (HTTPS → HTTP)</div>`;
+    if (hasDowngrade) redirHtml += `<div class="finding high">⚠️ Protocol downgrade detected (HTTPS → HTTP)</div>`;
     redirHtml += `</div>`;
     container.innerHTML += redirHtml;
   }
 
+  // ── Performance ──
+  if (r.performance) {
+    const ttfb = r.performance.ttfb;
+    const perfGrade = ttfb < 200 ? 'good' : ttfb < 500 ? 'info' : ttfb < 1000 ? 'medium' : 'high';
+    const perfLabel = ttfb < 200 ? 'Excellent ✓' : ttfb < 500 ? 'Good' : ttfb < 1000 ? 'Needs improvement' : 'Slow — consider optimizing';
+    container.innerHTML += `<div class="report-section"><h4>⏱️ Performance</h4><div class="finding ${perfGrade}">TTFB (Time To First Byte): ${ttfb}ms — ${perfLabel}</div></div>`;
+  }
+
+  // ── Open Graph / Meta ──
+  if (r.fullBodySample) {
+    const ogTitle = r.fullBodySample.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i);
+    const ogDesc = r.fullBodySample.match(/<meta[^>]+property="og:description"[^>]+content="([^"]+)"/i);
+    const ogImage = r.fullBodySample.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i);
+    const generator = r.fullBodySample.match(/<meta[^>]+name="generator"[^>]+content="([^"]+)"/i);
+    if (ogTitle || ogDesc || ogImage || generator) {
+      let metaHtml = `<div class="report-section"><h4>🔍 Meta & Social Tags</h4>`;
+      if (generator) metaHtml += `<div class="finding info">Generator: ${generator[1]}</div>`;
+      if (ogTitle) metaHtml += `<div class="finding info">OG Title: ${ogTitle[1]}</div>`;
+      if (ogDesc) metaHtml += `<div class="finding info">OG Description: ${ogDesc[1].substring(0, 100)}${ogDesc[1].length > 100 ? '...' : ''}</div>`;
+      if (ogImage) metaHtml += `<div class="finding info">OG Image: ${ogImage[1]}</div>`;
+      metaHtml += `</div>`;
+      container.innerHTML += metaHtml;
+    }
+  }
+
   // ── Recommendations ──
-  container.innerHTML += `<div class="report-section"><h4>💡 Prioritized Recommendations</h4>`;
+  container.innerHTML += `<div class="report-section" id="report-recommendations"><h4>💡 Prioritized Recommendations (${totalIssues} issues)</h4>`;
 
   const recs = [];
   if (r.ssl && !r.ssl.https) recs.push({ sev: 'critical', text: 'Enable HTTPS with a valid TLS certificate. All traffic is currently unencrypted.' });
   if (r.ssl && !r.ssl.hsts && r.ssl.https) recs.push({ sev: 'high', text: 'Enable HSTS with max-age≥31536000 and includeSubDomains to enforce HTTPS.' });
 
-  if (r.headers) {
-    r.headers.results.filter(hr => hr.severity === 'high').forEach(hr => {
-      recs.push({ sev: 'high', text: hr.detail });
-    });
-    r.headers.results.filter(hr => hr.severity === 'medium').forEach(hr => {
-      recs.push({ sev: 'medium', text: hr.detail });
-    });
-  }
-
-  if (r.cors && r.cors.acao === '*') recs.push({ sev: 'medium', text: 'Restrict CORS ACAO to specific origins instead of wildcard.' });
-  if (r.cors && r.cors.acac === 'true') recs.push({ sev: 'medium', text: 'Avoid credentials with CORS unless absolutely necessary.' });
-
-  if (riskyMethods.length) {
-    riskyMethods.forEach(m => recs.push({ sev: 'high', text: `Disable ${m.method} on production endpoints.` }));
-  }
-
-  if (hasDowngrade) recs.push({ sev: 'high', text: 'Fix protocol downgrade: ensure all redirects within the chain use HTTPS.' });
+  recs.push(...criticalIssues.map(t => ({ sev: 'critical', text: t })));
+  recs.push(...highIssues.map(t => ({ sev: 'high', text: t })));
+  recs.push(...mediumIssues.map(t => ({ sev: 'medium', text: t })));
+  recs.push(...lowIssues.map(t => ({ sev: 'low', text: t })));
 
   if (!recs.length) recs.push({ sev: 'low', text: 'No critical issues found. Review the detailed sections for minor improvements.' });
 
@@ -588,6 +874,21 @@ function renderReport(r, url) {
     container.innerHTML += `<div class="recommendation rec-${rec.sev}"><strong>[${rec.sev.toUpperCase()}]</strong> ${rec.text}</div>`;
   });
   container.innerHTML += `</div>`;
+
+  // ── Print button at bottom too ──
+  container.innerHTML += `<div style="text-align:center;margin-top:1rem">
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF Report</button>
+    <button class="copy-btn" onclick="copyReport()">📋 Copy Report Summary</button>
+  </div>`;
+}
+
+function copyReport() {
+  const summary = document.getElementById('report-summary');
+  const recs = document.getElementById('report-recommendations');
+  if (summary) {
+    const text = summary.textContent + '\n\n' + (recs ? recs.textContent : '');
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
 }
 
 function resetAudit() {
