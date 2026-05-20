@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://replikantek.github.io/security-toolbox/sitemap.xml
