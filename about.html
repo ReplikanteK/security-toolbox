@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>About — Security Toolbox</title>
-<meta name="description" content="About Security Toolbox — free client-side security tools built from real bug bounty experience across HackerOne, Bugcrowd, Intigriti, and YesWeHack.">
+<meta name="description" content="Free client-side security tools for security researchers and developers. Privacy-first, no tracking, open source.">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <header>
   <h1>Sec<span>Toolbox</span></h1>
-  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="subtitle">tools for security researchers & developers</span>
   <nav>
     <a href="index.html#tools">Tools</a>
     <a href="about.html">About</a>
@@ -26,36 +26,19 @@
 
   <div style="margin-top:1.5rem;line-height:1.8;font-size:.9rem">
 
-    <p>Security Toolbox is a collection of free, privacy-first security tools — built by a bug bounty hunter, for bug bounty hunters and developers.</p>
+    <p>Security Toolbox is a collection of free, privacy-first security tools for security researchers and developers.</p>
 
     <h3>Why this exists</h3>
-    <p>Every tool here was born from a real need during security research. When analyzing targets on HackerOne, Bugcrowd, Intigriti, and YesWeHack, I kept reaching for the same tools over and over: JWT decoders, DNS lookups, hash identifiers. Existing options were either slow, cluttered, or sent your data to a server.</p>
+    <p>Every tool here was born from a real need during security analysis. When testing web applications, APIs, and infrastructure, certain tools come up repeatedly: JWT decoders, DNS lookups, hash identifiers, CVE searches. Existing options were often slow, cluttered, or sent data to third-party servers.</p>
 
-    <p>So I built my own. Everything runs in your browser. No data leaves your machine unless you explicitly query an API (DNS, CVE, etc.).</p>
-
-    <h3>Built from experience</h3>
-    <p>The tools reflect actual bug hunting patterns discovered across 59 research sessions:</p>
-    <ul>
-      <li><strong>JWT Attacker</strong> — from testing auth bypasses on multiple platforms</li>
-      <li><strong>GraphQL Introspection Checker</strong> — from API recon on GraphQL-based targets</li>
-      <li><strong>Redirect Chain Analyzer</strong> — from finding open redirects in real programs</li>
-      <li><strong>CSP Evaluator</strong> — from analyzing security headers during recon</li>
-      <li><strong>Payload Builder</strong> — curated from payloads that actually work in bug bounty</li>
-    </ul>
+    <p>This project provides fast, clean alternatives that run entirely in your browser.</p>
 
     <h3>Privacy</h3>
-    <p>No tracking, no analytics, no backend. Zero data collection. Most tools work entirely offline. Tools that need external APIs (DNS, CVE, CORS proxy) clearly state what data is sent and to which service.</p>
+    <p>No tracking, no analytics, no backend. Zero data collection. Most tools work completely offline. Tools that use external APIs (DNS, CVE search, CORS proxy) clearly indicate what data is sent and to which service.</p>
 
     <h3>Open Source</h3>
     <p>Every line of code is on <a href="https://github.com/ReplikanteK/security-toolbox" target="_blank" rel="noopener">GitHub</a>. Contributions, feature ideas, and bug reports are welcome.</p>
 
-    <h3>Roadmap</h3>
-    <ul>
-      <li>More recon tools (WAF detector, HTTP methods tester)</li>
-      <li>Knowledge base with bug hunting methodology</li>
-      <li>Searchable payload library</li>
-      <li>API documentation for programmatic use</li>
-    </ul>
   </div>
 </div>
 
@@ -65,7 +48,7 @@
     <a href="privacy.html">Privacy</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
   </div>
-  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side · No tracking</p>
+  <p>Open source · All processing client-side · No tracking</p>
 </footer>
 
 </body>
