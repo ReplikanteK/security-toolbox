@@ -406,6 +406,7 @@ function severityFromScore(s, max) {
 }
 
 async function runAudit() {
+  try {
   const url = qs('audit-url').value.trim();
   if (!url) return;
   let parsed;
@@ -672,7 +673,12 @@ async function runAudit() {
   var stepLabel = document.getElementById('progress-step');
   if (stepLabel) stepLabel.textContent = '\u2705 Complete!';
   try { renderReport(report, url); } catch(e) {
-    qs('audit-report').innerHTML = '<div class="output error">Error generating report. Please try again.</div>';
+    qs('audit-report').innerHTML = '<div class="output error">Error generating report: ' + e.message + '</div>';
+  }
+  } catch(e) {
+    clearInterval(progressTimer);
+    qs('audit-report').innerHTML = '<div class="output error">Audit failed: ' + e.message + '</div>';
+    qs('audit-progress').style.display = 'none';
   }
 }
 
