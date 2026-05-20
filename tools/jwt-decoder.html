@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JWT Decoder — Security Toolbox</title>
+<meta name="description" content="Decode JWT tokens online. Inspect header, payload, and signature. Privacy-first, runs entirely in your browser.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>JWT Decoder</h2>
+  <p class="desc">Decode JSON Web Tokens — inspect header, payload, and signature. All processing happens locally in your browser.</p>
+
+  <label for="jwt-input">Paste JWT token</label>
+  <textarea id="jwt-input" rows="4" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"></textarea>
+  <div class="actions">
+    <button onclick="decode()">Decode</button>
+    <button class="secondary" onclick="clearInput()">Clear</button>
+    <button class="secondary" onclick="copyOutput()">Copy</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Header</h3>
+  <div id="header-output" class="output">Paste a JWT and click Decode</div>
+
+  <h3 style="margin-top:1rem;font-size:.85rem;color:var(--text2)">Payload</h3>
+  <div id="payload-output" class="output"></div>
+
+  <h3 style="margin-top:1rem;font-size:.85rem;color:var(--text2)">Signature</h3>
+  <div id="sig-output" class="output"></div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side · No tracking</p>
+</footer>
+
+<script>
+function decode() {
+  const input = document.getElementById('jwt-input').value.trim();
+  const parts = input.split('.');
+  const hdr = document.getElementById('header-output');
+  const pld = document.getElementById('payload-output');
+  const sig = document.getElementById('sig-output');
+
+  if (parts.length !== 3) {
+    hdr.className = 'output error';
+    hdr.textContent = 'Invalid JWT format. Expected 3 dot-separated parts (header.payload.signature).';
+    pld.textContent = '';
+    sig.textContent = '';
+    return;
+  }
+
+  try {
+    const header = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+
+    hdr.className = 'output';
+    hdr.textContent = JSON.stringify(header, null, 2);
+
+    pld.className = 'output';
+    pld.textContent = JSON.stringify(payload, null, 2);
+
+    sig.className = 'output';
+    sig.textContent = `${parts[2].substring(0, 32)}... (${parts[2].length} chars)`;
+
+  } catch (e) {
+    hdr.className = 'output error';
+    hdr.textContent = 'Error decoding JWT: ' + e.message;
+    pld.textContent = '';
+    sig.textContent = '';
+  }
+}
+
+function clearInput() {
+  document.getElementById('jwt-input').value = '';
+  document.getElementById('header-output').textContent = 'Paste a JWT and click Decode';
+  document.getElementById('header-output').className = 'output';
+  document.getElementById('payload-output').textContent = '';
+  document.getElementById('sig-output').textContent = '';
+}
+
+function copyOutput() {
+  const pld = document.getElementById('payload-output').textContent;
+  if (pld) navigator.clipboard.writeText(pld);
+}
+
+// Auto-decode on paste
+document.addEventListener('DOMContentLoaded', () => {
+  const example = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+  document.getElementById('jwt-input').value = example;
+  decode();
+});
+</script>
+</body>
+</html>

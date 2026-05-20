@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hash Identifier — Security Toolbox</title>
+<meta name="description" content="Identify hash types from format, length, and prefix. Supports MD5, SHA-1, SHA-256, bcrypt, and 40+ hash types.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Hash Identifier</h2>
+  <p class="desc">Paste a hash to identify its type. Matches by length, character set, prefix, and format patterns.</p>
+
+  <label for="hash-input">Hash string</label>
+  <textarea id="hash-input" rows="3" placeholder="Paste a hash here... e.g. $2y$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"></textarea>
+  <div class="actions">
+    <button onclick="identify()">Identify</button>
+    <button class="secondary" onclick="document.getElementById('hash-input').value=''">Clear</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Matches</h3>
+  <div id="results" class="output">Paste a hash and click Identify</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side · No tracking</p>
+</footer>
+
+<script>
+const HASH_DB = [
+  { name: 'MD4', len: 32, regex: /^[0-9a-f]{32}$/i },
+  { name: 'MD5', len: 32, regex: /^[0-9a-f]{32}$/i },
+  { name: 'SHA-1', len: 40, regex: /^[0-9a-f]{40}$/i },
+  { name: 'SHA-224', len: 56, regex: /^[0-9a-f]{56}$/i },
+  { name: 'SHA-256', len: 64, regex: /^[0-9a-f]{64}$/i },
+  { name: 'SHA-384', len: 96, regex: /^[0-9a-f]{96}$/i },
+  { name: 'SHA-512', len: 128, regex: /^[0-9a-f]{128}$/i },
+  { name: 'SHA-512/224', len: 56, regex: /^[0-9a-f]{56}$/i },
+  { name: 'SHA-512/256', len: 64, regex: /^[0-9a-f]{64}$/i },
+  { name: 'SHA3-224', len: 56, regex: /^[0-9a-f]{56}$/i },
+  { name: 'SHA3-256', len: 64, regex: /^[0-9a-f]{64}$/i },
+  { name: 'SHA3-384', len: 96, regex: /^[0-9a-f]{96}$/i },
+  { name: 'SHA3-512', len: 128, regex: /^[0-9a-f]{128}$/i },
+  { name: 'RIPEMD-128', len: 32, regex: /^[0-9a-f]{32}$/i },
+  { name: 'RIPEMD-160', len: 40, regex: /^[0-9a-f]{40}$/i },
+  { name: 'RIPEMD-256', len: 64, regex: /^[0-9a-f]{64}$/i },
+  { name: 'RIPEMD-320', len: 80, regex: /^[0-9a-f]{80}$/i },
+  { name: 'Whirlpool', len: 128, regex: /^[0-9a-f]{128}$/i },
+  { name: 'GOST R 34.11-2012 (Streebog) 256', len: 64, regex: /^[0-9a-f]{64}$/i },
+  { name: 'GOST R 34.11-2012 (Streebog) 512', len: 128, regex: /^[0-9a-f]{128}$/i },
+  { name: 'NTLM', len: 32, regex: /^[0-9a-f]{32}$/i },
+  { name: 'MySQL <= 4.1', len: 16, regex: /^[0-9a-f]{16}$/i },
+  { name: 'MySQL 5+', len: 41, regex: /^\*[0-9a-f]{40}$/i },
+  { name: 'CRC32', len: 8, regex: /^[0-9a-f]{8}$/i },
+  { name: 'Adler32', len: 8, regex: /^[0-9a-f]{8}$/i },
+  { name: 'Base64 (standard)', regex: /^[A-Za-z0-9+/]{4,}=*$/ },
+  { name: 'Base64 (URL-safe)', regex: /^[A-Za-z0-9_-]{4,}$/ },
+  { name: 'Base58', regex: /^[1-9A-HJ-NP-Za-km-z]+$/ },
+  { name: 'Base32', regex: /^[A-Z2-7]+=*$/i },
+  { name: 'bcrypt', regex: /^\$2[aby]\$\d{2}\$[A-Za-z0-9./]{53}$/ },
+  { name: 'bcrypt (sha256)', regex: /^\$SHA\$[^$]+\$[^$]+$/ },
+  { name: 'scrypt', regex: /^scrypt:[0-9]+:[0-9]+:[0-9]+\$[A-Za-z0-9+/]+$/ },
+  { name: 'PBKDF2-HMAC-SHA1', len: 40, regex: /^[0-9a-f]{40}$/i },
+  { name: 'PBKDF2-HMAC-SHA256', len: 64, regex: /^[0-9a-f]{64}$/i },
+  { name: 'Argon2', regex: /^\$argon2[di]?\$v=\d+\$m=\d+,t=\d+,p=\d+\$[A-Za-z0-9+/]+\$[A-Za-z0-9+/]+$/ },
+  { name: 'LM hash', regex: /^[0-9a-f]{32}$/i },
+  { name: 'Unix DES (crypt)', regex: /^[A-Za-z0-9./]{13}$/ },
+  { name: 'Unix MD5 (crypt)', regex: /^\$1\$[A-Za-z0-9./]{1,8}\$[A-Za-z0-9./]{22}$/ },
+  { name: 'Unix SHA-256 (crypt)', regex: /^\$5\$(rounds=\d+\$)?[A-Za-z0-9./]{1,16}\$[A-Za-z0-9./]{43}$/ },
+  { name: 'Unix SHA-512 (crypt)', regex: /^\$6\$(rounds=\d+\$)?[A-Za-z0-9./]{1,16}\$[A-Za-z0-9./]{86}$/ },
+  { name: 'Bitcoin (base58check)', regex: /^[13][1-9A-HJ-NP-Za-km-z]{25,34}$/ },
+  { name: 'Ethereum address', regex: /^0x[0-9a-f]{40}$/i },
+  { name: 'UUID v4', regex: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i },
+  { name: 'UUID (any version)', regex: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i },
+  { name: 'ASCII text', regex: /^[\x20-\x7E]+$/ },
+  { name: 'Hex string', regex: /^[0-9a-f]+$/i },
+  { name: 'Decimal number', regex: /^\d+$/ },
+];
+
+function identify() {
+  const input = document.getElementById('hash-input').value.trim();
+  const results = document.getElementById('results');
+
+  if (!input) {
+    results.className = 'output';
+    results.textContent = 'Paste a hash and click Identify';
+    return;
+  }
+
+  const matches = HASH_DB
+    .map(h => ({ name: h.name, len: h.len || null, score: scoreHash(input, h) }))
+    .filter(h => h.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (matches.length === 0) {
+    results.className = 'output error';
+    results.textContent = `No hash pattern matches found for "${input.substring(0, 50)}..." (${input.length} chars). Check the input format.`;
+    return;
+  }
+
+  results.className = 'output';
+  const lines = matches.slice(0, 10).map((m, i) => {
+    const matchPct = Math.round(m.score * 100);
+    const bar = '█'.repeat(Math.floor(matchPct / 10)) + '░'.repeat(10 - Math.floor(matchPct / 10));
+    return `${i === 0 ? '→' : ' '} ${m.name}${m.len ? ` (${m.len} chars)` : ''} ${bar} ${matchPct}%`;
+  });
+  results.textContent = lines.join('\n');
+}
+
+function scoreHash(input, hashDef) {
+  let score = 0;
+  if (hashDef.regex && hashDef.regex.test(input)) score += 0.6;
+  if (hashDef.len && input.length === hashDef.len) score += 0.3;
+  if (hashDef.len && input.length === hashDef.len && hashDef.regex && hashDef.regex.test(input)) score += 0.1;
+  return score;
+}
+</script>
+</body>
+</html>

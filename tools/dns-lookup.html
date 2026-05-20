@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNS Lookup — Security Toolbox</title>
+<meta name="description" content="DNS record lookup tool. Query A, AAAA, MX, NS, TXT, CNAME records via DNS-over-HTTPS.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>DNS Lookup</h2>
+  <p class="desc">Query DNS records via DNS-over-HTTPS (Cloudflare). Results are fetched from a public API — the domain you query is visible to the DNS provider.</p>
+
+  <div class="row">
+    <div>
+      <label for="dns-domain">Domain</label>
+      <input type="text" id="dns-domain" placeholder="example.com" value="example.com">
+    </div>
+    <div>
+      <label for="dns-type">Record type</label>
+      <select id="dns-type">
+        <option value="A">A (IPv4)</option>
+        <option value="AAAA">AAAA (IPv6)</option>
+        <option value="MX">MX (Mail)</option>
+        <option value="NS">NS (Nameserver)</option>
+        <option value="TXT">TXT (Text)</option>
+        <option value="CNAME">CNAME (Alias)</option>
+        <option value="SOA">SOA (Start of Authority)</option>
+        <option value="ALL">ALL</option>
+      </select>
+    </div>
+  </div>
+  <div class="actions">
+    <button onclick="lookup()">Lookup</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Results</h3>
+  <div id="dns-output" class="output">Enter a domain and click Lookup</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · DNS via Cloudflare DoH</p>
+</footer>
+
+<script>
+async function lookup() {
+  const domain = document.getElementById('dns-domain').value.trim();
+  const type = document.getElementById('dns-type').value;
+  const output = document.getElementById('dns-output');
+
+  if (!domain) {
+    output.className = 'output error';
+    output.textContent = 'Enter a domain name';
+    return;
+  }
+
+  output.className = 'output';
+  output.textContent = 'Querying...';
+
+  try {
+    const url = type === 'ALL'
+      ? `https://cloudflare-dns.com/dns-query?name=${domain}`
+      : `https://cloudflare-dns.com/dns-query?name=${domain}&type=${type}`;
+
+    const resp = await fetch(url, {
+      headers: { 'Accept': 'application/dns-json' }
+    });
+
+    if (!resp.ok) {
+      throw new Error(`DNS query failed (HTTP ${resp.status})`);
+    }
+
+    const data = await resp.json();
+
+    if (!data.Answer || data.Answer.length === 0) {
+      output.className = 'output';
+      output.textContent = `No ${type} records found for ${domain}`;
+      return;
+    }
+
+    const lines = data.Answer.map(r => {
+      const ttl = r.TTL > 86400 ? `${(r.TTL / 86400).toFixed(1)}d` :
+                  r.TTL > 3600 ? `${(r.TTL / 3600).toFixed(1)}h` :
+                  r.TTL > 60 ? `${(r.TTL / 60).toFixed(0)}m` :
+                  `${r.TTL}s`;
+      return `${r.type.padEnd(6)} ${r.name.padEnd(30)} → ${r.data.padEnd(40)} ttl: ${ttl}`;
+    });
+
+    output.className = 'output';
+    output.textContent = `${domain} — ${data.Answer.length} record(s):\n\n${lines.join('\n')}`;
+
+  } catch (e) {
+    output.className = 'output error';
+    output.textContent = `Error: ${e.message}`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('dns-domain').addEventListener('keydown', e => {
+    if (e.key === 'Enter') lookup();
+  });
+});
+</script>
+</body>
+</html>

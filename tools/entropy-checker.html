@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entropy Checker — Security Toolbox</title>
+<meta name="description" content="Analyze string entropy to detect randomness in tokens, passwords, API keys, and secrets. High entropy = likely random/secure.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Entropy Checker</h2>
+  <p class="desc">Calculate Shannon entropy of a string. Useful for identifying random tokens, API keys, and secrets vs. structured data.</p>
+
+  <label for="entropy-input">String to analyze</label>
+  <textarea id="entropy-input" rows="4" placeholder="Paste a token, key, password, or text...">sk-abc123def456ghi789jkl012mno345pqr678stu901vwx</textarea>
+  <div class="actions">
+    <button onclick="analyzeEntropy()">Analyze</button>
+    <button class="secondary" onclick="document.getElementById('entropy-input').value=''">Clear</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Results</h3>
+  <div id="entropy-output" class="output">Paste a string and click Analyze</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side</p>
+</footer>
+
+<script>
+function analyzeEntropy() {
+  const input = document.getElementById('entropy-input').value;
+  const output = document.getElementById('entropy-output');
+
+  if (!input) {
+    output.className = 'output';
+    output.textContent = 'Paste a string to analyze';
+    return;
+  }
+
+  const len = input.length;
+  const shannon = shannonEntropy(input);
+  const charset = detectCharset(input);
+  const bits = shannon * len;
+  const bitsPerChar = typeof shannon === 'number' ? shannon : 0;
+
+  const rating = bitsPerChar < 2 ? 'Very low' :
+                 bitsPerChar < 3 ? 'Low' :
+                 bitsPerChar < 4 ? 'Moderate' :
+                 bitsPerChar < 5 ? 'High' :
+                 'Very high';
+
+  const interpretation = bitsPerChar > 4.5
+    ? 'Likely random / cryptographic key material'
+    : bitsPerChar > 3.5
+    ? 'Possibly random or encoded'
+    : bitsPerChar > 2.5
+    ? 'Structured data (language, config, etc.)'
+    : 'Low entropy — predictable or repetitive';
+
+  const freq = {};
+  for (const ch of input) freq[ch] = (freq[ch] || 0) + 1;
+  const topChars = Object.entries(freq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([ch, count]) => `  '${ch === '\n' ? '\\n' : ch === '\t' ? '\\t' : ch}': ${count}x (${(count/len*100).toFixed(1)}%)`);
+
+  const lines = [
+    `String length:      ${len} char(s)`,
+    `Character set:      ${charset}`,
+    `Unique chars:       ${Object.keys(freq).length}`,
+    '',
+    `Shannon entropy:    ${bitsPerChar.toFixed(3)} bits/char`,
+    `Total entropy:      ${bits.toFixed(1)} bits`,
+    `Entropy rating:     ${rating}`,
+    '',
+    `Interpretation:     ${interpretation}`,
+    '',
+    'Top 5 characters by frequency:',
+    ...topChars,
+  ];
+
+  if (bitsPerChar > 4) {
+    const keyStrength = bits > 128 ? '✅ Strong (>128 bits — exceeds AES-128 key strength)' :
+                        bits > 80 ? '⚠️ Moderate (80-128 bits — acceptable for most uses)' :
+                        '❌ Weak (<80 bits — insufficient for cryptographic keys)';
+    lines.push('', `Key strength: ${keyStrength}`);
+  }
+
+  output.className = 'output';
+  output.textContent = lines.join('\n');
+}
+
+function shannonEntropy(str) {
+  const len = str.length;
+  if (len === 0) return 0;
+  const freq = {};
+  for (const ch of str) freq[ch] = (freq[ch] || 0) + 1;
+  let entropy = 0;
+  for (const count of Object.values(freq)) {
+    const p = count / len;
+    entropy -= p * Math.log2(p);
+  }
+  return entropy;
+}
+
+function detectCharset(str) {
+  const sets = [];
+  if (/[a-z]/.test(str)) sets.push('lower');
+  if (/[A-Z]/.test(str)) sets.push('UPPER');
+  if (/[0-9]/.test(str)) sets.push('digit');
+  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(str)) sets.push('special');
+  if (/[\x00-\x08\x0e-\x1f]/.test(str)) sets.push('control');
+  if (/[\x80-\xff]/.test(str)) sets.push('extended');
+  if (/^[0-9a-f]+$/i.test(str) && str.length > 10) sets.push('hex-only');
+  if (/^[A-Za-z0-9+/]+={0,2}$/.test(str) && str.length > 10) sets.push('base64');
+  return sets.length > 0 ? sets.join(', ') : 'ascii-printable';
+}
+</script>
+</body>
+</html>

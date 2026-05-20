@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTP Probe — Security Toolbox</title>
+<meta name="description" content="Probe HTTP/HTTPS endpoints. Check live hosts, response headers, status codes, and security headers.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>HTTP Probe</h2>
+  <p class="desc">Probe a URL and inspect response headers, status code, content-type, and security-relevant headers. Uses a CORS proxy — the URL you probe is visible to the proxy service.</p>
+
+  <label for="http-url">URL</label>
+  <input type="text" id="http-url" placeholder="https://example.com" value="https://example.com">
+  <div class="actions">
+    <button onclick="probe()">Probe</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Response</h3>
+  <div id="http-output" class="output">Enter a URL and click Probe</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side</p>
+</footer>
+
+<script>
+const SECURITY_HEADERS = [
+  'strict-transport-security',
+  'content-security-policy',
+  'x-frame-options',
+  'x-content-type-options',
+  'x-xss-protection',
+  'referrer-policy',
+  'permissions-policy',
+  'access-control-allow-origin',
+  'set-cookie',
+  'www-authenticate',
+];
+
+async function probe() {
+  const url = document.getElementById('http-url').value.trim();
+  const output = document.getElementById('http-output');
+
+  if (!url) {
+    output.className = 'output error';
+    output.textContent = 'Enter a URL';
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
+  } catch (_) {
+    output.className = 'output error';
+    output.textContent = 'Invalid URL. Must start with http:// or https://';
+    return;
+  }
+
+  output.className = 'output';
+  output.textContent = 'Probing...';
+
+  try {
+    const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, {
+      method: 'HEAD'
+    });
+
+    const lines = [
+      `URL:      ${url}`,
+      `Status:   ${resp.status} ${resp.statusText}`,
+      `Probed:   ${new Date().toISOString()}`,
+      '',
+      '── Headers ──',
+    ];
+
+    resp.headers.forEach((value, key) => {
+      const isSecurity = SECURITY_HEADERS.includes(key.toLowerCase());
+      lines.push(`${isSecurity ? '🔒' : ' '} ${key}: ${value}`);
+    });
+
+    lines.push('', '── Security Analysis ──');
+
+    const hsts = resp.headers.get('strict-transport-security');
+    lines.push(`${hsts ? '✅' : '⚠️'} HSTS: ${hsts || 'Not set — cookie hijacking risk on HTTP'}`);
+
+    const csp = resp.headers.get('content-security-policy');
+    lines.push(`${csp ? '✅' : '⚠️'} CSP: ${csp ? 'Set' : 'Not set — XSS protection reduced'}`);
+
+    const xfo = resp.headers.get('x-frame-options');
+    lines.push(`${xfo ? '✅' : '⚠️'} X-Frame-Options: ${xfo || 'Not set — clickjacking risk'}`);
+
+    const xcto = resp.headers.get('x-content-type-options');
+    lines.push(`${xcto ? '✅' : '⚠️'} X-Content-Type-Options: ${xcto || 'Not set — MIME sniffing risk'}`);
+
+    const server = resp.headers.get('server');
+    lines.push(`\n${server ? 'ℹ️' : 'ℹ️'} Server: ${server || 'Not disclosed (good)'}`);
+
+    output.className = 'output';
+    output.textContent = lines.join('\n');
+
+  } catch (e) {
+    // Fallback: use a simpler GET proxy
+    try {
+      const resp2 = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+      output.className = 'output';
+      output.textContent = `Connected! (HTTP ${resp2.status})\n\nNote: HEAD request failed, showing GET result.\nHeaders unavailable via this proxy.`;
+    } catch (e2) {
+      output.className = 'output error';
+      output.textContent = `Error probing ${url}: ${e2.message}\n\nTip: Some sites block CORS proxies. Try a direct curl instead.`;
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('http-url').addEventListener('keydown', e => {
+    if (e.key === 'Enter') probe();
+  });
+});
+</script>
+</body>
+</html>

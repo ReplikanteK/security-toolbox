@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regex Tester — Security Toolbox</title>
+<meta name="description" content="Test regular expressions live. Supports flags, match groups, and includes security-focused regex presets for bug bounty hunting.">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+.match { background: #00d4aa22; border-radius: 2px; }
+.match-highlight { background: #00d4aa44; font-weight: bold; }
+.group { background: #0ea5e922; border-radius: 2px; padding: 0 2px; }
+.match-info { font-size: .75rem; color: var(--text2); margin-top: .5rem; }
+#matches-table { width: 100%; border-collapse: collapse; font-size: .8rem; margin-top: .5rem; }
+#matches-table th { text-align: left; color: var(--text2); padding: .3rem .5rem; border-bottom: 1px solid var(--border); font-weight: 400; }
+#matches-table td { padding: .3rem .5rem; border-bottom: 1px solid var(--border); font-family: var(--font); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Regex Tester</h2>
+  <p class="desc">Test regular expressions with live matching. Includes security presets for bug bounty patterns.</p>
+
+  <div class="row">
+    <div>
+      <label for="regex-pattern">Pattern</label>
+      <input type="text" id="regex-pattern" placeholder="(\w+)@(\w+\.\w+)" value="(\w+)@(\w+\.\w+)">
+    </div>
+    <div>
+      <label for="regex-flags">Flags</label>
+      <input type="text" id="regex-flags" placeholder="gi" value="g" style="width:80px">
+      <span style="font-size:.7rem;color:var(--text2);margin-left:.5rem">g i m s u</span>
+    </div>
+  </div>
+
+  <label for="regex-text">Test string</label>
+  <textarea id="regex-text" rows="6" placeholder="Paste text to test against...">Contact us at security@example.com or admin@test.org for support. Also try api@internal.dev.</textarea>
+
+  <div class="actions">
+    <button onclick="testRegex()">Test</button>
+    <select id="regex-presets" onchange="loadPreset()" style="background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:.6rem;font-family:var(--font);font-size:.82rem">
+      <option value="">— Load preset —</option>
+      <option value="email">Email addresses</option>
+      <option value="url">URLs</option>
+      <option value="ip">IP addresses</option>
+      <option value="api-key">API keys / tokens</option>
+      <option value="jwt">JWT tokens</option>
+      <option value="aws-key">AWS access keys</option>
+      <option value="private-key">Private keys (PEM)</option>
+      <option value="hash-md5">MD5 hashes</option>
+      <option value="hash-sha256">SHA-256 hashes</option>
+      <option value="base64">Base64 encoded data</option>
+    </select>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Output</h3>
+  <div id="regex-output" class="output">Enter a pattern and click Test</div>
+  <div id="regex-info" class="match-info"></div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side</p>
+</footer>
+
+<script>
+const PRESETS = {
+  'email': { pattern: '[\\w.-]+@[\\w.-]+\\.\\w+', flags: 'gi', desc: 'Email addresses (basic)' },
+  'url': { pattern: 'https?://[\\w./?=&%-]+', flags: 'gi', desc: 'HTTP/HTTPS URLs' },
+  'ip': { pattern: '\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b', flags: 'g', desc: 'IPv4 addresses' },
+  'api-key': { pattern: '(?i)(?:api[_-]?key|apikey|secret|token)\\s*[:=]\\s*[\'"][A-Za-z0-9_\\-]{16,}[\'"]', flags: 'g', desc: 'API keys / tokens in key=value format' },
+  'jwt': { pattern: 'eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+', flags: 'g', desc: 'JWT tokens (base64url-encoded)' },
+  'aws-key': { pattern: '(?:AKIA|ASIA)[A-Z0-9]{16}', flags: 'g', desc: 'AWS access key IDs' },
+  'private-key': { pattern: '-----BEGIN\\s(?:RSA\\s)?PRIVATE\\sKEY-----', flags: 'g', desc: 'Private key headers (PEM format)' },
+  'hash-md5': { pattern: '\\b[0-9a-fA-F]{32}\\b', flags: 'g', desc: 'MD5 hash strings (32 hex chars)' },
+  'hash-sha256': { pattern: '\\b[0-9a-fA-F]{64}\\b', flags: 'g', desc: 'SHA-256 hash strings (64 hex chars)' },
+  'base64': { pattern: '(?:[A-Za-z0-9+/]{16,}={0,2})', flags: 'g', desc: 'Base64 encoded strings' },
+};
+
+function testRegex() {
+  const pattern = document.getElementById('regex-pattern').value;
+  const flags = document.getElementById('regex-flags').value;
+  const text = document.getElementById('regex-text').value;
+  const output = document.getElementById('regex-output');
+  const info = document.getElementById('regex-info');
+
+  if (!pattern) {
+    output.className = 'output';
+    output.textContent = 'Enter a regex pattern';
+    info.textContent = '';
+    return;
+  }
+
+  try {
+    const re = new RegExp(pattern, flags);
+    const matches = [...text.matchAll(re)];
+    const groups = re.source.includes('('') ? 1 : 0;
+
+    if (matches.length === 0) {
+      output.className = 'output';
+      output.textContent = 'No matches found';
+      info.textContent = `/${pattern}/${flags} — 0 matches`;
+      return;
+    }
+
+    const lines = [`Found ${matches.length} match(es):\n`];
+    matches.forEach((m, i) => {
+      lines.push(`[${i}] Full match: "${m[0].substring(0, 120)}" (at index ${m.index})`);
+      if (m.length > 1) {
+        for (let g = 1; g < m.length; g++) {
+          lines.push(`     Group ${g}: "${(m[g] || '').substring(0, 120)}"`);
+        }
+      }
+    });
+
+    output.className = 'output';
+    output.textContent = lines.join('\n');
+    info.textContent = `/${pattern}/${flags} — ${matches.length} matches in ${text.length} chars`;
+
+  } catch (e) {
+    output.className = 'output error';
+    output.textContent = `Regex error: ${e.message}`;
+    info.textContent = '';
+  }
+}
+
+function loadPreset() {
+  const sel = document.getElementById('regex-presets');
+  const key = sel.value;
+  if (!key) return;
+  const preset = PRESETS[key];
+  if (preset) {
+    document.getElementById('regex-pattern').value = preset.pattern;
+    document.getElementById('regex-flags').value = preset.flags;
+    document.getElementById('regex-text').focus();
+    testRegex();
+  }
+  sel.value = '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  testRegex();
+  document.getElementById('regex-pattern').addEventListener('input', testRegex);
+  document.getElementById('regex-flags').addEventListener('input', testRegex);
+  document.getElementById('regex-text').addEventListener('input', testRegex);
+});
+</script>
+</body>
+</html>

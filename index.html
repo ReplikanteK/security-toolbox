@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security Toolbox — Tools for bug hunters & developers</title>
+<meta name="description" content="Free online security tools for bug bounty hunters and developers. CVE lookup, JWT decoder, hash identifier, DNS recon, and more. Privacy-first, runs in your browser.">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="container">
+
+<section class="hero">
+  <h2>Free <span>security</span> tools</h2>
+  <p>Privacy-first tools that run entirely in your browser. Built by a bug bounty hunter, for bug bounty hunters and developers.</p>
+</section>
+
+<section class="categories">
+
+<div class="category">
+  <h3>🔍 Reconnaissance</h3>
+  <div class="tool-grid">
+    <a href="tools/dns-lookup.html" class="tool-card">
+      <div class="icon">🌐</div>
+      <h4>DNS Lookup</h4>
+      <p>Resolve A, AAAA, MX, NS, TXT, CNAME records for any domain via DNS-over-HTTPS.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/http-probe.html" class="tool-card">
+      <div class="icon">📡</div>
+      <h4>HTTP Probe</h4>
+      <p>Probe URLs — check status codes, response headers, and security-relevant headers (HSTS, CSP, XFO).</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="#" class="tool-card" onclick="return false;">
+      <div class="icon">🧭</div>
+      <h4>Subdomain Scanner</h4>
+      <p>Discover subdomains via common wordlist + DNS resolution.</p>
+      <span class="status status-wip">building</span>
+    </a>
+  </div>
+</div>
+
+<div class="category">
+  <h3>📊 Analysis</h3>
+  <div class="tool-grid">
+    <a href="tools/jwt-decoder.html" class="tool-card">
+      <div class="icon">🔐</div>
+      <h4>JWT Decoder</h4>
+      <p>Decode JWT headers, payloads, and inspect claims. No data leaves your browser.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/hash-identifier.html" class="tool-card">
+      <div class="icon">🔎</div>
+      <h4>Hash Identifier</h4>
+      <p>Identify hash type from format, length, and character set. 40+ hash patterns supported.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/cve-search.html" class="tool-card">
+      <div class="icon">⚠️</div>
+      <h4>CVE Search</h4>
+      <p>Search the CVE database by keyword, product, or vendor via CIRCL's public API.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="#" class="tool-card" onclick="return false;">
+      <div class="icon">📐</div>
+      <h4>CVSS Calculator</h4>
+      <p>Calculate CVSS v3.1 scores from attack vector metrics.</p>
+      <span class="status status-wip">building</span>
+    </a>
+  </div>
+</div>
+
+<div class="category">
+  <h3>⚙️ Developer Tools</h3>
+  <div class="tool-grid">
+    <a href="tools/regex-tester.html" class="tool-card">
+      <div class="icon">🔤</div>
+      <h4>Regex Tester</h4>
+      <p>Test regular expressions with live matching. Includes security presets for bug bounty patterns.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/hex-converter.html" class="tool-card">
+      <div class="icon">🔄</div>
+      <h4>Hex Converter</h4>
+      <p>Convert between hex, decimal, binary, ASCII, and Base64. Instant bidirectional.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="#" class="tool-card" onclick="return false;">
+      <div class="icon">🧮</div>
+      <h4>Token Counter</h4>
+      <p>Count tokens in your prompts for LLM context estimation.</p>
+      <span class="status status-wip">building</span>
+    </a>
+  </div>
+</div>
+
+<div class="category">
+  <h3>🔒 Crypto & Encoding</h3>
+  <div class="tool-grid">
+    <a href="tools/entropy-checker.html" class="tool-card">
+      <div class="icon">🎲</div>
+      <h4>Entropy Checker</h4>
+      <p>Shannon entropy analysis to detect randomness in tokens, keys, and secrets.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="#" class="tool-card" onclick="return false;">
+      <div class="icon">⚖️</div>
+      <h4>Hash Compare</h4>
+      <p>Compare text against multiple hash algorithms simultaneously.</p>
+      <span class="status status-wip">building</span>
+    </a>
+  </div>
+</div>
+
+</section>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> &middot; All processing client-side &middot; No tracking &middot; <a href="https://github.com/ReplikanteK/security-toolbox">Source</a></p>
+</footer>
+
+</body>
+</html>
