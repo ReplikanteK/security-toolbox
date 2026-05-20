@@ -13,7 +13,7 @@
   --green: #22c55e;
   --font: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
-:root.light {
+html[data-theme="light"] {
   --bg: #f5f7fa;
   --bg2: #ffffff;
   --bg3: #e8edf4;

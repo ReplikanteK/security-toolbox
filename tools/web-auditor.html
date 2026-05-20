@@ -6,7 +6,7 @@
 <title>Web Auditor — Security Toolbox</title>
 <meta name="description" content="Comprehensive security audit for any website. Checks DNS, SSL/TLS, security headers, CORS, WAF, tech stack, cookies, CSP, TTFB, and more. Generates a full PDF-ready report with prioritized fixes.">
 <link rel="stylesheet" href="../css/style.css">
-<script src="../js/theme.js"></script>
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <style>
 .progress-bar {
   display: flex;
@@ -404,11 +404,12 @@ async function runAudit() {
     const bimiRecs = await dnsQuery('default._bimi.' + hostname, 'TXT');
     const bimi = bimiRecs.map(r => stripTxtQuotes(r.data)).filter(r => r.startsWith('v=BIMI1')).map(r => r.replace(/\.$/,''));
     const dkimSelectors = ['default', 'google', 'protonmail', 'dkim', 's1', 's2', 'selector1', 'selector2'];
-    const dkimFound = [];
-    for (const sel of dkimSelectors) {
-      const recs = await dnsQuery(sel + '._domainkey.' + hostname, 'TXT');
-      if (recs.some(r => stripTxtQuotes(r.data).includes('v=DKIM1'))) dkimFound.push(sel);
-    }
+    const dkimResults = await Promise.all(dkimSelectors.map(sel =>
+      dnsQuery(sel + '._domainkey.' + hostname, 'TXT').then(function(recs) {
+        return recs.some(function(r) { return stripTxtQuotes(r.data).includes('v=DKIM1'); }) ? sel : null;
+      })
+    ));
+    const dkimFound = dkimResults.filter(Boolean);
     report.emailSecurity = { spf: spf[0] || null, dmarc: dmarc[0] || null, bimi: bimi[0] || null, dkimSelectors: dkimFound };
     markProgress('emailsec', 'done');
   } catch { markProgress('emailsec', 'error'); }
@@ -554,15 +555,17 @@ async function runAudit() {
   // ── HTTP Methods ──
   markProgress('methods', 'running');
   const methods = ['GET','POST','HEAD','OPTIONS','PUT','DELETE','PATCH','TRACE'];
-  const methodResults = [];
-  for (const m of methods) {
-    try {
-      const c = new AbortController();
-      setTimeout(() => c.abort(), 5000);
-      const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { method: m, signal: c.signal });
-      methodResults.push({ method: m, status: r.status, allowed: r.status < 400 });
-    } catch { methodResults.push({ method: m, status: null, allowed: false }); }
-  }
+  const methodResults = await Promise.all(methods.map(function(m) {
+    return (async function() {
+      try {
+        const c = new AbortController();
+        var to = setTimeout(function() { c.abort(); }, 5000);
+        const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url), { method: m, signal: c.signal });
+        clearTimeout(to);
+        return { method: m, status: r.status, allowed: r.status < 400 };
+      } catch { return { method: m, status: null, allowed: false }; }
+    })();
+  }));
   report.methods = methodResults;
   markProgress('methods', 'done');
 
@@ -570,18 +573,22 @@ async function runAudit() {
   markProgress('redirect', 'running');
   const redirectChain = [];
   let cur = url;
-  for (let i = 0; i < 5; i++) {
-    try {
-      const c = new AbortController();
-      setTimeout(() => c.abort(), 5000);
-      const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(cur)}`, { method: 'HEAD', signal: c.signal });
-      const loc = r.headers.get('location');
-      redirectChain.push({ url: cur, status: r.status, location: loc });
-      if (loc && r.status >= 300 && r.status < 400) {
-        cur = new URL(loc, cur).href;
-      } else break;
-    } catch { break; }
-  }
+  var redirTimeout = setTimeout(function() { report.redirectChain = redirectChain; markProgress('redirect', 'done'); }, 15000);
+  try {
+    for (let i = 0; i < 5; i++) {
+      try {
+        const c = new AbortController();
+        setTimeout(() => c.abort(), 5000);
+        const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(cur), { method: 'HEAD', signal: c.signal });
+        const loc = r.headers.get('location');
+        redirectChain.push({ url: cur, status: r.status, location: loc });
+        if (loc && r.status >= 300 && r.status < 400) {
+          cur = new URL(loc, cur).href;
+        } else break;
+      } catch { break; }
+    }
+  } catch(e) {}
+  clearTimeout(redirTimeout);
   report.redirectChain = redirectChain;
   markProgress('redirect', 'done');
 
@@ -612,7 +619,9 @@ async function runAudit() {
   } catch(e) { markProgress('httpf', 'error'); }
 
   // ── Build Report ──
-  renderReport(report, url);
+  try { renderReport(report, url); } catch(e) {
+    qs('audit-report').innerHTML = '<div class="output error">Error generating report. Please try again.</div>';
+  }
 }
 
 function renderReport(r, url) {
@@ -756,28 +765,28 @@ function renderReport(r, url) {
   // ── Email Security ──
   if (r.emailSecurity) {
     const e = r.emailSecurity;
-    let eHtml = `<div class="report-section"><h4>📧 Email Security (SPF/DKIM/DMARC/BIMI)</h4>
-      <div class="finding ${e.spf ? 'good' : 'high'}">SPF: ${e.spf || '❌ Not configured — anyone can spoof your domain'}</div>`;
+    var eHtml = '<div class="report-section"><h4>\uD83D\uDCE7 Email Security (SPF/DKIM/DMARC/BIMI)</h4>';
+    eHtml += '<div class="finding ' + (e.spf ? 'good' : 'high') + '">SPF: ' + (e.spf || '\u274C Not configured \u2014 anyone can spoof your domain') + '</div>';
     if (e.spf) {
-      const qualifier = e.spf.match(/\~(all|\?all)/i);
-      if (qualifier) eHtml += `<div class="finding medium">⚠️ SPF softfail (~${qualifier[1]}) — consider using -all for strict rejection</div>`;
-      const mxInclude = (e.spf.match(/include:/g) || []).length;
-      if (mxInclude > 10) eHtml += `<div class="finding medium">⚠️ SPF has ${mxInclude} includes — may exceed DNS lookup limit (10)</div>`;
+      var qualifier = e.spf.match(/\~(all|\?all)/i);
+      if (qualifier) eHtml += '<div class="finding medium">\u26A0\uFE0F SPF softfail (~' + qualifier[1] + ') \u2014 consider using -all for strict rejection</div>';
+      var mxInclude = (e.spf.match(/include:/g) || []).length;
+      if (mxInclude > 10) eHtml += '<div class="finding medium">\u26A0\uFE0F SPF has ' + mxInclude + ' includes \u2014 may exceed DNS lookup limit (10)</div>';
     }
-    eHtml += `<div class="finding ${e.dmarc ? 'good' : 'high'}">DMARC: ${e.dmarc || '❌ Not configured — receivers can\'t enforce policy'}</div>`;
+    eHtml += '<div class="finding ' + (e.dmarc ? 'good' : 'high') + '">DMARC: ' + (e.dmarc || '\u274C Not configured \u2014 receivers can\'t enforce policy') + '</div>';
     if (e.dmarc) {
-      const pMatch = e.dmarc.match(/p=(none|quarantine|reject)/i);
+      var pMatch = e.dmarc.match(/p=(none|quarantine|reject)/i);
       if (pMatch) {
-        if (pMatch[1] === 'none') eHtml += `<div class="finding medium">⚠️ DMARC policy is p=none (monitoring only, no enforcement)</div>`;
-        else if (pMatch[1] === 'quarantine') eHtml += `<div class="finding info">DMARC policy: quarantine ✓ (spam folder)</div>`;
-        else eHtml += `<div class="finding good">DMARC policy: reject ✓ (strong protection)</div>`;
+        if (pMatch[1] === 'none') eHtml += '<div class="finding medium">\u26A0\uFE0F DMARC policy is p=none (monitoring only, no enforcement)</div>';
+        else if (pMatch[1] === 'quarantine') eHtml += '<div class="finding info">DMARC policy: quarantine \u2713 (spam folder)</div>';
+        else eHtml += '<div class="finding good">DMARC policy: reject \u2713 (strong protection)</div>';
       }
-      const pctMatch = e.dmarc.match(/pct=(\d+)/i);
-      if (pctMatch && parseInt(pctMatch[1]) < 100) eHtml += `<div class="finding medium">⚠️ DMARC pct=${pctMatch[1]}% — not fully deployed</div>`;
+      var pctMatch = e.dmarc.match(/pct=(\d+)/i);
+      if (pctMatch && parseInt(pctMatch[1]) < 100) eHtml += '<div class="finding medium">\u26A0\uFE0F DMARC pct=' + pctMatch[1] + '% \u2014 not fully deployed</div>';
     }
-    eHtml += `<div class="finding ${e.dkimSelectors.length ? 'good' : 'medium'}">DKIM: ${e.dkimSelectors.length ? e.dkimSelectors.join(', ') + ' (selectors found) ✓' : 'No common selectors found'}</div>`;
-    eHtml += `<div class="finding ${e.bimi ? 'good' : 'low'}">BIMI: ${e.bimi || 'Not configured (optional, for branded indicators)'}</div>`;
-    eHtml += `</div>`;
+    eHtml += '<div class="finding ' + (e.dkimSelectors.length ? 'good' : 'medium') + '">DKIM: ' + (e.dkimSelectors.length ? e.dkimSelectors.join(', ') + ' (selectors found) \u2713' : 'No common selectors found') + '</div>';
+    eHtml += '<div class="finding ' + (e.bimi ? 'good' : 'low') + '">BIMI: ' + (e.bimi || 'Not configured (optional, for branded indicators)') + '</div>';
+    eHtml += '</div>';
     container.innerHTML += eHtml;
 
     // Scoring
@@ -876,12 +885,14 @@ function renderReport(r, url) {
   // ── HTTP Features ──
   if (r.httpFeatures) {
     const f = r.httpFeatures;
-    let fHtml = `<div class="report-section"><h4>⚡ HTTP Features</h4>`;
-    fHtml += `<div class="finding ${f.httpsRedirect ? 'good' : 'medium'}">HTTP → HTTPS redirect: ${f.httpsRedirect ? '✓ Present' : '✗ Not detected (or no HTTP available)'}</div>`;
-    if (f.server) fHtml += `<div class="finding info">Server: ${f.server}</div>`;
-    fHtml += `<div class="finding ${f.hstsPreloadReady ? 'good' : f.hstsMaxAge > 0 ? 'info' : 'low'}">HSTS Preload Ready: ${f.hstsPreloadReady ? '✓ Yes (max-age≥31536000 + includeSubDomains + preload)' : f.hstsMaxAge > 0 ? 'Partially configured (max-age=${f.hstsMaxAge}s)' : 'Not preload-ready'}</div>`;
-    fHtml += `<div class="finding ${f.xctoNoSniff ? 'good' : 'medium'}">X-Content-Type-Options: ${f.xctoNoSniff ? 'nosniff ✓' : '✗ Missing — MIME-sniffing allowed'}</div>`;
-    fHtml += `</div>`;
+    let fHtml = '<div class="report-section"><h4>⚡ HTTP Features</h4>';
+    fHtml += '<div class="finding ' + (f.httpsRedirect ? 'good' : 'medium') + '">HTTP → HTTPS redirect: ' + (f.httpsRedirect ? '&#10003; Present' : '&#10007; Not detected (or no HTTP available)') + '</div>';
+    if (f.server) fHtml += '<div class="finding info">Server: ' + f.server + '</div>';
+    var hstsStatus = f.hstsPreloadReady ? 'good' : (f.hstsMaxAge > 0 ? 'info' : 'low');
+    var hstsText = f.hstsPreloadReady ? '&#10003; Yes (max-age&#8805;31536000 + includeSubDomains + preload)' : (f.hstsMaxAge > 0 ? 'Partially configured (max-age=' + f.hstsMaxAge + 's)' : 'Not preload-ready');
+    fHtml += '<div class="finding ' + hstsStatus + '">HSTS Preload Ready: ' + hstsText + '</div>';
+    fHtml += '<div class="finding ' + (f.xctoNoSniff ? 'good' : 'medium') + '">X-Content-Type-Options: ' + (f.xctoNoSniff ? 'nosniff &#10003;' : '&#10007; Missing — MIME-sniffing allowed') + '</div>';
+    fHtml += '</div>';
     container.innerHTML += fHtml;
     if (!f.httpsRedirect) { lowIssues.push('No HTTP→HTTPS redirect — users may connect over plain HTTP'); }
     if (f.hstsPreloadReady) { goodItems.push('HSTS preload eligible ✓'); }
