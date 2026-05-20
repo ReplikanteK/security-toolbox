@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redirect Chain Analyzer — Security Toolbox</title>
+<meta name="description" content="Follow HTTP redirect chains and analyze each hop. Detect open redirects, protocol downgrades, and SSRF opportunities.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Redirect Chain Analyzer</h2>
+  <p class="desc">Follow a URL through all HTTP redirects (max 10 hops). See each redirect type, Location header, and detect risky behaviors like open redirects, protocol downgrades, and cross-domain redirects. Uses a CORS proxy.</p>
+
+  <label for="redirect-url">Start URL</label>
+  <input type="text" id="redirect-url" placeholder="https://example.com/redirect?url=https://evil.com" value="https://httpbin.org/redirect-to?url=https://example.com">
+  <div class="actions">
+    <button onclick="followChain()">Follow</button>
+    <button class="secondary" onclick="clearOutput()">Clear</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Redirect Chain</h3>
+  <div id="redirect-output" class="output">Enter a URL and click Follow.</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side</p>
+</footer>
+
+<script>
+const STATUS_LABELS = {
+  301: 'Moved Permanently',
+  302: 'Found',
+  303: 'See Other',
+  307: 'Temporary Redirect',
+  308: 'Permanent Redirect',
+};
+
+async function followChain() {
+  const url = document.getElementById('redirect-url').value.trim();
+  const output = cleanOutput();
+
+  if (!url) {
+    setError(output, 'Enter a URL');
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
+  } catch (_) {
+    setError(output, 'Invalid URL. Must start with http:// or https://');
+    return;
+  }
+
+  appendLine(output, `Following redirect chain from: ${url}`);
+  appendLine(output, '');
+  appendLine(output, `── Chain ──`);
+  appendLine(output, '');
+
+  const chain = [];
+  let currentUrl = url;
+  let hopCount = 0;
+  const MAX_HOPS = 10;
+  let finalStatus = null;
+  let finalHeaders = null;
+  let error = null;
+
+  while (hopCount < MAX_HOPS) {
+    try {
+      const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(currentUrl)}`, {
+        method: 'HEAD'
+      });
+
+      const status = resp.status;
+      const location = resp.headers.get('location');
+      const contentType = resp.headers.get('content-type');
+
+      chain.push({ url: currentUrl, status, location, contentType });
+
+      if (status >= 300 && status < 400 && location) {
+        try {
+          currentUrl = new URL(location, currentUrl).href;
+        } catch {
+          chain[chain.length - 1].error = 'Invalid Location header';
+          break;
+        }
+        hopCount++;
+      } else {
+        finalStatus = status;
+        finalHeaders = resp.headers;
+        break;
+      }
+    } catch (e) {
+      chain.push({ url: currentUrl, error: e.message });
+      error = e.message;
+      break;
+    }
+  }
+
+  if (chain.length === 0 && error) {
+    appendLine(output, `❌ Error: ${error}`, '#e06060');
+    return;
+  }
+
+  const startDomain = new URL(url).hostname;
+
+  chain.forEach((hop, idx) => {
+    const isLast = idx === chain.length - 1 && (!hop.location || hop.status < 300 || hop.status >= 400);
+    const isRedirect = hop.status >= 300 && hop.status < 400;
+
+    if (idx > 0) appendLine(output, '');
+
+    const arrow = isRedirect ? '↳' : '→';
+    const label = STATUS_LABELS[hop.status] || (isRedirect ? 'Redirect' : 'Final');
+
+    let hopDomain = '?';
+    try {
+      hopDomain = new URL(hop.url).hostname;
+    } catch {}
+
+    const crossDomain = idx > 0 && hopDomain !== startDomain;
+    const protocolDowngrade = idx > 0 && hop.url.startsWith('http://') && chain[idx - 1] && chain[idx - 1].url.startsWith('https://');
+
+    appendLine(output, `Hop #${idx + 1}: ${arrow} ${hop.url}`, isRedirect ? '#e0b040' : '#40c060');
+
+    if (hop.error) {
+      appendLine(output, `   ❌ Error: ${hop.error}`, '#e06060');
+      return;
+    }
+
+    appendLine(output, `   Status: ${hop.status} ${label}`);
+
+    if (crossDomain && isRedirect) {
+      appendLine(output, `   ⚠️ CROSS-DOMAIN REDIRECT: ${startDomain} → ${hopDomain}`, '#e0b040');
+    }
+
+    if (protocolDowngrade) {
+      appendLine(output, `   ❌ PROTOCOL DOWNGRADE: HTTPS → HTTP`, '#e06060');
+    }
+
+    if (isRedirect && hop.location) {
+      appendLine(output, `   Location: ${hop.location}`);
+    }
+
+    if (isLast && hop.status >= 200 && hop.status < 300) {
+      appendLine(output, `   ✅ Final destination (HTTP ${hop.status})`, '#40c060');
+      appendLine(output, `   Content-Type: ${hop.contentType || '—'}`);
+    }
+  });
+
+  if (chain.length >= MAX_HOPS && chain[chain.length - 1].location) {
+    appendLine(output, '');
+    appendLine(output, '⚠️ Reached max redirect limit (10 hops). Chain may continue.', '#e0b040');
+  }
+
+  appendLine(output, '');
+  appendLine(output, `── Analysis ──`);
+
+  const openRedirect = chain.some(h => {
+    if (!h.location) return false;
+    try {
+      const locationUrl = new URL(h.location, h.url);
+      return locationUrl.hostname !== new URL(h.url).hostname;
+    } catch { return false; }
+  });
+
+  const downgrade = chain.some(h => h.url && h.url.startsWith('http://'));
+  const httpsStart = url.startsWith('https://');
+
+  if (openRedirect) {
+    appendLine(output, '❌ Open redirect detected — server redirects to external domains', '#e06060');
+  }
+  if (downgrade && httpsStart) {
+    appendLine(output, '❌ Protocol downgrade from HTTPS to HTTP — cookie hijacking risk', '#e06060');
+  }
+  if (!openRedirect && !downgrade) {
+    appendLine(output, '✅ No risky redirect patterns detected', '#40c060');
+  }
+
+  appendLine(output, '');
+  appendLine(output, `Total hops: ${chain.length}`);
+  appendLine(output, `Final HTTP status: ${finalStatus || '—'}`);
+}
+
+function cleanOutput() {
+  const el = document.getElementById('redirect-output');
+  el.className = 'output';
+  el.innerHTML = '';
+  return el;
+}
+
+function setError(el, msg) {
+  el.textContent = msg;
+  el.className = 'output error';
+}
+
+function appendLine(el, text, color) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  if (color) div.style.color = color;
+  el.appendChild(div);
+}
+
+function clearOutput() {
+  const el = document.getElementById('redirect-output');
+  el.className = 'output';
+  el.textContent = 'Enter a URL and click Follow.';
+}
+</script>
+</body>
+</html>

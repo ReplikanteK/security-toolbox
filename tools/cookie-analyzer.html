@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cookie Analyzer — Security Toolbox</title>
+<meta name="description" content="Parse and analyze HTTP cookies. Check Secure, HttpOnly, SameSite flags, expiration, and security posture.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Cookie Analyzer</h2>
+  <p class="desc">Parse raw Set-Cookie headers or Cookie strings. Inspect security flags, expiration, domain/path scope, and get a risk assessment for each cookie.</p>
+
+  <label for="cookie-input">Set-Cookie Header(s) or Cookie String</label>
+  <textarea id="cookie-input" rows="6" placeholder="sessionid=abc123; Secure; HttpOnly; SameSite=Lax
+csrf=xyz789; Domain=.example.com; Path=/; Secure; SameSite=Strict
+tracking=yes; Expires=Wed, 21 Oct 2026 07:28:00 GMT">sessionid=abc123; Secure; HttpOnly; SameSite=Lax
+csrf=xyz789; Domain=.example.com; Path=/; Secure; SameSite=Strict
+tracking=yes; Expires=Wed, 21 Oct 2026 07:28:00 GMT</textarea>
+  <div class="actions">
+    <button onclick="analyze()">Analyze</button>
+    <button class="secondary" onclick="clearOutput()">Clear</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Results</h3>
+  <div id="cookie-output" class="output">Paste cookies above and click Analyze.</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side</p>
+</footer>
+
+<script>
+function parseSetCookie(str) {
+  const cookies = [];
+  const parts = str.split('\n').filter(s => s.trim());
+  for (const line of parts) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const segments = trimmed.split(';').map(s => s.trim());
+    const nameValue = segments[0].split('=');
+    const name = nameValue[0] || '';
+    const value = nameValue.slice(1).join('=') || '';
+
+    const attrs = {};
+    for (let i = 1; i < segments.length; i++) {
+      const eqIdx = segments[i].indexOf('=');
+      let key, val;
+      if (eqIdx === -1) {
+        key = segments[i].toLowerCase();
+        val = true;
+      } else {
+        key = segments[i].substring(0, eqIdx).toLowerCase();
+        val = segments[i].substring(eqIdx + 1);
+      }
+      attrs[key] = val;
+    }
+
+    cookies.push({ name, value, attrs });
+  }
+  return cookies;
+}
+
+function findIssues(cookie) {
+  const issues = [];
+  const a = cookie.attrs;
+
+  if (!a.secure) {
+    issues.push({ severity: 'high', text: 'Missing Secure flag — cookie sent over HTTP, susceptible to interception' });
+  }
+  if (!a.httponly) {
+    issues.push({ severity: 'high', text: 'Missing HttpOnly flag — accessible via JavaScript (XSS risk)' });
+  }
+  if (!a.samesite) {
+    issues.push({ severity: 'medium', text: 'Missing SameSite attribute — default behavior depends on browser (Lax in modern browsers)' });
+  } else if (a.samesite === 'none') {
+    issues.push({ severity: 'medium', text: 'SameSite=None — cookie sent in cross-site requests. Requires Secure flag.' });
+    if (!a.secure) {
+      issues.push({ severity: 'critical', text: 'SameSite=None without Secure — browser will reject this cookie' });
+    }
+  } else if (a.samesite === 'lax') {
+    issues.push({ severity: 'low', text: 'SameSite=Lax — reasonable default, sent for top-level navigations' });
+  } else if (a.samesite === 'strict') {
+    issues.push({ severity: 'info', text: 'SameSite=Strict — most restrictive, not sent on any cross-site requests' });
+  }
+
+  if (a.domain) {
+    if (a.domain.startsWith('.')) {
+      issues.push({ severity: 'info', text: `Domain=${a.domain} — accessible to all subdomains` });
+    }
+  }
+
+  if (a.expires || a['max-age']) {
+    const expires = a.expires || a['max-age'];
+    issues.push({ severity: 'info', text: `Expires/Max-Age set — this is a persistent cookie${isNaN(new Date(expires).getTime()) ? '' : ', expires ' + new Date(expires).toLocaleString()}` });
+  } else {
+    issues.push({ severity: 'info', text: 'No Expires/Max-Age — session cookie (deleted on browser close)' });
+  }
+
+  if (a.partitioned) {
+    issues.push({ severity: 'info', text: 'Partitioned — CHIPS partitioned cookie (3rd-party context)' });
+  }
+
+  if (nameLooksSensitive(cookie.name)) {
+    issues.push({ severity: 'medium', text: `Cookie name suggests sensitive data: "${cookie.name}"` });
+  }
+
+  return issues;
+}
+
+function nameLooksSensitive(name) {
+  const sensitive = /^(session|token|auth|jwt|sid|access|refresh|secret|key|api[_-]?key|password|credential)/i;
+  return sensitive.test(name);
+}
+
+function severityColor(sev) {
+  switch (sev) {
+    case 'critical': return '#e04040';
+    case 'high':     return '#e08040';
+    case 'medium':   return '#e0b040';
+    case 'low':      return '#a0a0a0';
+    case 'info':     return '#6090c0';
+    default:         return '#a0a0a0';
+  }
+}
+
+function severityLabel(sev) {
+  switch (sev) {
+    case 'critical': return 'CRITICAL';
+    case 'high':     return 'HIGH';
+    case 'medium':   return 'MEDIUM';
+    case 'low':      return 'LOW';
+    case 'info':     return 'INFO';
+    default:         return '—';
+  }
+}
+
+function cleanOutput() {
+  const el = document.getElementById('cookie-output');
+  el.className = 'output';
+  el.innerHTML = '';
+  return el;
+}
+
+function appendLine(el, text, color) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  if (color) div.style.color = color;
+  el.appendChild(div);
+}
+
+function appendIssue(el, issue) {
+  const div = document.createElement('div');
+  div.style.marginBottom = '2px';
+  const label = document.createElement('span');
+  label.textContent = `[${severityLabel(issue.severity)}] `;
+  label.style.color = severityColor(issue.severity);
+  label.style.fontWeight = '700';
+  div.appendChild(label);
+  const text = document.createTextNode(issue.text);
+  div.appendChild(text);
+  el.appendChild(div);
+}
+
+function analyze() {
+  const input = document.getElementById('cookie-input').value.trim();
+  const output = cleanOutput();
+
+  if (!input) {
+    output.textContent = 'Enter cookie data to analyze.';
+    output.className = 'output error';
+    return;
+  }
+
+  const cookies = parseSetCookie(input);
+
+  if (cookies.length === 0) {
+    output.textContent = 'No cookies found to parse.';
+    output.className = 'output error';
+    return;
+  }
+
+  appendLine(output, `Found ${cookies.length} cookie(s)`);
+  appendLine(output, '');
+
+  let totalHigh = 0, totalMedium = 0, totalCritical = 0;
+
+  cookies.forEach((cookie, idx) => {
+    const issues = findIssues(cookie);
+    const crit = issues.filter(i => i.severity === 'critical').length;
+    const high = issues.filter(i => i.severity === 'high').length;
+    totalCritical += crit;
+    totalHigh += high;
+    totalMedium += issues.filter(i => i.severity === 'medium').length;
+
+    if (idx > 0) appendLine(output, '');
+
+    let status;
+    if (crit > 0) status = '❌';
+    else if (high > 0) status = '⚠️';
+    else if (issues.some(i => i.severity === 'medium')) status = '⚠️';
+    else status = '✅';
+
+    appendLine(output, `${status} Cookie #${idx + 1}: "${cookie.name}"${cookie.value ? ' = ' + (cookie.value.length > 40 ? cookie.value.substring(0, 40) + '...' : cookie.value) : ''}`, '#ffffff');
+
+    if (cookie.attrs.path) appendLine(output, `    Path: ${cookie.attrs.path}`, '#a0a0a0');
+    if (cookie.attrs.domain) appendLine(output, `    Domain: ${cookie.attrs.domain}`, '#a0a0a0');
+
+    issues.forEach(issue => appendIssue(output, issue));
+  });
+
+  appendLine(output, '');
+  appendLine(output, '── Summary ──');
+  if (totalCritical > 0) appendLine(output, `❌ ${totalCritical} critical issue(s)`, '#e04040');
+  if (totalHigh > 0)     appendLine(output, `⚠️ ${totalHigh} high issue(s)`, '#e08040');
+  if (totalMedium > 0)   appendLine(output, `⚠️ ${totalMedium} medium issue(s)`, '#e0b040');
+  if (totalCritical === 0 && totalHigh === 0 && totalMedium === 0) appendLine(output, '✅ No significant security issues found', '#40c060');
+}
+
+function clearOutput() {
+  document.getElementById('cookie-output').className = 'output';
+  document.getElementById('cookie-output').innerHTML = 'Paste cookies above and click Analyze.';
+}
+</script>
+</body>
+</html>

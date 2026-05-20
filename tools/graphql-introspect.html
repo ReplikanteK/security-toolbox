@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GraphQL Introspection Checker — Security Toolbox</title>
+<meta name="description" content="Test if a GraphQL endpoint has introspection enabled. Discover schema types, queries, mutations, and subscriptions.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>GraphQL Introspection Checker</h2>
+  <p class="desc">Send an introspection query to a GraphQL endpoint and discover the schema. Useful for API recon and attack surface mapping. All processing client-side.</p>
+
+  <label for="gql-url">GraphQL Endpoint URL</label>
+  <input type="text" id="gql-url" placeholder="https://api.example.com/graphql" value="https://countries.trevorblades.com/graphql">
+  <div class="actions">
+    <button onclick="checkIntrospection()">Check</button>
+    <button class="secondary" onclick="clearOutput()">Clear</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Result</h3>
+  <div id="gql-output" class="output">Enter a GraphQL endpoint URL and click Check.</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side</p>
+</footer>
+
+<script>
+const INTROSPECTION_QUERY = `
+query IntrospectionQuery {
+  __schema {
+    queryType { name }
+    mutationType { name }
+    subscriptionType { name }
+    types {
+      kind
+      name
+      description
+      fields {
+        name
+        description
+        type { ...TypeRef }
+        args { name description type { ...TypeRef } }
+      }
+      inputFields { name type { ...TypeRef } }
+      interfaces { ...TypeRef }
+      enumValues { name }
+      possibleTypes { ...TypeRef }
+    }
+  }
+}
+fragment TypeRef on __Type {
+  kind
+  name
+  ofType { kind name ofType { kind name ofType { kind name } } }
+}
+`;
+
+function formatTypeRef(type) {
+  if (!type) return 'null';
+  if (type.name) return type.name;
+  let s = '';
+  let t = type;
+  while (t) {
+    s += t.kind === 'NON_NULL' ? '!' : t.kind === 'LIST' ? '[]' : '';
+    t = t.ofType;
+  }
+  return s || type.kind;
+}
+
+function cleanOutput() {
+  const el = document.getElementById('gql-output');
+  el.className = 'output';
+  el.textContent = '';
+  return el;
+}
+
+function appendLine(el, text, cls) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  if (cls) div.style.color = cls;
+  el.appendChild(div);
+}
+
+async function checkIntrospection() {
+  const url = document.getElementById('gql-url').value.trim();
+  const output = cleanOutput();
+
+  if (!url) {
+    output.textContent = 'Enter a GraphQL endpoint URL';
+    output.className = 'output error';
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
+  } catch (_) {
+    output.textContent = 'Invalid URL. Must start with http:// or https://';
+    output.className = 'output error';
+    return;
+  }
+
+  appendLine(output, `Probing ${url} ...`);
+  appendLine(output, '');
+
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: INTROSPECTION_QUERY })
+    });
+
+    appendLine(output, `HTTP ${resp.status} ${resp.statusText}`, '#a0a0a0');
+
+    if (!resp.ok) {
+      appendLine(output, '');
+      appendLine(output, `⚠️ Endpoint returned error. Introspection may be disabled or the endpoint may be invalid.`, '#e8a040');
+      const text = await resp.text().catch(() => '');
+      if (text) {
+        appendLine(output, '');
+        appendLine(output, `Response body:`);
+        appendLine(output, text.substring(0, 2000));
+      }
+      return;
+    }
+
+    const data = await resp.json();
+
+    if (data.errors) {
+      appendLine(output, '');
+      const blocked = data.errors.some(e =>
+        String(e.message).toLowerCase().includes('introspection') ||
+        String(e.message).toLowerCase().includes('not supported') ||
+        String(e.message).toLowerCase().includes('validation')
+      );
+      if (blocked) {
+        appendLine(output, `❌ Introspection is DISABLED on this endpoint`, '#e06060');
+        appendLine(output, ``);
+        appendLine(output, `Error: ${data.errors[0].message}`);
+      } else {
+        appendLine(output, `⚠️ GraphQL returned errors (but introspection may still be possible)`);
+        appendLine(output, ``);
+        data.errors.forEach(e => appendLine(output, `  • ${e.message}`));
+      }
+      return;
+    }
+
+    if (!data.data || !data.data.__schema) {
+      appendLine(output, `⚠️ Response did not contain schema data. Introspection may be restricted.`);
+      return;
+    }
+
+    const schema = data.data.__schema;
+    appendLine(output, `✅ INTROSPECTION ENABLED`, '#40c060');
+    appendLine(output, ``);
+
+    const queryName = schema.queryType ? schema.queryType.name : '—';
+    const mutName = schema.mutationType ? schema.mutationType.name : '—';
+    const subName = schema.subscriptionType ? schema.subscriptionType.name : '—';
+    appendLine(output, `Query Type:        ${queryName}`);
+    appendLine(output, `Mutation Type:     ${mutName}`);
+    appendLine(output, `Subscription Type: ${subscriptionAvailable(subName)}`);
+    appendLine(output, `Total Types:       ${schema.types ? schema.types.length : 0}`);
+    appendLine(output, ``);
+
+    const userTypes = (schema.types || []).filter(t =>
+      !t.name.startsWith('__') && t.name !== queryName && t.name !== mutName
+    );
+
+    if (userTypes.length > 0) {
+      appendLine(output, `── Types (${userTypes.length}) ──`);
+      userTypes.forEach(t => {
+        const fields = t.fields ? t.fields.map(f => f.name).join(', ') : '';
+        const enums = t.enumValues ? t.enumValues.map(e => e.name).join(', ') : '';
+        appendLine(output, `  ${t.kind === 'OBJECT' ? '📦' : t.kind === 'INPUT_OBJECT' ? '📥' : t.kind === 'ENUM' ? '🔢' : t.kind === 'INTERFACE' ? '🔗' : '📄'} ${t.name} (${t.kind})${t.description ? ' — ' + t.description.split('\n')[0] : ''}`);
+        if (enums) appendLine(output, `       values: ${enums}`);
+        if (fields) appendLine(output, `       fields: ${fields}`);
+      });
+    }
+
+    if (schema.queryType && schema.queryType.name) {
+      const qt = schema.types.find(t => t.name === schema.queryType.name);
+      if (qt && qt.fields) {
+        appendLine(output, ``);
+        appendLine(output, `── Queries (${qt.fields.length}) ──`);
+        qt.fields.forEach(f => {
+          appendLine(output, `  📡 ${f.name}${f.args && f.args.length ? `(${f.args.map(a => a.name + ': ' + formatTypeRef(a.type)).join(', ')})` : ''}: ${formatTypeRef(f.type)}`);
+        });
+      }
+    }
+
+    if (schema.mutationType && schema.mutationType.name) {
+      const mt = schema.types.find(t => t.name === schema.mutationType.name);
+      if (mt && mt.fields) {
+        appendLine(output, ``);
+        appendLine(output, `── Mutations (${mt.fields.length}) ──`);
+        mt.fields.forEach(f => {
+          appendLine(output, `  ✏️ ${f.name}${f.args && f.args.length ? `(${f.args.map(a => a.name + ': ' + formatTypeRef(a.type)).join(', ')})` : ''}: ${formatTypeRef(f.type)}`);
+        });
+      }
+    }
+
+  } catch (e) {
+    output.innerHTML = '';
+    appendLine(output, `❌ Error: ${e.message}`, '#e06060');
+    appendLine(output, ``);
+    appendLine(output, `Possible causes:`);
+    appendLine(output, `  • CORS policy blocked the request (common with GraphQL APIs)`);
+    appendLine(output, `  • URL is not reachable`);
+    appendLine(output, `  • Server returned no response`);
+    appendLine(output, ``);
+    appendLine(output, `Tip: Try from the terminal: curl -X POST ${url} -H 'Content-Type: application/json' -d '{"query":"{__schema{types{name}}}"}'`);
+  }
+}
+
+function subscriptionAvailable(name) {
+  return name !== '—' ? name : 'None (no subscriptions)';
+}
+
+function clearOutput() {
+  const el = document.getElementById('gql-output');
+  el.className = 'output';
+  el.textContent = 'Enter a GraphQL endpoint URL and click Check.';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('gql-url').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkIntrospection();
+  });
+});
+</script>
+</body>
+</html>
