@@ -562,6 +562,24 @@ async function runAudit() {
     markProgress('httpf', 'done');
   } catch { markProgress('httpf', 'error'); }
 
+  // ── Meta tags from body ──
+  try {
+    var titleMatch = body.match(/<title>([^<]+)<\/title>/i);
+    if (titleMatch) report.pageTitle = titleMatch[1].trim();
+    var ogTitle = body.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i);
+    var ogDesc = body.match(/<meta[^>]+property="og:description"[^>]+content="([^"]+)"/i);
+    var ogImage = body.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i);
+    var generator = body.match(/<meta[^>]+name="generator"[^>]+content="([^"]+)"/i);
+    if (ogTitle || ogDesc || ogImage || generator) {
+      report.metaTags = {};
+      if (ogTitle) report.metaTags.ogTitle = ogTitle[1];
+      if (ogDesc) report.metaTags.ogDesc = ogDesc[1];
+      if (ogImage) report.metaTags.ogImage = ogImage[1];
+      if (generator) report.metaTags.generator = generator[1];
+    }
+    report.fullBodySample = body.substring(0, 3000);
+  } catch {}
+
   // ── Build Report ──
   clearInterval(progressTimer);
   var stepLabel = document.getElementById('progress-step');
@@ -790,6 +808,20 @@ function renderReport(r, url) {
     var perfClass = r.performance.ttfb < 500 ? 'good' : (r.performance.ttfb < 1500 ? 'info' : 'medium');
     container.innerHTML += '<div class="report-section"><h4>\u23F1\uFE0F Performance</h4>'
       + '<div class="finding ' + perfClass + '">Time to first byte: ' + r.performance.ttfb + 'ms' + (r.performance.ttfb < 500 ? ' (fast \u2713)' : r.performance.ttfb < 1500 ? '' : ' (slow \u2014 consider optimizing)') + '</div></div>';
+  }
+
+  // ── Meta Tags (from HTML) ──
+  if (r.pageTitle || r.metaTags) {
+    var metaHtml = '<div class="report-section"><h4>\uD83D\uDD0D Page Meta</h4>';
+    if (r.pageTitle) metaHtml += '<div class="finding info"><strong>Title:</strong> ' + r.pageTitle + '</div>';
+    if (r.metaTags) {
+      if (r.metaTags.generator) metaHtml += '<div class="finding info"><strong>Generator:</strong> ' + r.metaTags.generator + '</div>';
+      if (r.metaTags.ogTitle) metaHtml += '<div class="finding info"><strong>OG Title:</strong> ' + r.metaTags.ogTitle.substring(0, 100) + (r.metaTags.ogTitle.length > 100 ? '...' : '') + '</div>';
+      if (r.metaTags.ogDesc) metaHtml += '<div class="finding info"><strong>OG Description:</strong> ' + r.metaTags.ogDesc.substring(0, 120) + (r.metaTags.ogDesc.length > 120 ? '...' : '') + '</div>';
+      if (r.metaTags.ogImage) metaHtml += '<div class="finding info"><strong>OG Image:</strong> ' + r.metaTags.ogImage.substring(0, 80) + (r.metaTags.ogImage.length > 80 ? '...' : '') + '</div>';
+    }
+    metaHtml += '</div>';
+    container.innerHTML += metaHtml;
   }
 
   // ── Recommendations ──
