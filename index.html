@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Security Toolbox — Tools for bug hunters & developers</title>
-<meta name="description" content="Free online security tools for bug bounty hunters and developers. CVE lookup, JWT decoder, hash identifier, DNS recon, and more. Privacy-first, runs in your browser.">
+<title>Security Toolbox — Free Security Tools for Bug Hunters</title>
+<meta name="description" content="23 free online security tools for bug bounty hunters and developers. JWT decoder, CVE search, CVSS calculator, SSL checker, CSP evaluator, and more. Privacy-first, all client-side.">
 <meta property="og:title" content="Security Toolbox — Free Security Tools for Bug Hunters">
-<meta property="og:description" content="23 free online security tools. JWT decoder/attacker, CVE search, CVSS calculator, SSL checker, CORS tester, CSP evaluator, security headers grader, and more. All client-side.">
+<meta property="og:description" content="23 free online security tools. JWT decoder/attacker, CVE search, CVSS calculator, SSL checker, CSP evaluator, security headers grader, and more. All client-side.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://replikantek.github.io/security-toolbox/">
 <link rel="stylesheet" href="css/style.css">
@@ -17,166 +17,219 @@
 <header>
   <h1>Sec<span>Toolbox</span></h1>
   <span class="subtitle">tools for bug hunters & developers</span>
-  <span class="badge">beta</span>
+  <nav>
+    <a href="#tools">Tools</a>
+    <a href="about.html">About</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
+  </nav>
+  <span class="badge">23 tools</span>
 </header>
 
 <div class="container">
 
 <section class="hero">
   <h2>Free <span>security</span> tools</h2>
-  <p>Privacy-first tools that run entirely in your browser. Built by a bug bounty hunter, for bug bounty hunters and developers.</p>
+  <p class="tagline">Privacy-first tools built from real bug bounty experience. Every tool runs entirely in your browser — nothing is sent to any server.</p>
+
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="tool-search" placeholder="Search tools... (e.g. jwt, cve, dns)" oninput="filterTools()">
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="num">23</div><div class="label">Tools</div></div>
+    <div class="stat"><div class="num">100%</div><div class="label">Client-side</div></div>
+    <div class="stat"><div class="num">0</div><div class="label">Trackers</div></div>
+    <div class="stat"><div class="num">Free</div><div class="label">Always</div></div>
+  </div>
 </section>
 
-<section class="categories">
-
-<div class="category">
-  <h3>🔍 Reconnaissance</h3>
-  <div class="tool-grid">
-    <a href="tools/dns-lookup.html" class="tool-card">
-      <div class="icon">🌐</div>
-      <h4>DNS Lookup</h4>
-      <p>Resolve A, AAAA, MX, NS, TXT, CNAME records for any domain via DNS-over-HTTPS.</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/http-probe.html" class="tool-card">
-      <div class="icon">📡</div>
-      <h4>HTTP Probe</h4>
-      <p>Probe URLs — check status codes, response headers, and security-relevant headers (HSTS, CSP, XFO).</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/subdomain-scanner.html" class="tool-card">
-      <div class="icon">🧭</div>
-      <h4>Subdomain Scanner</h4>
-      <p>Discover subdomains via 500-word wordlist + DNS resolution.</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/port-scanner.html" class="tool-card">
-      <div class="icon">🔌</div>
-      <h4>Port Scanner</h4>
-      <p>Scan 38 common ports on a target via HTTP/S probes.</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/ssl-checker.html" class="tool-card">
-      <div class="icon">🔒</div>
-      <h4>SSL/TLS Checker</h4>
-      <p>Check SSL certificates, HSTS, and security headers.</p>
-      <span class="status status-done">live</span>
-    </a>
-  </div>
-</div>
-
-<div class="category">
-  <h3>📊 Analysis</h3>
-  <div class="tool-grid">
-    <a href="tools/jwt-decoder.html" class="tool-card">
-      <div class="icon">🔐</div>
-      <h4>JWT Decoder</h4>
-      <p>Decode JWT headers, payloads, and inspect claims. No data leaves your browser.</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/hash-identifier.html" class="tool-card">
-      <div class="icon">🔎</div>
-      <h4>Hash Identifier</h4>
-      <p>Identify hash type from format, length, and character set. 40+ hash patterns supported.</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/cve-search.html" class="tool-card">
-      <div class="icon">⚠️</div>
-      <h4>CVE Search</h4>
-      <p>Search the CVE database by keyword, product, or vendor via CIRCL's public API.</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/cvss-calculator.html" class="tool-card">
-      <div class="icon">📐</div>
-      <h4>CVSS Calculator</h4>
-      <p>Calculate CVSS v3.1 scores from attack vector metrics.</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/cors-checker.html" class="tool-card">
-      <div class="icon">🌐</div>
-      <h4>CORS Checker</h4>
-      <p>Test CORS headers, origin reflection, and credential misconfigurations.</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/graphql-introspect.html" class="tool-card">
-      <div class="icon">📊</div>
-      <h4>GraphQL Introspection</h4>
-      <p>Check if a GraphQL endpoint exposes its full schema via introspection.</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/cookie-analyzer.html" class="tool-card">
-      <div class="icon">🍪</div>
-      <h4>Cookie Analyzer</h4>
-      <p>Parse cookies and check Secure, HttpOnly, SameSite flags and risks.</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/jwt-attacker.html" class="tool-card">
+<section class="featured">
+  <h3>⭐ Featured</h3>
+  <div class="featured-grid">
+    <a href="tools/jwt-attacker.html" class="featured-card">
       <div class="icon">⚔️</div>
       <h4>JWT Attacker</h4>
-      <p>Test JWTs for alg:none, kid injection, weak secrets, and algorithm confusion.</p>
-      <span class="status status-done">live</span>
+      <p>Test JWTs against 5 attack classes: alg:none, kid injection, secret cracking, algorithm confusion.</p>
+      <span class="tag">unique</span>
     </a>
-    <a href="tools/security-headers.html" class="tool-card">
+    <a href="tools/graphql-introspect.html" class="featured-card">
+      <div class="icon">📊</div>
+      <h4>GraphQL Introspection</h4>
+      <p>Discover full GraphQL schemas — types, queries, mutations. Essential for API recon.</p>
+      <span class="tag">unique</span>
+    </a>
+    <a href="tools/security-headers.html" class="featured-card">
       <div class="icon">🛡️</div>
-      <h4>Security Headers</h4>
-      <p>Grade any URL's security headers from A+ to F.</p>
-      <span class="status status-done">live</span>
+      <h4>Security Headers Grader</h4>
+      <p>Grade any URL from A+ to F based on HSTS, CSP, XFO, CORS, and more.</p>
+      <span class="tag">popular</span>
     </a>
-    <a href="tools/csp-evaluator.html" class="tool-card">
+    <a href="tools/csp-evaluator.html" class="featured-card">
       <div class="icon">📋</div>
       <h4>CSP Evaluator</h4>
-      <p>Analyze Content-Security-Policy for weaknesses and misconfigurations.</p>
+      <p>Deep analysis of Content-Security-Policy headers with actionable recommendations.</p>
+      <span class="tag">unique</span>
+    </a>
+  </div>
+</section>
+
+<section class="categories" id="tools">
+
+<div class="category" data-cat="reconnaissance">
+  <h3>🔍 Reconnaissance</h3>
+  <div class="tool-grid">
+    <a href="tools/dns-lookup.html" class="tool-card" data-tags="dns lookup domain resolve">
+      <div class="icon">🌐</div>
+      <h4>DNS Lookup</h4>
+      <p>Resolve A, AAAA, MX, NS, TXT, CNAME records via DNS-over-HTTPS.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/http-probe.html" class="tool-card" data-tags="http probe headers probe">
+      <div class="icon">📡</div>
+      <h4>HTTP Probe</h4>
+      <p>Check status codes, response headers, and security-relevant headers (HSTS, CSP, XFO).</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/subdomain-scanner.html" class="tool-card" data-tags="subdomain discovery scanner">
+      <div class="icon">🧭</div>
+      <h4>Subdomain Scanner</h4>
+      <p>Discover subdomains via wordlist + DNS resolution. Client-side and rate-limited.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/port-scanner.html" class="tool-card" data-tags="port scan scanner ports">
+      <div class="icon">🔌</div>
+      <h4>Port Scanner</h4>
+      <p>Scan 38 common ports for penetration testing and attack surface mapping.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/ssl-checker.html" class="tool-card" data-tags="ssl tls certificate security">
+      <div class="icon">🔒</div>
+      <h4>SSL/TLS Checker</h4>
+      <p>Audit SSL certificates, chain, expiration, HSTS, and security header posture.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/redirect-chain.html" class="tool-card" data-tags="redirect chain open redirect ssfr">
+      <div class="icon">↪️</div>
+      <h4>Redirect Chain</h4>
+      <p>Follow redirects and detect open redirects, protocol downgrades, SSRF opportunities.</p>
       <span class="status status-done">live</span>
     </a>
   </div>
 </div>
 
-<div class="category">
+<div class="category" data-cat="analysis">
+  <h3>📊 Analysis</h3>
+  <div class="tool-grid">
+    <a href="tools/jwt-decoder.html" class="tool-card" data-tags="jwt token decode decode">
+      <div class="icon">🔐</div>
+      <h4>JWT Decoder</h4>
+      <p>Decode JWT headers, payloads, and inspect claims client-side.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/jwt-attacker.html" class="tool-card" data-tags="jwt attack hack forge none kid">
+      <div class="icon">⚔️</div>
+      <h4>JWT Attacker</h4>
+      <p>Test JWTs: alg:none, kid injection, weak secrets, algorithm confusion.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/hash-identifier.html" class="tool-card" data-tags="hash identify type md5 sha">
+      <div class="icon">🔎</div>
+      <h4>Hash Identifier</h4>
+      <p>Identify 40+ hash types from format, length, and character set.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/cve-search.html" class="tool-card" data-tags="cve vulnerability search lookup">
+      <div class="icon">⚠️</div>
+      <h4>CVE Search</h4>
+      <p>Search the CVE database by keyword, product, or vendor via CIRCL API.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/cvss-calculator.html" class="tool-card" data-tags="cvss calculator severity score">
+      <div class="icon">📐</div>
+      <h4>CVSS Calculator</h4>
+      <p>Calculate CVSS v3.1 base scores with severity rating and vector string.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/cors-checker.html" class="tool-card" data-tags="cors origin cross domain test">
+      <div class="icon">🌐</div>
+      <h4>CORS Checker</h4>
+      <p>Test CORS configuration, origin reflection, and credential misconfigs.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/cookie-analyzer.html" class="tool-card" data-tags="cookie secure httponly samesite">
+      <div class="icon">🍪</div>
+      <h4>Cookie Analyzer</h4>
+      <p>Parse cookies and inspect Secure, HttpOnly, SameSite flags and risks.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/graphql-introspect.html" class="tool-card" data-tags="graphql introspection schema api">
+      <div class="icon">📊</div>
+      <h4>GraphQL Introspection</h4>
+      <p>Discover full GraphQL schemas: types, queries, mutations, subscriptions.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/security-headers.html" class="tool-card" data-tags="security headers grade hsts csp">
+      <div class="icon">🛡️</div>
+      <h4>Security Headers Grader</h4>
+      <p>Grade any URL's security posture from A+ to F with detailed breakdown.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/csp-evaluator.html" class="tool-card" data-tags="csp policy content security evaluate">
+      <div class="icon">📋</div>
+      <h4>CSP Evaluator</h4>
+      <p>Deep analysis of Content-Security-Policy headers and misconfigurations.</p>
+      <span class="status status-done">live</span>
+    </a>
+  </div>
+</div>
+
+<div class="category" data-cat="developer">
   <h3>⚙️ Developer Tools</h3>
   <div class="tool-grid">
-    <a href="tools/regex-tester.html" class="tool-card">
+    <a href="tools/regex-tester.html" class="tool-card" data-tags="regex regular expression test">
       <div class="icon">🔤</div>
       <h4>Regex Tester</h4>
-      <p>Test regular expressions with live matching. Includes security presets for bug bounty patterns.</p>
+      <p>Test regular expressions live with security-focused presets for bug hunters.</p>
       <span class="status status-done">live</span>
     </a>
-    <a href="tools/hex-converter.html" class="tool-card">
+    <a href="tools/hex-converter.html" class="tool-card" data-tags="hex decimal binary converter">
       <div class="icon">🔄</div>
       <h4>Hex Converter</h4>
-      <p>Convert between hex, decimal, binary, ASCII, and Base64. Instant bidirectional.</p>
+      <p>Convert between hex, decimal, binary, ASCII, and Base64 instantly.</p>
       <span class="status status-done">live</span>
     </a>
-    <a href="tools/token-counter.html" class="tool-card">
+    <a href="tools/token-counter.html" class="tool-card" data-tags="token count llm estimate">
       <div class="icon">🧮</div>
       <h4>Token Counter</h4>
-      <p>Count tokens in your prompts for LLM context estimation.</p>
+      <p>Count tokens for LLM context estimation with cost calculator.</p>
       <span class="status status-done">live</span>
     </a>
-    <a href="tools/base64-tool.html" class="tool-card">
+    <a href="tools/base64-tool.html" class="tool-card" data-tags="base64 encode decode">
       <div class="icon">🔡</div>
       <h4>Base64 Tool</h4>
-      <p>Encode/decode Base64. Standard, URL-safe, and auto-detect in text.</p>
+      <p>Encode/decode standard, URL-safe base64. Auto-detect in text.</p>
       <span class="status status-done">live</span>
     </a>
-    <a href="tools/url-extractor.html" class="tool-card">
+    <a href="tools/url-extractor.html" class="tool-card" data-tags="url extract parse filter">
       <div class="icon">🔗</div>
       <h4>URL Extractor</h4>
-      <p>Extract, parse, and filter URLs from text. Filter by domain and scheme.</p>
+      <p>Extract, parse, and filter URLs from text by domain and scheme.</p>
       <span class="status status-done">live</span>
     </a>
   </div>
 </div>
 
-<div class="category">
+<div class="category" data-cat="crypto">
   <h3>🔒 Crypto & Encoding</h3>
   <div class="tool-grid">
-    <a href="tools/entropy-checker.html" class="tool-card">
+    <a href="tools/entropy-checker.html" class="tool-card" data-tags="entropy shannon randomness key">
       <div class="icon">🎲</div>
       <h4>Entropy Checker</h4>
-      <p>Shannon entropy analysis to detect randomness in tokens, keys, and secrets.</p>
+      <p>Shannon entropy analysis to detect randomness in tokens and secrets.</p>
       <span class="status status-done">live</span>
     </a>
-    <a href="tools/hash-compare.html" class="tool-card">
+    <a href="tools/hash-compare.html" class="tool-card" data-tags="hash compare md5 sha">
       <div class="icon">⚖️</div>
       <h4>Hash Compare</h4>
       <p>Compare text against multiple hash algorithms simultaneously.</p>
@@ -185,30 +238,73 @@
   </div>
 </div>
 
-<div class="category">
+<div class="category" data-cat="testing">
   <h3>🧪 Testing & Payloads</h3>
   <div class="tool-grid">
-    <a href="tools/payload-builder.html" class="tool-card">
+    <a href="tools/payload-builder.html" class="tool-card" data-tags="payload xss sqli ssti ssrf">
       <div class="icon">💉</div>
       <h4>Payload Builder</h4>
-      <p>Browse and copy XSS, SQLi, SSTI, SSRF, path traversal, and CMD injection payloads.</p>
-      <span class="status status-done">live</span>
-    </a>
-    <a href="tools/redirect-chain.html" class="tool-card">
-      <div class="icon">↪️</div>
-      <h4>Redirect Chain</h4>
-      <p>Follow redirect chains and detect open redirects, protocol downgrades, and SSRF.</p>
+      <p>Browse XSS, SQLi, SSTI, SSRF, path traversal, and CMD injection payloads.</p>
       <span class="status status-done">live</span>
     </a>
   </div>
 </div>
 
+<div class="no-results" id="no-results" style="display:none">
+  No tools match your search. Try "jwt", "cve", "dns", "hash", etc.
+</div>
+
 </section>
+
+<section class="knowledge-preview">
+  <h3>From <span>59 bug bounty sessions</span> to you</h3>
+  <p>Every tool here was built from patterns discovered analyzing real targets on HackerOne, Bugcrowd, Intigriti, and YesWeHack. 27 targets analyzed, 6 vulnerabilities reported, $15k+ potential payout.</p>
+  <div class="topics">
+    <span class="topic">C/C++ Memory Safety</span>
+    <span class="topic">JWT Security</span>
+    <span class="topic">SSRF Detection</span>
+    <span class="topic">GraphQL Recon</span>
+    <span class="topic">API Testing</span>
+    <span class="topic">Custom Parsers</span>
+    <span class="topic">DNS Recon</span>
+  </div>
+  <a href="about.html" style="font-size:.85rem;color:var(--accent2)">Learn more about the methodology →</a>
+</section>
+
 </div>
 
 <footer>
-  <p>Built by <a href="https://github.com/ReplikanteK">K</a> &middot; <a href="about.html">About</a> &middot; <a href="privacy.html">Privacy</a> &middot; <a href="https://github.com/ReplikanteK/security-toolbox">Source</a></p>
+  <div class="footer-links">
+    <a href="about.html">About</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+  </div>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side · No tracking</p>
+  <p class="footnote">Security Toolbox — free security tools, forever.</p>
 </footer>
 
+<script>
+function filterTools() {
+  const q = document.getElementById('tool-search').value.toLowerCase().trim();
+  const cards = document.querySelectorAll('.tool-card');
+  const categories = document.querySelectorAll('.category');
+  const noResults = document.getElementById('no-results');
+  let visible = 0;
+
+  cards.forEach(card => {
+    const text = (card.textContent + ' ' + (card.dataset.tags || '')).toLowerCase();
+    const match = !q || text.includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+
+  categories.forEach(cat => {
+    const hasVisible = [...cat.querySelectorAll('.tool-card')].some(c => c.style.display !== 'none');
+    cat.style.display = hasVisible ? '' : 'none';
+  });
+
+  noResults.style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
 </body>
 </html>
