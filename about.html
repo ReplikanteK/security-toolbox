@@ -3,62 +3,77 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>About — Security Toolbox</title>
-<meta name="description" content="Free client-side security tools for security researchers and developers. Privacy-first, no tracking, open source.">
+<title>About — SecToolbox</title>
+<meta name="description" content="Free client-side security tools for researchers and developers. Privacy-first, no tracking, open source. Built from real security research.">
 <link rel="stylesheet" href="css/style.css">
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%2300d4aa' d='M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z'/%3E%3Cpath fill='%2300d4aa' d='M15 10l-3 5h2v5l3-5h-2z'/%3E%3C/svg%3E">
 </head>
 <body>
 
 <header>
-  <h1>Sec<span>Toolbox</span></h1>
-  <span class="subtitle">tools for security researchers & developers</span>
+  <a href="/" class="logo" style="text-decoration:none">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="%2300d4aa" d="M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z"/><path fill="%2300d4aa" d="M15 10l-3 5h2v5l3-5h-2z"/></svg>
+    <span>Sec</span>Toolbox
+  </a>
+  <span class="logo-sub">free security tools</span>
   <nav>
     <a href="index.html#tools">Tools</a>
     <a href="about.html">About</a>
-    <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <button id="theme-toggle">☀️</button>
   </nav>
-  <span class="badge">27 tools</span>
 </header>
 
-<div class="tool-page">
-  <a href="index.html" class="back">← Back to tools</a>
-  <h2>About</h2>
+<div class="container">
 
-  <div style="margin-top:1.5rem;line-height:1.8;font-size:.9rem">
+<section class="hero" style="padding-bottom:1.5rem">
+  <h2><span>About</span> SecToolbox</h2>
+  <p class="tagline">29 free, privacy-first security tools for researchers and developers. All client-side, zero tracking, open source.</p>
+</section>
 
-    <p>Security Toolbox is a collection of free, privacy-first security tools for security researchers and developers.</p>
+<div class="about-content" style="max-width:700px;margin:0 auto;padding:0 0 2.5rem">
 
-    <h3>Why this exists</h3>
-    <p>Every tool here was born from a real need during security analysis. When testing web applications, APIs, and infrastructure, certain tools come up repeatedly: JWT decoders, DNS lookups, hash identifiers, CVE searches. Existing options were often slow, cluttered, or sent data to third-party servers.</p>
+  <section style="margin-bottom:2rem">
+    <h3 style="font-size:.9rem;color:var(--accent);margin-bottom:.4rem">Why this exists</h3>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7">Every tool here was born from a real need during security analysis. When testing web applications, APIs, and infrastructure, certain tools come up repeatedly: JWT decoders, DNS lookups, hash identifiers, CVE searches. Existing options were often slow, cluttered, or sent data to third-party servers.</p>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7;margin-top:.5rem">This project provides fast, clean alternatives that run entirely in your browser.</p>
+  </section>
 
-    <p>This project provides fast, clean alternatives that run entirely in your browser.</p>
-
-    <h3>Built from experience</h3>
-    <p>Each tool reflects patterns encountered during real security analysis work:</p>
-    <ul>
-      <li><strong>JWT Attacker</strong> — from testing authentication mechanisms across different systems</li>
-      <li><strong>GraphQL Introspection Checker</strong> — from API analysis and schema discovery</li>
-      <li><strong>Redirect Chain Analyzer</strong> — from researching URL handling and redirection logic</li>
-      <li><strong>CSP Evaluator</strong> — from analyzing web security configurations</li>
-      <li><strong>Payload Builder</strong> — curated from common testing patterns</li>
+  <section style="margin-bottom:2rem">
+    <h3 style="font-size:.9rem;color:var(--accent);margin-bottom:.4rem">Built from experience</h3>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7">Each tool reflects patterns encountered during real security analysis work:</p>
+    <ul style="font-size:.82rem;color:var(--text2);line-height:1.8;padding-left:1.2rem">
+      <li><strong style="color:var(--text)">JWT Attacker</strong> &mdash; from testing auth mechanisms across different systems</li>
+      <li><strong style="color:var(--text)">GraphQL Introspection</strong> &mdash; from API analysis and schema discovery</li>
+      <li><strong style="color:var(--text)">Redirect Chain Analyzer</strong> &mdash; from researching URL handling and redirection logic</li>
+      <li><strong style="color:var(--text)">CSP Evaluator</strong> &mdash; from analyzing web security configurations</li>
+      <li><strong style="color:var(--text)">Payload Builder</strong> &mdash; curated from common testing patterns</li>
     </ul>
+  </section>
 
-    <h3>Privacy</h3>
-    <p>No tracking, no analytics, no backend. Zero data collection. Most tools work completely offline. Tools that use external APIs (DNS, CVE search, CORS proxy) clearly indicate what data is sent and to which service.</p>
+  <section style="margin-bottom:2rem">
+    <h3 style="font-size:.9rem;color:var(--accent);margin-bottom:.4rem">Privacy</h3>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7">No tracking, no analytics, no backend. Zero data collection. Most tools work completely offline. Tools that use external APIs (DNS, CVE search, CORS proxy) clearly indicate what data is sent and to which service.</p>
+  </section>
 
-    <h3>Open Source</h3>
-    <p>Every line of code is on <a href="https://github.com/ReplikanteK/security-toolbox" target="_blank" rel="noopener">GitHub</a>. Contributions, feature ideas, and bug reports are welcome.</p>
+  <section style="margin-bottom:2rem">
+    <h3 style="font-size:.9rem;color:var(--accent);margin-bottom:.4rem">Open Source</h3>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7">Every line of code is on <a href="https://github.com/ReplikanteK/security-toolbox" target="_blank" rel="noopener">GitHub</a>. Contributions, feature ideas, and bug reports are welcome.</p>
+  </section>
 
-  </div>
+</div>
+
 </div>
 
 <footer>
-  <div class="footer-links">
+  <div class="links">
     <a href="about.html">About</a>
     <a href="privacy.html">Privacy</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
   </div>
-  <p>Open source · All processing client-side · No tracking</p>
+  <p>Open source &middot; All client-side &middot; No tracking</p>
+  <p class="note">Built from real security research &mdash; free forever.</p>
 </footer>
 
 </body>

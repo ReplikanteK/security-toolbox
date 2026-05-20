@@ -3,63 +3,87 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy Policy — Security Toolbox</title>
-<meta name="description" content="Privacy Policy for Security Toolbox. All tools run client-side, no data collection, no tracking.">
+<title>Privacy Policy — SecToolbox</title>
+<meta name="description" content="Privacy Policy for SecToolbox. All tools run client-side, no data collection, no tracking.">
 <link rel="stylesheet" href="css/style.css">
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%2300d4aa' d='M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z'/%3E%3Cpath fill='%2300d4aa' d='M15 10l-3 5h2v5l3-5h-2z'/%3E%3C/svg%3E">
 </head>
 <body>
 
 <header>
-  <h1>Sec<span>Toolbox</span></h1>
-  <span class="subtitle">tools for bug hunters & developers</span>
+  <a href="/" class="logo" style="text-decoration:none">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="%2300d4aa" d="M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z"/><path fill="%2300d4aa" d="M15 10l-3 5h2v5l3-5h-2z"/></svg>
+    <span>Sec</span>Toolbox
+  </a>
+  <span class="logo-sub">free security tools</span>
   <nav>
     <a href="index.html#tools">Tools</a>
     <a href="about.html">About</a>
-    <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <button id="theme-toggle">☀️</button>
   </nav>
-  <span class="badge">27 tools</span>
 </header>
 
-<div class="tool-page">
-  <a href="index.html" class="back">← Back to tools</a>
-  <h2>Privacy Policy</h2>
-  <p class="desc">Last updated: May 20, 2026</p>
+<div class="container">
 
-  <div style="margin-top:1.5rem;line-height:1.7;font-size:.9rem">
-    <h3>1. Data Collection</h3>
-    <p>Security Toolbox does <strong>not</strong> collect, store, or transmit any personal data. All tools run entirely client-side in your browser. No cookies, no tracking scripts, no analytics — we do not have a server.</p>
+<section class="hero" style="padding-bottom:1.5rem">
+  <h2><span>Privacy</span> Policy</h2>
+  <p class="tagline">Last updated: May 20, 2026</p>
+</section>
 
-    <h3>2. Third-Party Services</h3>
-    <p>Some tools make HTTP requests to external services to provide functionality:</p>
-    <ul>
-      <li><strong>DNS Lookup</strong> — queries Cloudflare DNS-over-HTTPS (dns.cloudflare.com). Subject to <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare Privacy Policy</a>.</li>
-      <li><strong>CVE Search</strong> — queries CIRCL CVE API (cve.circl.lu). Subject to <a href="https://www.circl.lu/" target="_blank" rel="noopener">CIRCL Privacy Policy</a>.</li>
-      <li><strong>HTTP Probe, Subdomain Scanner, SSL Checker, Port Scanner, Redirect Chain, CORS Checker</strong> — use allorigins.win as a CORS proxy. Subject to <a href="https://allorigins.win/" target="_blank" rel="noopener">allorigins Privacy Policy</a>.</li>
-      <li><strong>GraphQL Introspection Checker</strong> — sends requests directly to the URL you provide.</li>
+<div class="about-content" style="max-width:700px;margin:0 auto;padding:0 0 2.5rem">
+
+  <section style="margin-bottom:2rem">
+    <h3 style="font-size:.9rem;color:var(--accent);margin-bottom:.4rem">1. Data Collection</h3>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7">SecToolbox does <strong>not</strong> collect, store, or transmit any personal data. All tools run entirely client-side in your browser. No cookies, no tracking scripts, no analytics &mdash; we do not have a server.</p>
+  </section>
+
+  <section style="margin-bottom:2rem">
+    <h3 style="font-size:.9rem;color:var(--accent);margin-bottom:.4rem">2. Third-Party Services</h3>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7">Some tools make HTTP requests to external services to provide functionality:</p>
+    <ul style="font-size:.82rem;color:var(--text2);line-height:1.8;padding-left:1.2rem">
+      <li><strong style="color:var(--text)">DNS Lookup</strong> &mdash; queries Cloudflare DNS-over-HTTPS (dns.cloudflare.com)</li>
+      <li><strong style="color:var(--text)">CVE Search</strong> &mdash; queries CIRCL CVE API (cve.circl.lu)</li>
+      <li><strong style="color:var(--text)">HTTP Probe, Subdomain Scanner, SSL Checker, Port Scanner, Redirect Chain, CORS Checker</strong> &mdash; use allorigins.win as a CORS proxy</li>
+      <li><strong style="color:var(--text)">GraphQL Introspection</strong> &mdash; sends requests directly to the URL you provide</li>
+      <li><strong style="color:var(--text)">Email Security</strong> &mdash; queries Cloudflare DNS-over-HTTPS for TXT records</li>
     </ul>
-    <p>The URLs you enter are sent to these services and may be logged by them. We have no control over their data practices.</p>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7;margin-top:.5rem">The URLs you enter are sent to these services and may be logged by them. We have no control over their data practices. For details, refer to each service's privacy policy.</p>
+  </section>
 
-    <h3>3. Third-Party Advertising</h3>
-    <p>This site does <strong>not</strong> currently display advertisements. If ads are added in the future, this policy will be updated and you will be notified.</p>
+  <section style="margin-bottom:2rem">
+    <h3 style="font-size:.9rem;color:var(--accent);margin-bottom:.4rem">3. Advertising</h3>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7">This site does <strong>not</strong> currently display advertisements. If ads are added in the future, this policy will be updated.</p>
+  </section>
 
-    <h3>4. Your Rights</h3>
-    <p>Since we collect no data, there is nothing to access, correct, or delete. For third-party services, refer to their respective privacy policies.</p>
+  <section style="margin-bottom:2rem">
+    <h3 style="font-size:.9rem;color:var(--accent);margin-bottom:.4rem">4. Your Rights</h3>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7">Since we collect no data, there is nothing to access, correct, or delete. For third-party services, refer to their respective privacy policies.</p>
+  </section>
 
-    <h3>5. Changes</h3>
-    <p>We may update this policy. Changes will be posted here with an updated date.</p>
+  <section style="margin-bottom:2rem">
+    <h3 style="font-size:.9rem;color:var(--accent);margin-bottom:.4rem">5. Changes</h3>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7">We may update this policy. Changes will be posted here with an updated date.</p>
+  </section>
 
-    <h3>6. Contact</h3>
-    <p>Open an issue on <a href="https://github.com/ReplikanteK/security-toolbox" target="_blank" rel="noopener">GitHub</a>.</p>
-  </div>
+  <section style="margin-bottom:2rem">
+    <h3 style="font-size:.9rem;color:var(--accent);margin-bottom:.4rem">6. Contact</h3>
+    <p style="font-size:.82rem;color:var(--text2);line-height:1.7">Open an issue on <a href="https://github.com/ReplikanteK/security-toolbox" target="_blank" rel="noopener">GitHub</a>.</p>
+  </section>
+
+</div>
+
 </div>
 
 <footer>
-  <div class="footer-links">
+  <div class="links">
     <a href="about.html">About</a>
     <a href="privacy.html">Privacy</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
   </div>
-  <p>Open source · All processing client-side · No tracking</p>
+  <p>Open source &middot; All client-side &middot; No tracking</p>
+  <p class="note">Built from real security research &mdash; free forever.</p>
 </footer>
 
 </body>
