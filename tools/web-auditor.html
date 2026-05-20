@@ -6,6 +6,7 @@
 <title>Web Auditor — Security Toolbox</title>
 <meta name="description" content="Comprehensive security audit for any website. Checks DNS, SSL/TLS, security headers, CORS, WAF, tech stack, cookies, CSP, TTFB, and more. Generates a full PDF-ready report with prioritized fixes.">
 <link rel="stylesheet" href="../css/style.css">
+<script src="../js/theme.js"></script>
 <style>
 .progress-bar {
   display: flex;
@@ -134,8 +135,9 @@
     <a href="../index.html#tools">Tools</a>
     <a href="../about.html">About</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
+    <button id="theme-toggle" onclick="toggleTheme()">☀️</button>
   </nav>
-  <span class="badge">28 tools</span>
+  <span class="badge">29 tools</span>
 </header>
 
 <div class="tool-page">
@@ -167,12 +169,14 @@
 <script>
 const CHECKS = [
   { id: 'dns', label: 'DNS Records', icon: '🌐' },
+  { id: 'emailsec', label: 'Email Security', icon: '📧' },
   { id: 'ssl', label: 'SSL/TLS', icon: '🔒' },
   { id: 'headers', label: 'Security Headers', icon: '🛡️' },
   { id: 'cors', label: 'CORS', icon: '🌍' },
   { id: 'cookies', label: 'Cookies', icon: '🍪' },
   { id: 'csp', label: 'CSP Deep', icon: '📋' },
   { id: 'waf', label: 'WAF Detection', icon: '🔥' },
+  { id: 'httpf', label: 'HTTP Features', icon: '⚡' },
   { id: 'tech', label: 'Tech Stack', icon: '⚙️' },
   { id: 'perf', label: 'Performance', icon: '⏱️' },
   { id: 'methods', label: 'HTTP Methods', icon: '🔧' },
@@ -389,6 +393,26 @@ async function runAudit() {
     markProgress('dns', Object.keys(dnsRecs).length ? 'done' : 'skip');
   } catch { markProgress('dns', 'error'); }
 
+  // ── Email Security (SPF/DKIM/DMARC/BIMI) ──
+  markProgress('emailsec', 'running');
+  try {
+    const txtRecs = await dnsQuery(hostname, 'TXT');
+    const spf = txtRecs.filter(r => r.data.startsWith('v=spf1')).map(r => r.data.replace(/\.$/,''));
+    const dmarcRecs = await dnsQuery('_dmarc.' + hostname, 'TXT');
+    const dmarc = dmarcRecs.filter(r => r.data.startsWith('v=DMARC1')).map(r => r.data.replace(/\.$/,''));
+    const bimiRecs = await dnsQuery('default._bimi.' + hostname, 'TXT');
+    const bimi = bimiRecs.filter(r => r.data.startsWith('v=BIMI1')).map(r => r.data.replace(/\.$/,''));
+    // DKIM: check common selectors
+    const dkimSelectors = ['default', 'google', 'protonmail', 'dkim', 's1', 's2', 'selector1', 'selector2'];
+    const dkimFound = [];
+    for (const sel of dkimSelectors) {
+      const recs = await dnsQuery(sel + '._domainkey.' + hostname, 'TXT');
+      if (recs.some(r => r.data.includes('v=DKIM1'))) dkimFound.push(sel);
+    }
+    report.emailSecurity = { spf: spf[0] || null, dmarc: dmarc[0] || null, bimi: bimi[0] || null, dkimSelectors: dkimFound };
+    markProgress('emailsec', 'done');
+  } catch { markProgress('emailsec', 'error'); }
+
   // ── SSL + Performance ──
   markProgress('ssl', 'running');
   markProgress('perf', 'running');
@@ -561,6 +585,33 @@ async function runAudit() {
   report.redirectChain = redirectChain;
   markProgress('redirect', 'done');
 
+  // ── HTTP Features ──
+  markProgress('httpf', 'running');
+  const httpFeatures = {};
+  // Check if HTTP redirects to HTTPS
+  if (redirectChain.length >= 2 && redirectChain[0].url.startsWith('http://') && redirectChain[redirectChain.length-1].url.startsWith('https://')) {
+    httpFeatures.httpsRedirect = true;
+  } else { httpFeatures.httpsRedirect = false; }
+  // HSTS preload eligibility (from header check)
+  const hsts = report.headers ? report.headers.find(h => h.name.toLowerCase() === 'strict-transport-security') : null;
+  if (hsts) {
+    const val = hsts.value;
+    const matchAge = val.match(/max-age=(\d+)/i);
+    const maxAge = matchAge ? parseInt(matchAge[1]) : 0;
+    httpFeatures.hstsMaxAge = maxAge;
+    httpFeatures.hstsIncludeSub = val.toLowerCase().includes('includesubdomains');
+    httpFeatures.hstsPreload = val.toLowerCase().includes('preload');
+    httpFeatures.hstsPreloadReady = maxAge >= 31536000 && httpFeatures.hstsIncludeSub && httpFeatures.hstsPreload;
+  } else { httpFeatures.hstsMaxAge = 0; httpFeatures.hstsPreloadReady = false; }
+  // Server header
+  const serverH = report.headers ? report.headers.find(h => h.name.toLowerCase() === 'server') : null;
+  httpFeatures.server = serverH ? serverH.value : null;
+  // X-Content-Type-Options
+  const xcto = report.headers ? report.headers.find(h => h.name.toLowerCase() === 'x-content-type-options') : null;
+  httpFeatures.xctoNoSniff = xcto && xcto.value.toLowerCase().trim() === 'nosniff';
+  report.httpFeatures = httpFeatures;
+  markProgress('httpf', 'done');
+
   // ── Build Report ──
   renderReport(report, url);
 }
@@ -703,6 +754,43 @@ function renderReport(r, url) {
     container.innerHTML += dnsHtml;
   }
 
+  // ── Email Security ──
+  if (r.emailSecurity) {
+    const e = r.emailSecurity;
+    let eHtml = `<div class="report-section"><h4>📧 Email Security (SPF/DKIM/DMARC/BIMI)</h4>
+      <div class="finding ${e.spf ? 'good' : 'high'}">SPF: ${e.spf || '❌ Not configured — anyone can spoof your domain'}</div>`;
+    if (e.spf) {
+      const qualifier = e.spf.match(/\~(all|\?all)/i);
+      if (qualifier) eHtml += `<div class="finding medium">⚠️ SPF softfail (~${qualifier[1]}) — consider using -all for strict rejection</div>`;
+      const mxInclude = (e.spf.match(/include:/g) || []).length;
+      if (mxInclude > 10) eHtml += `<div class="finding medium">⚠️ SPF has ${mxInclude} includes — may exceed DNS lookup limit (10)</div>`;
+    }
+    eHtml += `<div class="finding ${e.dmarc ? 'good' : 'high'}">DMARC: ${e.dmarc || '❌ Not configured — receivers can\'t enforce policy'}</div>`;
+    if (e.dmarc) {
+      const pMatch = e.dmarc.match(/p=(none|quarantine|reject)/i);
+      if (pMatch) {
+        if (pMatch[1] === 'none') eHtml += `<div class="finding medium">⚠️ DMARC policy is p=none (monitoring only, no enforcement)</div>`;
+        else if (pMatch[1] === 'quarantine') eHtml += `<div class="finding info">DMARC policy: quarantine ✓ (spam folder)</div>`;
+        else eHtml += `<div class="finding good">DMARC policy: reject ✓ (strong protection)</div>`;
+      }
+      const pctMatch = e.dmarc.match(/pct=(\d+)/i);
+      if (pctMatch && parseInt(pctMatch[1]) < 100) eHtml += `<div class="finding medium">⚠️ DMARC pct=${pctMatch[1]}% — not fully deployed</div>`;
+    }
+    eHtml += `<div class="finding ${e.dkimSelectors.length ? 'good' : 'medium'}">DKIM: ${e.dkimSelectors.length ? e.dkimSelectors.join(', ') + ' (selectors found) ✓' : 'No common selectors found'}</div>`;
+    eHtml += `<div class="finding ${e.bimi ? 'good' : 'low'}">BIMI: ${e.bimi || 'Not configured (optional, for branded indicators)'}</div>`;
+    eHtml += `</div>`;
+    container.innerHTML += eHtml;
+
+    // Scoring
+    if (!e.spf) { highIssues.push('SPF record not found — domain spoofing possible'); }
+    if (!e.dmarc) { highIssues.push('DMARC record not found — no email authentication enforcement'); }
+    if (e.spf && !e.spf.includes('-all')) { mediumIssues.push('SPF should use -all (hard fail) instead of ~all (soft fail)'); }
+    if (e.dmarc) {
+      const dp = e.dmarc.match(/p=(none|quarantine|reject)/i);
+      if (dp && dp[1] === 'none') mediumIssues.push('DMARC policy is p=none — monitoring only, no protection');
+    }
+  }
+
   // ── SSL ──
   if (r.ssl) {
     let sslHtml = `<div class="report-section"><h4>🔒 SSL/TLS</h4>`;
@@ -784,6 +872,21 @@ function renderReport(r, url) {
     container.innerHTML += cookieHtml;
   } else if (r.cookies !== undefined) {
     container.innerHTML += `<div class="report-section"><h4>🍪 Cookie Security Analysis</h4><div class="finding info">No cookies set by this page</div></div>`;
+  }
+
+  // ── HTTP Features ──
+  if (r.httpFeatures) {
+    const f = r.httpFeatures;
+    let fHtml = `<div class="report-section"><h4>⚡ HTTP Features</h4>`;
+    fHtml += `<div class="finding ${f.httpsRedirect ? 'good' : 'medium'}">HTTP → HTTPS redirect: ${f.httpsRedirect ? '✓ Present' : '✗ Not detected (or no HTTP available)'}</div>`;
+    if (f.server) fHtml += `<div class="finding info">Server: ${f.server}</div>`;
+    fHtml += `<div class="finding ${f.hstsPreloadReady ? 'good' : f.hstsMaxAge > 0 ? 'info' : 'low'}">HSTS Preload Ready: ${f.hstsPreloadReady ? '✓ Yes (max-age≥31536000 + includeSubDomains + preload)' : f.hstsMaxAge > 0 ? 'Partially configured (max-age=${f.hstsMaxAge}s)' : 'Not preload-ready'}</div>`;
+    fHtml += `<div class="finding ${f.xctoNoSniff ? 'good' : 'medium'}">X-Content-Type-Options: ${f.xctoNoSniff ? 'nosniff ✓' : '✗ Missing — MIME-sniffing allowed'}</div>`;
+    fHtml += `</div>`;
+    container.innerHTML += fHtml;
+    if (!f.httpsRedirect) { lowIssues.push('No HTTP→HTTPS redirect — users may connect over plain HTTP'); }
+    if (f.hstsPreloadReady) { goodItems.push('HSTS preload eligible ✓'); }
+    if (!f.xctoNoSniff) { mediumIssues.push('Missing X-Content-Type-Options: nosniff — MIME-sniffing risk'); }
   }
 
   // ── WAF ──

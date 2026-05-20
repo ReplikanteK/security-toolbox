@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Security Toolbox — Free Web Security Auditor & 28 Security Tools</title>
-<meta name="description" content="Free web security auditor: enter any URL for a full report. DNS, SSL/TLS, security headers grade (A+ to F), CORS, WAF detection, tech stack, cookies, HTTP methods, redirects. 28 free security tools. Privacy-first, all client-side.">
+<title>Security Toolbox — Free Web Security Auditor & 29 Security Tools</title>
+<meta name="description" content="Free web security auditor: enter any URL for a full report. DNS, SSL/TLS, security headers grade (A+ to F), CORS, WAF detection, tech stack, cookies, HTTP methods, redirects. 29 free security tools. Privacy-first, all client-side.">
 <meta property="og:title" content="Security Toolbox — Free Web Security Auditor + 28 Tools">
 <meta property="og:description" content="Free web security auditor: full site report in seconds. DNS, SSL/TLS, headers grade (A+ to F), CORS, WAF, tech stack, cookies, HTTP methods, redirects. 28 free tools. All client-side.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://replikantek.github.io/security-toolbox/">
 <link rel="stylesheet" href="css/style.css">
+<script src="js/theme.js"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
 </head>
 <body>
@@ -21,8 +22,9 @@
     <a href="#tools">Tools</a>
     <a href="about.html">About</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
+    <button id="theme-toggle" onclick="toggleTheme()">☀️</button>
   </nav>
-  <span class="badge">28 tools</span>
+  <span class="badge">29 tools</span>
 </header>
 
 <div class="container">
@@ -234,6 +236,12 @@
       <div class="icon">📋</div>
       <h4>Web Auditor</h4>
       <p>Full security audit: DNS, SSL, headers, CORS, WAF, methods, redirects — one report.</p>
+      <span class="status status-done">live</span>
+    </a>
+    <a href="tools/email-security.html" class="tool-card" data-tags="email security spf dkim dmarc bimi dns">
+      <div class="icon">📧</div>
+      <h4>Email Security Checker</h4>
+      <p>Analyze SPF, DKIM, DMARC, and BIMI records. Score A+ to F with recommendations.</p>
       <span class="status status-done">live</span>
     </a>
   </div>

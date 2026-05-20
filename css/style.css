@@ -13,6 +13,19 @@
   --green: #22c55e;
   --font: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
+:root.light {
+  --bg: #f5f7fa;
+  --bg2: #ffffff;
+  --bg3: #e8edf4;
+  --border: #d0d7e0;
+  --text: #1a2332;
+  --text2: #5a6a7a;
+  --accent: #009977;
+  --accent2: #0a7abf;
+  --red: #dc2626;
+  --orange: #d97706;
+  --green: #16a34a;
+}
 html { font-size: 15px; scroll-behavior: smooth; }
 body {
   font-family: var(--font);
@@ -54,9 +67,22 @@ header nav {
   display: flex;
   gap: 1.2rem;
   font-size: .8rem;
+  align-items: center;
 }
 header nav a { color: var(--text2); }
 header nav a:hover { color: var(--accent); text-decoration: none; }
+#theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: .2rem .4rem;
+  cursor: pointer;
+  font-size: .9rem;
+  line-height: 1;
+  color: var(--text2);
+  transition: border-color .2s;
+}
+#theme-toggle:hover { border-color: var(--accent); }
 
 @media (min-width: 600px) {
   header .subtitle { display: inline; }

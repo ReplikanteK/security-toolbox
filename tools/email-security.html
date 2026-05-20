@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Email Security Checker — SPF/DKIM/DMARC/BIMI — Security Toolbox</title>
+<meta name="description" content="Free email security checker. Analyze SPF, DKIM, DMARC, and BIMI DNS records for any domain. Score A+ to F with detailed recommendations.">
+<link rel="stylesheet" href="../css/style.css">
+<script src="../js/theme.js"></script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📧</text></svg>">
+<style>
+.results-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .82rem; }
+.results-table th { text-align: left; padding: .5rem .6rem; background: var(--bg3); border-bottom: 2px solid var(--border); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
+.results-table td { padding: .5rem .6rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.pass { color: var(--green); }
+.fail { color: var(--red); }
+.warn { color: var(--orange); }
+.score-big { font-size: 2.5rem; font-weight: 700; text-align: center; padding: 1rem; }
+.hint { font-size: .75rem; color: var(--text2); margin-top: .25rem; }
+.check-detail { display: flex; align-items: flex-start; gap: .6rem; padding: .6rem 0; }
+.check-detail .icon { font-size: 1.1rem; min-width: 1.4rem; }
+.check-detail .body { flex: 1; }
+.check-detail .body strong { display: block; font-size: .85rem; }
+.check-detail .body p { margin: .15rem 0 0; font-size: .8rem; color: var(--text2); }
+@media print { .no-print { display: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">Email Security Checker</span>
+  <nav>
+    <a href="../index.html#tools">Tools</a>
+    <a href="../about.html">About</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
+    <button id="theme-toggle" onclick="toggleTheme()">☀️</button>
+  </nav>
+  <span class="badge">29 tools</span>
+</header>
+
+<div class="tool-page">
+  <a class="back" href="../index.html#tools">← Back to Tools</a>
+  <h2>📧 Email Security Checker</h2>
+  <p class="desc">Analyze a domain's email authentication posture: SPF, DKIM, DMARC, and BIMI records. Grade A+ to F with actionable recommendations.</p>
+
+  <label for="email-domain">Domain</label>
+  <div style="display:flex;gap:.5rem">
+    <input type="text" id="email-domain" placeholder="example.com" style="flex:1" value="google.com" onkeydown="if(event.key==='Enter')runEmailCheck()">
+    <button onclick="runEmailCheck()">Check</button>
+  </div>
+  <button class="secondary" onclick="runEmailCheck()" style="margin-top:.3rem">🔍 Also scan common DKIM selectors</button>
+
+  <div id="email-progress" class="output" style="display:none;margin-top:.8rem">⏳ Checking DNS records...</div>
+  <div id="email-results" style="margin-top:1rem"></div>
+</div>
+
+<script>
+function qs(id) { return document.getElementById(id); }
+var DKIM_SELECTORS = ['default','google','protonmail','dkim','s1','s2','selector1','selector2','mandrill','mailchimp','sparkpostmail','sendgrid','zoho','zoho2','mxvault','mxs','mx1','mx2','mxvault','_dmarc'];
+
+async function dnsQuery(host, type) {
+  var url = 'https://cloudflare-dns.com/dns-query?name=' + encodeURIComponent(host) + '&type=' + type;
+  var r = await fetch(url, { headers: { 'Accept': 'application/dns-json' } });
+  var j = await r.json();
+  if (!j.Answer) return [];
+  return j.Answer.filter(function(a) { return a.type === (type === 'TXT' ? 16 : type === 'MX' ? 15 : type === 'A' ? 1 : type === 'CNAME' ? 5 : 0); }).map(function(a) {
+    if (type === 'TXT') return { data: a.data.replace(/^"|"$/g, '').replace(/""/g, '') };
+    return { data: a.data };
+  });
+}
+
+function gradeFromScore(s) {
+  if (s >= 95) return { grade: 'A+', color: '#22c55e' };
+  if (s >= 85) return { grade: 'A', color: '#22c55e' };
+  if (s >= 75) return { grade: 'B', color: '#66bb6a' };
+  if (s >= 60) return { grade: 'C', color: '#f59e0b' };
+  if (s >= 40) return { grade: 'D', color: '#f97316' };
+  return { grade: 'F', color: '#ef4444' };
+}
+
+async function runEmailCheck() {
+  var domain = qs('email-domain').value.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase();
+  if (!domain || !domain.includes('.')) { qs('email-results').innerHTML = '<div class="output error">Please enter a valid domain (e.g. example.com)</div>'; return; }
+
+  var progress = qs('email-progress');
+  var results = qs('email-results');
+  progress.style.display = 'block';
+  progress.textContent = '⏳ Querying DNS records...';
+  results.innerHTML = '';
+
+  var spf, dmarc, bimi, dkimSelectors = [], mx, a, hasHttp;
+
+  try {
+    progress.textContent = '⏳ Checking SPF...';
+    var txtRecs = await dnsQuery(domain, 'TXT');
+    var spfMatches = txtRecs.filter(function(r) { return r.data.replace(/\s/g,'').toLowerCase().startsWith('v=spf1'); });
+    spf = spfMatches.length ? spfMatches[0].data : null;
+  } catch(e) { spf = null; }
+
+  try {
+    progress.textContent = '⏳ Checking DMARC...';
+    var dmarcRecs = await dnsQuery('_dmarc.' + domain, 'TXT');
+    var dmarcMatches = dmarcRecs.filter(function(r) { return r.data.replace(/\s/g,'').toLowerCase().startsWith('v=dmarc1'); });
+    dmarc = dmarcMatches.length ? dmarcMatches[0].data : null;
+  } catch(e) { dmarc = null; }
+
+  try {
+    progress.textContent = '⏳ Checking BIMI...';
+    var bimiRecs = await dnsQuery('default._bimi.' + domain, 'TXT');
+    var bimiMatches = bimiRecs.filter(function(r) { return r.data.replace(/\s/g,'').toLowerCase().startsWith('v=bimi1'); });
+    bimi = bimiMatches.length ? bimiMatches[0].data : null;
+  } catch(e) { bimi = null; }
+
+  try {
+    progress.textContent = '⏳ Scanning DKIM selectors (' + DKIM_SELECTORS.length + ' common)...';
+    for (var i = 0; i < DKIM_SELECTORS.length; i++) {
+      var sel = DKIM_SELECTORS[i];
+      try {
+        var recs = await dnsQuery(sel + '._domainkey.' + domain, 'TXT');
+        if (recs.some(function(r) { return r.data.toLowerCase().includes('v=dkim1'); })) {
+          dkimSelectors.push(sel);
+        }
+      } catch(e) {}
+    }
+  } catch(e) {}
+
+  try {
+    progress.textContent = '⏳ Checking MX records...';
+    mx = await dnsQuery(domain, 'MX');
+  } catch(e) { mx = null; }
+
+  try {
+    a = await dnsQuery(domain, 'A');
+  } catch(e) { a = null; }
+
+  try {
+    progress.textContent = '⏳ Checking HTTP status...';
+    var httpR = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('http://' + domain), { method: 'HEAD', signal: AbortSignal.timeout(5000) });
+    hasHttp = httpR.status > 0;
+  } catch(e) { hasHttp = false; }
+
+  progress.style.display = 'none';
+
+  // ── Analyze ──
+  var score = 100;
+  var details = [];
+  var recs = [];
+
+  // SPF
+  if (!spf) {
+    score -= 30;
+    details.push({ icon: '❌', label: 'SPF Record', status: 'fail', text: 'No SPF record found. Anyone can spoof emails from your domain.', rec: 'Add an SPF TXT record starting with v=spf1' });
+    recs.push('Create an SPF record: v=spf1 include:_spf.google.com ~all');
+  } else {
+    var spfDetails = [];
+    var hasHardFail = spf.includes('-all');
+    var hasSoftFail = spf.includes('~all');
+    var hasNeutral = spf.includes('?all');
+    var includeCount = (spf.match(/include:/g) || []).length;
+
+    if (hasHardFail) { spfDetails.push('-all (hard fail) ✓'); }
+    else if (hasSoftFail) { spfDetails.push('~all (soft fail) — recommend -all'); score -= 5; }
+    else if (hasNeutral) { spfDetails.push('?all (neutral) — recommend -all'); score -= 10; }
+    else { spfDetails.push('No all qualifier — recommend -all'); score -= 5; }
+
+    if (includeCount > 10) { spfDetails.push('⚠️ ' + includeCount + ' includes — may exceed 10-DNS-lookup limit'); score -= 10; }
+    spfDetails.push('Includes: ' + (includeCount || 'none'));
+
+    details.push({ icon: '✅', label: 'SPF Record', status: 'pass', text: spf.substring(0, 120) + (spf.length > 120 ? '...' : ''), rec: spfDetails.join(' | ') });
+  }
+
+  // DKIM
+  if (dkimSelectors.length === 0) {
+    score -= 15;
+    details.push({ icon: '⚠️', label: 'DKIM', status: 'warn', text: 'No common DKIM selectors found. Email signing may not be configured.', rec: 'Configure DKIM signing and publish the public key in your DNS.' });
+    recs.push('Set up DKIM signing for your mail provider and publish the TXT record on <selector>._domainkey.' + domain);
+  } else {
+    details.push({ icon: '✅', label: 'DKIM Selectors', status: 'pass', text: dkimSelectors.length + ' selector(s) found: ' + dkimSelectors.join(', '), rec: 'DKIM signing is configured ✓' });
+  }
+
+  // DMARC
+  if (!dmarc) {
+    score -= 30;
+    details.push({ icon: '❌', label: 'DMARC Record', status: 'fail', text: 'No DMARC record found. No enforcement of SPF/DKIM alignment.', rec: 'Add a DMARC TXT record on _dmarc.' + domain });
+    recs.push('Create a DMARC record: v=DMARC1; p=quarantine; rua=mailto:dmarc@' + domain);
+  } else {
+    var pMatch = dmarc.match(/p=(none|quarantine|reject)/i);
+    var pctMatch = dmarc.match(/pct=(\d+)/i);
+    var ruaMatch = dmarc.match(/rua=mailto:([^\s;]+)/i);
+    var rufMatch = dmarc.match(/ruf=mailto:([^\s;]+)/i);
+    var foMatch = dmarc.match(/fo=([^\s;]+)/i);
+    var dmarcDetails = [];
+
+    if (pMatch) {
+      if (pMatch[1] === 'reject') { dmarcDetails.push('p=reject (strong) ✓'); }
+      else if (pMatch[1] === 'quarantine') { dmarcDetails.push('p=quarantine (moderate)'); score -= 5; }
+      else { dmarcDetails.push('p=none (monitoring only)'); score -= 15; }
+    } else { dmarcDetails.push('No policy defined'); score -= 10; }
+
+    if (pctMatch) {
+      var pct = parseInt(pctMatch[1]);
+      if (pct < 100) { dmarcDetails.push('pct=' + pct + '% (partial deployment)'); score -= 5; }
+    } else { dmarcDetails.push('pct=100% ✓'); }
+
+    if (ruaMatch) dmarcDetails.push('rua=' + ruaMatch[1] + ' ✓');
+    else { dmarcDetails.push('No rua (reports)'); score -= 3; }
+
+    details.push({ icon: '✅', label: 'DMARC Record', status: 'pass', text: dmarc.substring(0, 180) + (dmarc.length > 180 ? '...' : ''), rec: dmarcDetails.join(' | ') });
+  }
+
+  // BIMI
+  if (bimi) {
+    var bimiUrlMatch = bimi.match(/l=([^\s;]+)/i);
+    details.push({ icon: '🌟', label: 'BIMI', status: 'pass', text: 'BIMI configured' + (bimiUrlMatch ? ' — logo: ' + bimiUrlMatch[1] : ''), rec: 'Brand Indicators for Message Identification ✓' });
+  } else {
+    details.push({ icon: 'ℹ️', label: 'BIMI', status: 'info', text: 'Not configured (optional — displays brand logo in supporting email clients)', rec: 'Requirements: DMARC p=quarantine or reject, SVG logo, VMC certificate' });
+  }
+
+  // MX
+  if (mx && mx.length) {
+    details.push({ icon: 'ℹ️', label: 'MX Records (' + mx.length + ')', status: 'info', text: mx.slice(0, 5).map(function(m) { return m.data; }).join(', ') + (mx.length > 5 ? ' (+' + (mx.length-5) + ' more)' : ''), rec: 'Mail exchangers configured ✓' });
+  } else {
+    details.push({ icon: 'ℹ️', label: 'MX Records', status: 'info', text: 'No MX records — domain may not handle email', rec: 'No action needed if email is not used' });
+  }
+
+  if (hasHttp) {
+    score -= 5;
+    recs.push('Domain responds on plain HTTP — consider HSTS to enforce HTTPS for email links and webmail.');
+  }
+
+  score = Math.max(0, Math.min(100, score));
+  var g = gradeFromScore(score);
+
+  // ── Render ──
+  var html = '<div class="report-section" style="text-align:center">';
+  html += '<h4>📊 Email Security Score</h4>';
+  html += '<div class="score-big" style="color:' + g.color + '">' + g.grade + '</div>';
+  html += '<div style="font-size:1.1rem;color:var(--text2);margin-bottom:.5rem">' + score + '/100</div>';
+  html += '<div style="max-width:400px;margin:0 auto;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden"><div style="width:' + score + '%;height:100%;background:' + g.color + ';border-radius:4px"></div></div>';
+  html += '</div>';
+
+  html += '<div class="report-section"><h4>📋 Individual Checks</h4>';
+  for (var i = 0; i < details.length; i++) {
+    var d = details[i];
+    html += '<div class="check-detail"><div class="icon">' + d.icon + '</div><div class="body"><strong>' + d.label + '</strong><p>' + d.text + '</p><p class="hint">' + d.rec + '</p></div></div>';
+  }
+  html += '</div>';
+
+  if (recs.length) {
+    html += '<div class="report-section"><h4>💡 Recommendations (' + recs.length + ')</h4>';
+    for (var i = 0; i < recs.length; i++) {
+      html += '<div class="recommendation rec-medium">' + recs[i] + '</div>';
+    }
+    html += '</div>';
+  }
+
+  html += '<div style="text-align:center;margin-top:1rem"><button onclick="window.print()">🖨️ Print / Save PDF</button></div>';
+
+  results.innerHTML = html;
+}
+</script>
+
+<footer>
+  <div class="footer-links">
+    <a href="../index.html">Home</a>
+    <a href="../index.html#tools">Tools</a>
+    <a href="../about.html">About</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+  </div>
+  <div class="footnote">All checks are client-side via Cloudflare DNS-over-HTTPS and allorigins.win. No data is stored or tracked.</div>
+</footer>
+
+</body>
+</html>
