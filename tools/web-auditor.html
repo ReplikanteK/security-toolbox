@@ -6,6 +6,17 @@
 <title>Web Auditor — Security Toolbox</title>
 <meta name="description" content="Comprehensive security audit for any website. Checks DNS, SSL/TLS, security headers, CORS, WAF, tech stack, cookies, CSP, TTFB, and more. Generates a full PDF-ready report with prioritized fixes.">
 <link rel="stylesheet" href="../css/style.css">
+<style>
+.progress-track { flex:1; height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+.progress-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:3px; transition:width .3s; }
+.progress-time { font-size:.75rem; color:var(--text2); min-width:3rem; text-align:right; }
+.progress-step-label { font-size:.8rem; color:var(--text); }
+.progress-chip { font-size:.72rem; padding:.15rem .45rem; border-radius:4px; border:1px solid var(--border); color:var(--text2); background:var(--bg2); transition:all .2s; }
+.progress-chip.running { border-color:var(--accent); color:var(--accent); animation:pulse-border 1s infinite; }
+.progress-chip.done { border-color:var(--green); color:var(--green); }
+.progress-chip.error { border-color:var(--red); color:var(--red); }
+@keyframes pulse-border { 0%,100%{opacity:1} 50%{opacity:.5} }
+</style>
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <style>
 .progress-bar {
@@ -290,16 +301,51 @@ const TECH_SIGNATURES = [
 
 function qs(s) { return document.getElementById(s); }
 
+var auditStartTime = 0;
+var progressTimer = null;
 function setProgress() {
   const bar = qs('audit-progress');
-  bar.style.display = 'flex';
-  bar.innerHTML = CHECKS.map(c =>
-    `<div class="progress-item" id="p-${c.id}">${c.icon} ${c.label}</div>`
-  ).join('');
+  bar.style.display = 'block';
+  var html = '<div style="margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem">';
+  html += '<div class="progress-track" id="progress-track"><div class="progress-fill" id="progress-fill"></div></div>';
+  html += '<span class="progress-time" id="progress-time">0s</span>';
+  html += '</div>';
+  html += '<div class="progress-step-label" id="progress-step">Starting...</div>';
+  html += '<div class="progress-steps" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem">';
+  CHECKS.forEach(function(c, i) {
+    html += '<span class="progress-chip" id="p-' + c.id + '" data-idx="' + i + '">' + c.icon + ' ' + c.label + '</span>';
+  });
+  html += '</div></div>';
+  bar.innerHTML = html;
+  auditStartTime = Date.now();
+  progressTimer = setInterval(function() {
+    var el = document.getElementById('progress-time');
+    if (el) el.textContent = Math.round((Date.now() - auditStartTime) / 1000) + 's';
+  }, 1000);
 }
 function markProgress(id, state) {
-  const el = qs(`p-${id}`);
-  if (el) { el.className = `progress-item ${state}`; }
+  var el = document.getElementById('p-' + id);
+  if (!el) return;
+  if (state === 'running') {
+    document.querySelectorAll('.progress-chip.running').forEach(function(e) { e.className = 'progress-chip'; });
+    el.className = 'progress-chip running';
+    var label = document.getElementById('progress-step');
+    if (label) label.textContent = '\u23F3 ' + el.textContent.trim();
+  } else if (state === 'done' || state === 'skip') {
+    el.className = 'progress-chip done';
+    var total = CHECKS.length;
+    var done = document.querySelectorAll('.progress-chip.done').length;
+    var fill = document.getElementById('progress-fill');
+    if (fill) fill.style.width = Math.round((done / total) * 100) + '%';
+  } else if (state === 'error') {
+    el.className = 'progress-chip error';
+    var label = document.getElementById('progress-step');
+    if (label) label.textContent = '\u274C ' + el.textContent.trim() + ' failed';
+    var total = CHECKS.length;
+    var done = document.querySelectorAll('.progress-chip.done').length;
+    var fill = document.getElementById('progress-fill');
+    if (fill) fill.style.width = Math.round((done / total) * 100) + '%';
+  }
 }
 
 const SECURITY_HEADER_CHECKS = [
@@ -421,7 +467,7 @@ async function runAudit() {
     const httpsUrl = url.replace(/^http:/, 'https:');
     const ctrl = new AbortController();
     const perfStart = performance.now();
-    setTimeout(() => ctrl.abort(), 10000);
+    setTimeout(() => ctrl.abort(), 8000);
     const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(httpsUrl)}`, { method: 'GET', signal: ctrl.signal });
     const perfTime = Math.round(performance.now() - perfStart);
 
@@ -559,7 +605,7 @@ async function runAudit() {
     return (async function() {
       try {
         const c = new AbortController();
-        var to = setTimeout(function() { c.abort(); }, 5000);
+        var to = setTimeout(function() { c.abort(); }, 3000);
         const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url), { method: m, signal: c.signal });
         clearTimeout(to);
         return { method: m, status: r.status, allowed: r.status < 400 };
@@ -573,12 +619,12 @@ async function runAudit() {
   markProgress('redirect', 'running');
   const redirectChain = [];
   let cur = url;
-  var redirTimeout = setTimeout(function() { report.redirectChain = redirectChain; markProgress('redirect', 'done'); }, 15000);
+  var redirTimeout = setTimeout(function() { report.redirectChain = redirectChain; markProgress('redirect', 'done'); }, 12000);
   try {
     for (let i = 0; i < 5; i++) {
       try {
         const c = new AbortController();
-        setTimeout(() => c.abort(), 5000);
+        setTimeout(function() { c.abort(); }, 3000);
         const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(cur), { method: 'HEAD', signal: c.signal });
         const loc = r.headers.get('location');
         redirectChain.push({ url: cur, status: r.status, location: loc });
@@ -594,6 +640,8 @@ async function runAudit() {
 
   // ── HTTP Features ──
   markProgress('httpf', 'running');
+  var httpfTimedOut = false;
+  var httpfTimer = setTimeout(function() { httpfTimedOut = true; markProgress('httpf', 'error'); }, 3000);
   try {
   const httpFeatures = {};
   const hdrList = report.headers && report.headers.results ? report.headers.results : [];
@@ -615,10 +663,14 @@ async function runAudit() {
   const xcto = hdrList.find(h => h.key === 'x-content-type-options');
   httpFeatures.xctoNoSniff = xcto && xcto.value && xcto.value.toLowerCase().trim() === 'nosniff';
   report.httpFeatures = httpFeatures;
-  markProgress('httpf', 'done');
-  } catch(e) { markProgress('httpf', 'error'); }
+  clearTimeout(httpfTimer);
+  if (!httpfTimedOut) markProgress('httpf', 'done');
+  } catch(e) { clearTimeout(httpfTimer); markProgress('httpf', 'error'); }
 
   // ── Build Report ──
+  clearInterval(progressTimer);
+  var stepLabel = document.getElementById('progress-step');
+  if (stepLabel) stepLabel.textContent = '\u2705 Complete!';
   try { renderReport(report, url); } catch(e) {
     qs('audit-report').innerHTML = '<div class="output error">Error generating report. Please try again.</div>';
   }

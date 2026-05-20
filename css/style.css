@@ -26,6 +26,10 @@ html[data-theme="light"] {
   --orange: #d97706;
   --green: #16a34a;
 }
+html[data-theme="light"] .status-done { background: #bbf7d0; }
+html[data-theme="light"] .status-wip { background: #fde68a; }
+html[data-theme="light"] .status-plan { background: #bfdbfe; }
+html[data-theme="light"] .featured-card .tag { color: #0a7abf; border-color: #0a7abf; }
 html { font-size: 15px; scroll-behavior: smooth; }
 body {
   font-family: var(--font);
