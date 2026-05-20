@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Token Counter — Security Toolbox</title>
+<meta name="description" content="Count tokens in your text or prompts. Estimate LLM token count with character-level approximation (~4 chars per token).">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Token Counter</h2>
+  <p class="desc">Estimate token count for LLM prompts. Uses a character-level approximation (~4 chars/token for English). Results are approximate — actual tokenization varies by model.</p>
+
+  <label for="tc-input">Text / Prompt</label>
+  <textarea id="tc-input" rows="8" placeholder="Paste your prompt here...">Write a short story about a bug bounty hunter who discovers a critical vulnerability in a popular open-source library.</textarea>
+  <div class="actions">
+    <button onclick="countTokens()">Count</button>
+    <button class="secondary" onclick="document.getElementById('tc-input').value=''">Clear</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Results</h3>
+  <div id="tc-output" class="output">Enter text and click Count</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> &middot; Approximate token estimation &middot; Client-side</p>
+</footer>
+
+<script>
+function countTokens() {
+  const input = document.getElementById('tc-input').value;
+  const output = document.getElementById('tc-output');
+
+  if (!input) {
+    output.className = 'output';
+    output.textContent = 'Enter text to count tokens';
+    return;
+  }
+
+  const chars = input.length;
+  const words = input.trim() ? input.trim().split(/\s+/).length : 0;
+  const lines = input.split('\n').length;
+
+  // Simple token estimation
+  const tokenEstimate = estimateTokens(input);
+
+  // Cost estimates (approximate per-model pricing)
+  const costs = [
+    { model: 'GPT-5 Nano', input: 0.05, output: 0.40 },
+    { model: 'GPT-5.4 Mini', input: 0.75, output: 4.50 },
+    { model: 'Claude Sonnet 4.6', input: 3.00, output: 15.00 },
+    { model: 'DeepSeek V4 Flash', input: 0.00, output: 0.00 },
+    { model: 'Gemini 3 Flash', input: 0.50, output: 3.00 },
+    { model: 'Qwen3.6 Plus', input: 0.50, output: 3.00 },
+  ];
+
+  const lines_out = [
+    `Characters:   ${chars.toLocaleString()}`,
+    `Words:        ${words.toLocaleString()}`,
+    `Lines:        ${lines.toLocaleString()}`,
+    '',
+    `Token estimate: ${tokenEstimate.toLocaleString()} tokens`,
+    `  (lower bound: ${Math.floor(tokenEstimate * 0.7).toLocaleString()})`,
+    `  (upper bound: ${Math.floor(tokenEstimate * 1.3).toLocaleString()})`,
+    '',
+    `Context ratio:`,
+    `  8K window:   ${(tokenEstimate / 8192 * 100).toFixed(1)}%`,
+    `  16K window:  ${(tokenEstimate / 16384 * 100).toFixed(1)}%`,
+    `  32K window:  ${(tokenEstimate / 32768 * 100).toFixed(1)}%`,
+    `  128K window: ${(tokenEstimate / 131072 * 100).toFixed(1)}%`,
+    '',
+    '── Estimated API cost (input, per 1K prompts) ──',
+    ...costs.map(c => {
+      const costPerM = c.input;
+      const costPerPrompt = (tokenEstimate / 1000000) * costPerM;
+      const cost1k = costPerPrompt * 1000;
+      return `  ${c.model.padEnd(22)} $${costPerPrompt.toFixed(5)}/prompt  $${cost1k.toFixed(3)}/1K prompts`;
+    }),
+  ];
+
+  output.className = 'output';
+  output.textContent = lines_out.join('\n');
+}
+
+function estimateTokens(text) {
+  if (!text) return 0;
+  // Basic heuristic: ~4 chars per token for English
+  // More accurate: count word boundaries, whitespace, punctuation
+  let tokens = 0;
+  let i = 0;
+  while (i < text.length) {
+    // Skip whitespace
+    if (/\s/.test(text[i])) { i++; continue; }
+    tokens++;
+
+    // Aproximate token boundaries
+    if (/[a-zA-Z0-9]/.test(text[i])) {
+      // Word: consume alphanumeric + apostrophe
+      while (i < text.length && /[a-zA-Z0-9'']/.test(text[i])) i++;
+      tokens += Math.floor((i - 1) / 4); // ~4 chars per token
+    } else if (/[,.!?;:]/.test(text[i])) {
+      i++; // Single char token
+    } else if (/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]/.test(text[i])) {
+      i++; // CJK: 1 char ≈ 1 token
+    } else {
+      i++; // Other: single char
+    }
+  }
+
+  return Math.max(1, tokens);
+}
+
+document.addEventListener('DOMContentLoaded', countTokens);
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CVSS Calculator — Security Toolbox</title>
+<meta name="description" content="Calculate CVSS v3.1 base scores. Select attack vector metrics and get severity rating, vector string, and score breakdown.">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+.metrics { display: flex; flex-direction: column; gap: .8rem; }
+.metric-row { display: flex; align-items: center; gap: 1rem; }
+.metric-row label { width: 160px; flex-shrink: 0; font-size: .82rem; }
+.metric-row select { flex: 1; background: var(--bg2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: .5rem; font-family: var(--font); font-size: .82rem; }
+.metric-row select:focus { border-color: var(--accent); }
+.score-display { text-align: center; padding: 1.5rem; margin: 1rem 0; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; }
+.score-number { font-size: 3rem; font-weight: 700; line-height: 1; }
+.score-severity { font-size: 1rem; margin-top: .3rem; }
+.score-vector { font-size: .7rem; color: var(--text2); margin-top: .3rem; word-break: break-all; font-family: var(--font); }
+.severity-critical { color: #ef4444; }
+.severity-high { color: #f59e0b; }
+.severity-medium { color: #eab308; }
+.severity-low { color: #22c55e; }
+.severity-none { color: var(--text2); }
+.breakdown { font-size: .8rem; color: var(--text2); }
+.breakdown table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
+.breakdown td { padding: .25rem .5rem; border-bottom: 1px solid var(--border); }
+.breakdown td:last-child { text-align: right; font-family: var(--font); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>CVSS v3.1 Calculator</h2>
+  <p class="desc">Calculate CVSS base scores. Select the relevant metrics and get the score, severity rating, and vector string.</p>
+
+  <div class="score-display">
+    <div class="score-number severity-medium" id="score-value">5.0</div>
+    <div class="score-severity" id="score-severity">MEDIUM</div>
+    <div class="score-vector" id="score-vector">CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L</div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric-row">
+      <label>Attack Vector (AV)</label>
+      <select id="AV" onchange="calc()">
+        <option value="N">Network (N) — Remotely exploitable</option>
+        <option value="A">Adjacent (A) — Same network segment</option>
+        <option value="L">Local (L) — Requires local access</option>
+        <option value="P">Physical (P) — Physical access required</option>
+      </select>
+    </div>
+    <div class="metric-row">
+      <label>Attack Complexity (AC)</label>
+      <select id="AC" onchange="calc()">
+        <option value="L">Low (L) — No special conditions</option>
+        <option value="H">High (H) — Special conditions required</option>
+      </select>
+    </div>
+    <div class="metric-row">
+      <label>Privileges Required (PR)</label>
+      <select id="PR" onchange="calc()">
+        <option value="N">None (N) — No privileges</option>
+        <option value="L">Low (L) — Basic privileges</option>
+        <option value="H">High (H) — Admin-level privileges</option>
+      </select>
+    </div>
+    <div class="metric-row">
+      <label>User Interaction (UI)</label>
+      <select id="UI" onchange="calc()">
+        <option value="N">None (N) — No user action needed</option>
+        <option value="R">Required (R) — User must act</option>
+      </select>
+    </div>
+    <div class="metric-row">
+      <label>Scope (S)</label>
+      <select id="S" onchange="calc()">
+        <option value="U">Unchanged (U) — Same authority</option>
+        <option value="C">Changed (C) — Different authority</option>
+      </select>
+    </div>
+    <div class="metric-row">
+      <label>Confidentiality (C)</label>
+      <select id="C" onchange="calc()">
+        <option value="H">High (H) — Total loss</option>
+        <option value="L">Low (L) — Some disclosure</option>
+        <option value="N">None (N) — No loss</option>
+      </select>
+    </div>
+    <div class="metric-row">
+      <label>Integrity (I)</label>
+      <select id="I" onchange="calc()">
+        <option value="H">High (H) — Total loss</option>
+        <option value="L">Low (L) — Some modification</option>
+        <option value="N">None (N) — No loss</option>
+      </select>
+    </div>
+    <div class="metric-row">
+      <label>Availability (A)</label>
+      <select id="A" onchange="calc()">
+        <option value="H">High (H) — Total loss</option>
+        <option value="L">Low (L) — Reduced performance</option>
+        <option value="N">None (N) — No loss</option>
+      </select>
+    </div>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Score Breakdown</h3>
+  <div class="breakdown" id="breakdown">
+    <table>
+      <tr><td>Exploitability Sub-Score</td><td id="exp-score">3.9</td></tr>
+      <tr><td>Impact Sub-Score (ISS)</td><td id="iss-score">0.88</td></tr>
+      <tr><td>Impact</td><td id="impact-score">5.6</td></tr>
+      <tr><td>Base Score</td><td id="base-calc">5.0</td></tr>
+    </table>
+  </div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> &middot; CVSS v3.1 specification &middot; All processing client-side</p>
+</footer>
+
+<script>
+const AV = { N: 0.85, A: 0.62, L: 0.55, P: 0.2 };
+const AC = { L: 0.77, H: 0.44 };
+const PR = { N: 0.85, L: 0.62, H: 0.27 };
+const PR_C = { N: 0.85, L: 0.68, H: 0.5 };
+const UI = { N: 0.85, R: 0.62 };
+const C = { H: 0.56, L: 0.22, N: 0 };
+const I = { H: 0.56, L: 0.22, N: 0 };
+const A_IMP = { H: 0.56, L: 0.22, N: 0 };
+
+function calc() {
+  const av = document.getElementById('AV').value;
+  const ac = document.getElementById('AC').value;
+  const pr = document.getElementById('PR').value;
+  const ui = document.getElementById('UI').value;
+  const s = document.getElementById('S').value;
+  const c = document.getElementById('C').value;
+  const i = document.getElementById('I').value;
+  const a = document.getElementById('A').value;
+
+  const prVal = s === 'C' ? PR_C[pr] : PR[pr];
+
+  const ess = 8.22 * AV[av] * AC[ac] * prVal * UI[ui];
+  const iss = 1 - ((1 - C[c]) * (1 - I[i]) * (1 - A_IMP[a]));
+
+  let impact, base;
+
+  if (s === 'U') {
+    impact = 6.42 * iss;
+    base = impact > 0 ? roundUp(Math.min(ess + impact, 10)) : 0;
+  } else {
+    impact = 7.52 * (iss - 0.029) - 3.25 * Math.pow(iss - 0.02, 15);
+    base = impact > 0 ? roundUp(Math.min(1.08 * (ess + impact), 10)) : 0;
+  }
+
+  const severity = base >= 9.0 ? 'CRITICAL' :
+                   base >= 7.0 ? 'HIGH' :
+                   base >= 4.0 ? 'MEDIUM' :
+                   base >= 0.1 ? 'LOW' : 'NONE';
+
+  const vector = `CVSS:3.1/AV:${av}/AC:${ac}/PR:${pr}/UI:${ui}/S:${s}/C:${c}/I:${i}/A:${a}`;
+
+  const scoreEl = document.getElementById('score-value');
+  scoreEl.textContent = base.toFixed(1);
+  scoreEl.className = 'score-number severity-' + severity.toLowerCase();
+
+  document.getElementById('score-severity').textContent = severity;
+  document.getElementById('score-vector').textContent = vector;
+  document.getElementById('score-severity').className = 'score-severity severity-' + severity.toLowerCase();
+
+  document.getElementById('exp-score').textContent = ess.toFixed(2);
+  document.getElementById('iss-score').textContent = iss.toFixed(4);
+  document.getElementById('impact-score').textContent = impact.toFixed(2);
+  document.getElementById('base-calc').textContent = base.toFixed(1);
+}
+
+function roundUp(val) {
+  const int = Math.floor(val);
+  const dec = val - int;
+  if (dec === 0) return int;
+  if (dec <= 0.5) return int + 0.5;
+  return Math.ceil(val);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subdomain Scanner — Security Toolbox</title>
+<meta name="description" content="Quick subdomain discovery via common wordlist and DNS-over-HTTPS. Client-side, rate-limited by DNS provider.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Subdomain Scanner</h2>
+  <p class="desc">Quick subdomain discovery via common wordlist + DNS-over-HTTPS. Results are rate-limited by Cloudflare DNS (~10 req/min). For full scans, use tools like subfinder or amass locally.</p>
+
+  <div class="row">
+    <div>
+      <label for="sd-domain">Domain</label>
+      <input type="text" id="sd-domain" placeholder="example.com" value="example.com">
+    </div>
+    <div>
+      <label for="sd-mode">Scan mode</label>
+      <select id="sd-mode">
+        <option value="quick">Quick (50 common subs)</option>
+        <option value="full">Full (~500 subs, slower)</option>
+      </select>
+    </div>
+  </div>
+  <div class="actions">
+    <button onclick="scan()">Scan</button>
+    <button class="secondary" onclick="stopScan()">Stop</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Found subdomains</h3>
+  <div id="sd-results" class="output">Enter a domain and click Scan</div>
+  <div id="sd-counter" style="font-size:.75rem;color:var(--text2);margin-top:.3rem"></div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> &middot; DNS via Cloudflare DoH &middot; Rate-limited</p>
+</footer>
+
+<script>
+const WORDLIST_QUICK = [
+  'www', 'mail', 'ftp', 'admin', 'api', 'blog', 'dev', 'test', 'staging',
+  'app', 'web', 'm', 'mobile', 'shop', 'cdn', 'static', 'media', 'img',
+  'assets', 'download', 'support', 'help', 'docs', 'wiki', 'status',
+  'portal', 'login', 'auth', 'sso', 'vpn', 'remote', 'git', 'jenkins',
+  'ci', 'jenkins', 'jira', 'confluence', 'grafana', 'prometheus', 'monitor',
+  'monitoring', 'logs', 'kibana', 'elastic', 'db', 'database', 'mysql',
+  'backup', 'proxy', 'ns1', 'ns2', 'mx', 'smtp', 'imap', 'pop3',
+];
+
+const WORDLIST_FULL = [
+  'www', 'mail', 'ftp', 'admin', 'api', 'blog', 'dev', 'test', 'staging',
+  'app', 'web', 'm', 'mobile', 'shop', 'cdn', 'static', 'media', 'img',
+  'assets', 'download', 'downloads', 'upload', 'uploads', 'files', 'file',
+  'data', 'storage', 'backup', 'backups', 'db', 'database', 'sql', 'mysql',
+  'postgres', 'redis', 'mongo', 'mongodb', 'elastic', 'elasticsearch',
+  'kibana', 'grafana', 'prometheus', 'metrics', 'monitor', 'monitoring',
+  'logs', 'logging', 'syslog', 'splunk', 'nagios', 'zabbix',
+  'support', 'help', 'docs', 'wiki', 'knowledge', 'kb', 'faq',
+  'portal', 'login', 'auth', 'sso', 'oauth', 'idp', 'saml', 'openid',
+  'vpn', 'remote', 'ssh', 'rdp', 'gateway', 'bastion', 'jump',
+  'git', 'github', 'gitlab', 'bitbucket', 'jenkins', 'ci', 'cd',
+  'jira', 'confluence', 'trello', 'slack', 'teams', 'discord',
+  'chat', 'webchat', 'forum', 'community', 'board',
+  'api', 'api-dev', 'api-test', 'api-staging', 'graphql', 'rest',
+  'swagger', 'openapi', 'docs-api', 'apidocs', 'developer',
+  'stage', 'stg', 'dev', 'test', 'uat', 'qa', 'sandbox', 'demo',
+  'prod', 'production', 'preprod', 'pre-prod', 'dr', 'disaster',
+  'ns1', 'ns2', 'ns3', 'ns4', 'dns', 'dns1', 'dns2', 'mx', 'mx1',
+  'smtp', 'imap', 'pop3', 'mail', 'email', 'webmail', 'roundcube',
+  'proxy', 'squid', 'haproxy', 'nginx', 'lb', 'loadbalancer',
+  'cdn', 'static', 'assets', 'img', 'image', 'images', 'photo',
+  'video', 'videos', 'stream', 'media', 'player',
+  'shop', 'store', 'billing', 'payment', 'checkout', 'cart',
+  'track', 'tracking', 'status', 'health', 'heartbeat',
+  'calendar', 'meeting', 'zoom', 'webex', 'teams',
+  'phone', 'voip', 'sip', 'asterisk', 'pbx',
+  'ads', 'analytics', 'pixel', 'tag', 'events', 'event',
+  'recruit', 'jobs', 'career', 'careers', 'hr', 'employee',
+  'intranet', 'corp', 'office', 'global', 'eu', 'us', 'asia',
+  'nyc', 'lon', 'fra', 'sfo', 'ams', 'sin', 'hkg', 'tokyo',
+  'seo', 'marketing', 'news', 'press', 'pr', 'brand',
+  'info', 'about', 'contact', 'feedback', 'survey', 'poll',
+  'search', 'catalog', 'index', 'sitemap', 'sitemaps', 'robots',
+  'crossdomain', 'clientaccess', 'policy', 'privacy', 'terms',
+  'legal', 'gdpr', 'security', 'report', 'bug', 'bounty',
+  'partners', 'partner', 'vendor', 'vendors', 'supplier',
+  'dashboard', 'admin', 'administrator', 'adminer', 'phpmyadmin',
+  'pma', 'webmin', 'cpanel', 'whm', 'plesk', 'directadmin',
+  'cloud', 'aws', 'azure', 'gcp', 'compute', 'storage', 's3',
+  'rds', 'ec2', 'lambda', 'functions', 'queue', 'worker',
+  'ws', 'wss', 'socket', 'websocket', 'sockjs', 'signal',
+  'rtmp', 'rtsp', 'hls', 'dash', 'streaming', 'live',
+  'office365', 'exchange', 'owa', 'ecp', 'autodiscover',
+  'lync', 'skype', 'sfb', 'meet',
+  'xbox', 'playstation', 'nintendo', 'steam', 'epic',
+  'appstore', 'playstore', 'itunes', 'googleplay',
+  'firebase', 'firestore', 'functions', 'appspot',
+  'heroku', 'netlify', 'vercel', 'pages', 'ghpages',
+  'digitalocean', 'linode', 'vultr', 'ovh', 'hetzner',
+  'k8s', 'kubernetes', 'kube', 'cluster', 'node', 'pod',
+  'docker', 'registry', 'harbor', 'nexus', 'artifactory',
+  'rancher', 'openshift', 'minikube', 'microk8s',
+  'terraform', 'pulumi', 'ansible', 'puppet', 'chef',
+  'salt', 'saltstack', 'stack', 'spinnaker', 'argo',
+  'istio', 'linkerd', 'envoy', 'traefik', 'caddy',
+  'vault', 'consul', 'nomad', 'etcd', 'zookeeper',
+  'kafka', 'rabbitmq', 'nats', 'pulsar', 'activemq',
+  'airflow', 'prefect', 'luigi', 'dag', 'pipeline',
+  'jupyter', 'notebook', 'lab', 'hub', 'spark',
+  'hadoop', 'hive', 'hbase', 'cassandra', 'couchbase',
+  'solr', 'lucene', 'sphinx', 'meilisearch', 'typesense',
+  'sentry', 'rollbar', 'bugsnag', 'datadog', 'newrelic',
+  'sumologic', 'papertrail', 'logstash', 'fluentd', 'vector',
+  'gerrit', 'review', 'code', 'codereview', 'sonar',
+  'nexus', 'artifactory', 'npm', 'pypi', 'rubygems',
+  'maven', 'gradle', 'nuget', 'packagist', 'crates',
+  'dockerhub', 'quay', 'ecr', 'gcr', 'acr',
+  'ifconfig', 'ip', 'whatsmyip', 'myip', 'whoami',
+  'speedtest', 'fast', 'speed', 'ping', 'traceroute',
+  'config', 'configuration', 'settings', 'setup', 'install',
+  'update', 'upgrade', 'patch', 'hotfix', 'release',
+  'changelog', 'release', 'version', 'versions',
+  'old', 'new', 'v1', 'v2', 'v3', 'beta', 'alpha', 'rc',
+  'legacy', 'archive', 'deprecated', 'retired',
+  'devel', 'development', 'testing', 'integration',
+  'perf', 'performance', 'benchmark', 'stress', 'load',
+  'xampp', 'phpinfo', 'info', 'php', 'server-status',
+  'server-info', 'status', 'health', 'actuator',
+  'callback', 'webhook', 'hooks', 'hook', 'notification',
+  'pubsub', 'eventbus', 'bus', 'events',
+  'invoice', 'invoices', 'order', 'orders', 'receipt',
+];
+
+let running = false;
+let abortController = null;
+
+async function scan() {
+  const domain = document.getElementById('sd-domain').value.trim();
+  const mode = document.getElementById('sd-mode').value;
+  const output = document.getElementById('sd-results');
+  const counter = document.getElementById('sd-counter');
+
+  if (!domain) {
+    output.className = 'output error';
+    output.textContent = 'Enter a domain';
+    return;
+  }
+
+  const wordlist = mode === 'quick' ? WORDLIST_QUICK : WORDLIST_FULL;
+  const modeLabel = mode === 'quick' ? '50' : '~500';
+
+  output.className = 'output';
+  output.textContent = `Scanning ${domain} with ${modeLabel} subdomains...\nThis may take a minute due to DNS rate limits.\n`;
+  counter.textContent = '';
+
+  running = true;
+  abortController = new AbortController();
+  const found = [];
+
+  // Batch to avoid overwhelming DNS
+  const batchSize = 5;
+  for (let i = 0; i < wordlist.length && running; i += batchSize) {
+    const batch = wordlist.slice(i, i + batchSize);
+    const promises = batch.map(sub => checkSubdomain(sub, domain, abortController.signal));
+    const results = await Promise.all(promises);
+    for (const r of results) {
+      if (r) found.push(r);
+    }
+    const progress = Math.min(i + batchSize, wordlist.length);
+    output.textContent = `Scanning... ${progress}/${wordlist.length} (${found.length} found)\n\n${found.map(f => `  ✅ ${f}`).join('\n')}`;
+
+    // Rate limiting: wait between batches
+    if (running && i + batchSize < wordlist.length) {
+      await sleep(1200);
+    }
+  }
+
+  running = false;
+  if (found.length === 0) {
+    output.className = 'output';
+    output.textContent = `No subdomains found for ${domain} using the ${modeLabel} wordlist.\n\nTry a local tool like subfinder or amass for comprehensive scans.`;
+  } else {
+    output.className = 'output';
+    output.textContent = `Found ${found.length} subdomain(s) for ${domain}:\n\n${found.map(f => `  ✅ ${f}`).join('\n')}`;
+    counter.textContent = `${found.length} live subdomains`;
+  }
+}
+
+async function checkSubdomain(sub, domain, signal) {
+  const fqdn = `${sub}.${domain}`;
+  try {
+    const resp = await fetch(`https://cloudflare-dns.com/dns-query?name=${fqdn}&type=A`, {
+      headers: { 'Accept': 'application/dns-json' },
+      signal
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (data.Answer && data.Answer.length > 0) {
+      const ips = data.Answer.filter(r => r.type === 1).map(r => r.data).join(', ');
+      return ips ? `${fqdn} (${ips})` : fqdn;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function stopScan() {
+  running = false;
+  if (abortController) abortController.abort();
+  document.getElementById('sd-results').textContent += '\n\n⚠️ Scan stopped by user.';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
