@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Web Auditor — Security Toolbox</title>
-<meta name="description" content="Comprehensive security audit for any website. Checks DNS, SSL/TLS, security headers, CORS, WAF, tech stack, cookies, CSP, TTFB, and more. Generates a full PDF-ready report with prioritized fixes.">
+<title>Web Auditor — SecToolbox</title>
+<meta name="description" content="Free web security auditor: DNS, email security (SPF/DKIM/DMARC), SSL/TLS, WAF, tech stack, CSP meta analysis, performance, redirect chain. Generates prioritized PDF-ready report.">
 <link rel="stylesheet" href="../css/style.css">
 <style>
 .progress-track { flex:1; height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
@@ -156,7 +156,7 @@
 <div class="tool-page">
   <a href="../index.html" class="back">← Back to tools</a>
   <h2>Web Auditor</h2>
-  <p class="desc">Comprehensive security audit for any URL. Runs DNS, SSL/TLS, security headers (A+ grade), CORS, WAF, tech stack detection, cookie analysis, CSP deep evaluation, TTFB, HTTP methods, redirect chain — then generates a full PDF-ready report with prioritized recommendations.</p>
+  <p class="desc">Comprehensive security audit for any URL. Checks DNS, SSL/TLS, WAF, tech stack, CSP (from meta tags), email security (SPF/DKIM/DMARC), TTFB, redirect chain, and HTTP features. Generates a full PDF-ready report with prioritized recommendations.</p>
 
   <label for="audit-url">Target URL</label>
   <input type="text" id="audit-url" placeholder="https://example.com" value="https://example.com" onkeydown="if(event.key==='Enter')runAudit()">
@@ -184,28 +184,13 @@ const CHECKS = [
   { id: 'dns', label: 'DNS Records', icon: '🌐' },
   { id: 'emailsec', label: 'Email Security', icon: '📧' },
   { id: 'ssl', label: 'SSL/TLS', icon: '🔒' },
-  { id: 'headers', label: 'Security Headers', icon: '🛡️' },
-  { id: 'cors', label: 'CORS', icon: '🌍' },
-  { id: 'cookies', label: 'Cookies', icon: '🍪' },
-  { id: 'csp', label: 'CSP Deep', icon: '📋' },
+  { id: 'csp', label: 'CSP Analysis', icon: '📋' },
   { id: 'waf', label: 'WAF Detection', icon: '🔥' },
   { id: 'httpf', label: 'HTTP Features', icon: '⚡' },
   { id: 'tech', label: 'Tech Stack', icon: '⚙️' },
   { id: 'perf', label: 'Performance', icon: '⏱️' },
-  { id: 'methods', label: 'HTTP Methods', icon: '🔧' },
   { id: 'redirect', label: 'Redirect Chain', icon: '↪️' },
 ];
-
-const HEADER_WEIGHTS = {
-  'strict-transport-security': { weight: 25, name: 'HSTS' },
-  'content-security-policy': { weight: 25, name: 'CSP' },
-  'x-frame-options': { weight: 15, name: 'X-Frame-Options' },
-  'x-content-type-options': { weight: 10, name: 'X-Content-Type-Options' },
-  'referrer-policy': { weight: 10, name: 'Referrer-Policy' },
-  'permissions-policy': { weight: 5, name: 'Permissions-Policy' },
-  'x-xss-protection': { weight: 5, name: 'X-XSS-Protection' },
-  'access-control-allow-origin': { weight: 5, name: 'CORS ACAO' },
-};
 
 const WAF_SIGNATURES = [
   { name: 'Cloudflare', headers: { 'server': 'cloudflare', 'cf-ray': null }, body: ['Attention Required! | Cloudflare', 'cf-error-page'] },
@@ -350,44 +335,6 @@ function markProgress(id, state) {
   }
 }
 
-const SECURITY_HEADER_CHECKS = [
-  { key: 'strict-transport-security', name: 'HSTS', weight: 25,
-    grade: v => !v ? { s: 0, d: 'Missing — cookie hijacking via HTTP', sev: 'high' }
-      : v.includes('max-age=') && parseInt((v.match(/max-age=(\d+)/)||[,0])[1]) >= 31536000
-        ? { s: 25, d: 'Set with long max-age ✓', sev: 'good' }
-        : { s: 10, d: 'Set but max-age < 1 year or missing includeSubDomains', sev: 'medium' } },
-  { key: 'content-security-policy', name: 'CSP', weight: 25,
-    grade: v => !v ? { s: 0, d: 'Missing — XSS protection relies entirely on developer discipline', sev: 'high' }
-      : v.includes("'unsafe-inline'") && !v.includes("'nonce-")
-        ? { s: 5, d: "Weak — allows 'unsafe-inline' without nonce", sev: 'high' }
-        : v.includes("'unsafe-eval'") ? { s: 10, d: 'Allows unsafe-eval', sev: 'high' }
-        : v.includes("https:") || v.includes("'self'") ? { s: 20, d: 'Set with reasonable restrictions ✓', sev: 'good' }
-        : { s: 20, d: 'Set ✓', sev: 'good' } },
-  { key: 'x-frame-options', name: 'X-Frame-Options', weight: 15,
-    grade: v => !v ? { s: 0, d: 'Missing — clickjacking risk', sev: 'high' }
-      : v.toLowerCase() === 'deny' ? { s: 15, d: 'DENY ✓', sev: 'good' }
-      : v.toLowerCase() === 'sameorigin' ? { s: 12, d: 'SAMEORIGIN ✓', sev: 'good' }
-      : { s: 5, d: `Weak: ${v}`, sev: 'low' } },
-  { key: 'x-content-type-options', name: 'X-Content-Type-Options', weight: 10,
-    grade: v => !v ? { s: 0, d: 'Missing — MIME sniffing risk', sev: 'medium' }
-      : { s: 10, d: 'nosniff ✓', sev: 'good' } },
-  { key: 'referrer-policy', name: 'Referrer-Policy', weight: 10,
-    grade: v => !v ? { s: 3, d: 'Missing — referrer leakage possible', sev: 'low' }
-      : ['no-referrer','same-origin','strict-origin','strict-origin-when-cross-origin'].includes(v.toLowerCase())
-        ? { s: 10, d: `${v} ✓`, sev: 'good' }
-        : { s: 5, d: `Weak: ${v}`, sev: 'low' } },
-  { key: 'permissions-policy', name: 'Permissions-Policy', weight: 5,
-    grade: v => !v ? { s: 0, d: 'Missing', sev: 'low' } : { s: 5, d: 'Set ✓', sev: 'good' } },
-  { key: 'x-xss-protection', name: 'X-XSS-Protection', weight: 5,
-    grade: v => !v ? { s: 3, d: 'Deprecated but still used by some browsers', sev: 'low' }
-      : { s: 5, d: 'Set ✓', sev: 'good' } },
-  { key: 'access-control-allow-origin', name: 'CORS ACAO', weight: 5,
-    grade: v => !v ? { s: 5, d: 'Not exposed (non-API) ✓', sev: 'good' }
-      : v === '*' ? { s: 0, d: 'Wildcard — any origin can read', sev: 'medium' }
-      : v.includes(origin) ? { s: 1, d: `Reflects origin: ${v}`, sev: 'medium' }
-      : { s: 3, d: `Restricted to ${v}`, sev: 'info' } },
-];
-
 async function dnsQuery(name, type) {
   try {
     const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=${type}`, { headers: { 'Accept': 'application/dns-json' } });
@@ -428,6 +375,7 @@ async function runAudit() {
   const report = { targetUrl: url, timestamp: new Date().toISOString() };
   const hostname = parsed.hostname;
   let body = '';
+  let bodyHdrs = {};
 
   // ── DNS ──
   markProgress('dns', 'running');
@@ -463,212 +411,151 @@ async function runAudit() {
     markProgress('emailsec', 'done');
   } catch { markProgress('emailsec', 'error'); }
 
-  // ── SSL + Performance ──
+  // ── SSL + Body fetch (try HTTPS, fallback HTTP) ──
   markProgress('ssl', 'running');
   markProgress('perf', 'running');
+  var sslFailed = false;
   try {
-    const httpsUrl = url.replace(/^http:/, 'https:');
-    const ctrl = new AbortController();
-    const perfStart = performance.now();
-    setTimeout(() => ctrl.abort(), 8000);
-    const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(httpsUrl)}`, { method: 'GET', signal: ctrl.signal });
-    const perfTime = Math.round(performance.now() - perfStart);
-
+    var fetchUrl = url.replace(/^http:/, 'https:');
+    var fetchScheme = 'https';
+    var ctrl = new AbortController();
+    var perfStart = performance.now();
+    setTimeout(function() { ctrl.abort(); }, 6000);
+    var resp = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(fetchUrl), { signal: ctrl.signal });
+    body = await resp.text().catch(function() { return ''; });
+    var perfTime = Math.round(performance.now() - perfStart);
     report.performance = { ttfb: perfTime };
-
-    const hsts = resp.headers.get('strict-transport-security');
-    const server = resp.headers.get('server') || '—';
-    report.ssl = { https: true, hsts: !!hsts, hstsValue: hsts, server };
+    resp.headers.forEach(function(v,k) { bodyHdrs[k.toLowerCase()] = v; });
+    report.status = resp.status;
+    report.ssl = { https: true };
     markProgress('ssl', 'done');
     markProgress('perf', 'done');
-
-    // Read body for analysis
-    body = await resp.text().catch(() => '');
-    report.status = resp.status;
-
-    const hdrs = {};
-    resp.headers.forEach((v,k) => { hdrs[k.toLowerCase()] = v; });
-    report.headers_raw = hdrs;
-    report.fullBodySample = body.substring(0, 50000);
-
-    // ── Security Headers ──
-    markProgress('headers', 'running');
-    const secResults = SECURITY_HEADER_CHECKS.map(c => {
-      const val = hdrs[c.key];
-      const g = c.grade(val);
-      return { name: c.name, key: c.key, score: g.s, max: c.weight, detail: g.d, severity: g.sev, value: val || '—' };
-    });
-    const totalScore = secResults.reduce((a,r) => a+r.score, 0);
-    const maxScore = secResults.reduce((a,r) => a+r.max, 0);
-    const hGrade = severityFromScore(totalScore, maxScore);
-    report.headers = { results: secResults, totalScore, maxScore, grade: hGrade.grade, gradeColor: hGrade.color };
-    markProgress('headers', 'done');
-
-    // ── CORS ──
-    markProgress('cors', 'running');
-    const acao = hdrs['access-control-allow-origin'];
-    const acac = hdrs['access-control-allow-credentials'];
-    const acam = hdrs['access-control-allow-methods'];
-    const aceh = hdrs['access-control-expose-headers'];
-    const acah = hdrs['access-control-allow-headers'];
-    report.cors = { acao, acac, acam, aceh, acah };
-    markProgress('cors', 'done');
-
-    // ── Cookie Analysis ──
-    markProgress('cookies', 'running');
-    const setCookie = resp.headers.get('set-cookie');
-    const allCookies = [];
-    if (setCookie) {
-      const cookieHeaders = setCookie.split(/\n|(?<=Expires=[^;]+)/);
-      cookieHeaders.forEach(raw => {
-        if (!raw.trim()) return;
-        const parts = raw.split(';').map(s => s.trim());
-        const nameVal = parts[0].split('=');
-        const cookie = {
-          name: nameVal[0],
-          value: nameVal.slice(1).join('='),
-          secure: raw.toLowerCase().includes('secure'),
-          httponly: raw.toLowerCase().includes('httponly'),
-          samesite: (raw.match(/samesite=(\w+)/i) || [,null])[1],
-          domain: (raw.match(/domain=([^;]+)/i) || [,null])[1],
-          path: (raw.match(/path=([^;]+)/i) || [,null])[1],
-          maxAge: (raw.match(/max-age=(\d+)/i) || [,null])[1],
-          expires: (raw.match(/expires=([^;]+)/i) || [,null])[1],
-          raw
-        };
-        allCookies.push(cookie);
-      });
-    }
-    report.cookies = allCookies;
-    markProgress('cookies', 'done');
-
-    // ── CSP Deep Analysis ──
-    markProgress('csp', 'running');
-    const cspValue = hdrs['content-security-policy'];
-    if (cspValue) {
-      const directives = {};
-      cspValue.split(';').forEach(d => {
-        const parts = d.trim().split(/\s+/);
-        if (parts.length) directives[parts[0]] = parts.slice(1);
-      });
-      report.cspDeep = { raw: cspValue, directives };
+  } catch(e) {
+    sslFailed = true;
+    if (url.startsWith('https://')) {
+      report.ssl = { https: false };
     } else {
-      report.cspDeep = null;
+      try {
+        var ctrl2 = new AbortController();
+        var perfStart2 = performance.now();
+        setTimeout(function() { ctrl2.abort(); }, 6000);
+        var resp2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url), { signal: ctrl2.signal });
+        body = await resp2.text().catch(function() { return ''; });
+        var perfTime2 = Math.round(performance.now() - perfStart2);
+        report.performance = { ttfb: perfTime2 };
+        resp2.headers.forEach(function(v,k) { bodyHdrs[k.toLowerCase()] = v; });
+        report.ssl = { https: false }; /* HTTP works but no HTTPS */
+        report.status = resp2.status;
+      } catch(e2) {
+        report.ssl = { https: false };
+        report.performance = null;
+      }
     }
-    markProgress('csp', 'done');
+    markProgress('ssl', sslFailed && !report.ssl ? 'error' : 'done');
+    markProgress('perf', report.performance ? 'done' : 'error');
+  }
 
-    // ── WAF Detection ──
-    markProgress('waf', 'running');
-    const bodySample = body.substring(0, 3000);
-    const wafDetected = [];
-    for (const sig of WAF_SIGNATURES) {
-      let match = false;
-      for (const [k,v] of Object.entries(sig.headers)) {
-        const hv = hdrs[k];
-        if (v === null && hv) { match = true; break; }
-        if (typeof v === 'string' && hv && hv.includes(v)) { match = true; break; }
+  // ── CSP Analysis (from meta tags in body) ──
+  markProgress('csp', 'running');
+  try {
+    var cspMeta = null;
+    var metaMatch = body.match(/<meta[^>]+http-equiv=[\"']Content-Security-Policy[\"'][^>]+content=[\"']([^\"']+)[\"'][^>]*>/i);
+    if (metaMatch) {
+      var cspRaw = metaMatch[1];
+      var directives = {};
+      cspRaw.split(';').forEach(function(d) {
+        var parts = d.trim().split(/\s+/);
+        if (parts.length && parts[0]) directives[parts[0]] = parts.slice(1);
+      });
+      cspMeta = { raw: cspRaw, directives: directives, source: 'meta' };
+    }
+    /* also check for CSP header from allorigins (proxy might forward it) */
+    var cspHeader = bodyHdrs['content-security-policy'];
+    if (cspHeader && !cspMeta) {
+      var directives2 = {};
+      cspHeader.split(';').forEach(function(d) {
+        var parts = d.trim().split(/\s+/);
+        if (parts.length && parts[0]) directives2[parts[0]] = parts.slice(1);
+      });
+      cspMeta = { raw: cspHeader, directives: directives2, source: 'header' };
+    }
+    report.cspDeep = cspMeta;
+    markProgress('csp', 'done');
+  } catch { markProgress('csp', 'error'); }
+
+  // ── WAF Detection (from body + proxy headers) ──
+  markProgress('waf', 'running');
+  try {
+    var bodySample = body.substring(0, 5000);
+    var wafDetected = [];
+    for (var wi = 0; wi < WAF_SIGNATURES.length; wi++) {
+      var sig = WAF_SIGNATURES[wi];
+      var match = false;
+      for (var key in sig.headers) {
+        var hv = bodyHdrs[key];
+        if (sig.headers[key] === null && hv) { match = true; break; }
+        if (typeof sig.headers[key] === 'string' && hv && hv.includes(sig.headers[key])) { match = true; break; }
       }
       if (!match) {
-        for (const fp of (sig.body || [])) {
-          if (bodySample.includes(fp)) { match = true; break; }
+        for (var bi = 0; bi < (sig.body || []).length; bi++) {
+          if (bodySample.includes(sig.body[bi])) { match = true; break; }
         }
       }
       if (match) wafDetected.push(sig.name);
     }
     report.waf = wafDetected;
     markProgress('waf', 'done');
+  } catch { markProgress('waf', 'error'); }
 
-    // ── Tech Stack Detection ──
-    markProgress('tech', 'running');
-    const techFound = [];
-    for (const tech of TECH_SIGNATURES) {
+  // ── Tech Stack Detection (from body) ──
+  markProgress('tech', 'running');
+  try {
+    var techFound = [];
+    for (var ti = 0; ti < TECH_SIGNATURES.length; ti++) {
       try {
-        if (tech.probe(hdrs, body)) techFound.push(tech);
+        if (TECH_SIGNATURES[ti].probe(bodyHdrs, body)) techFound.push(TECH_SIGNATURES[ti]);
       } catch {}
     }
     report.tech = techFound;
     markProgress('tech', 'done');
-
-  } catch(e) {
-    report.ssl = { https: false, hsts: false };
-    markProgress('ssl', 'error');
-    markProgress('perf', 'error');
-    markProgress('headers', 'error');
-    markProgress('cors', 'error');
-    markProgress('cookies', 'error');
-    markProgress('csp', 'error');
-    markProgress('waf', 'error');
-    markProgress('tech', 'error');
-  }
-
-  // ── HTTP Methods ──
-  markProgress('methods', 'running');
-  const methods = ['GET','POST','HEAD','OPTIONS','PUT','DELETE','PATCH','TRACE'];
-  const methodResults = await Promise.all(methods.map(function(m) {
-    return (async function() {
-      try {
-        const c = new AbortController();
-        var to = setTimeout(function() { c.abort(); }, 3000);
-        const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url), { method: m, signal: c.signal });
-        clearTimeout(to);
-        return { method: m, status: r.status, allowed: r.status < 400 };
-      } catch { return { method: m, status: null, allowed: false }; }
-    })();
-  }));
-  report.methods = methodResults;
-  markProgress('methods', 'done');
+  } catch { markProgress('tech', 'error'); }
 
   // ── Redirect Chain ──
   markProgress('redirect', 'running');
-  const redirectChain = [];
-  let cur = url;
-  var redirTimeout = setTimeout(function() { report.redirectChain = redirectChain; markProgress('redirect', 'done'); }, 12000);
+  var redirectChain = [];
+  var cur = url;
   try {
-    for (let i = 0; i < 5; i++) {
+    var redirSafety = setTimeout(function() { report.redirectChain = redirectChain; markProgress('redirect', 'done'); }, 8000);
+    for (var ri = 0; ri < 3; ri++) {
       try {
-        const c = new AbortController();
-        setTimeout(function() { c.abort(); }, 3000);
-        const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(cur), { method: 'HEAD', signal: c.signal });
-        const loc = r.headers.get('location');
-        redirectChain.push({ url: cur, status: r.status, location: loc });
-        if (loc && r.status >= 300 && r.status < 400) {
-          cur = new URL(loc, cur).href;
+        var rc = new AbortController();
+        setTimeout(function() { rc.abort(); }, 3000);
+        var rr = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(cur), { method: 'GET', signal: rc.signal });
+        var loc = rr.headers.get('location');
+        redirectChain.push({ url: cur, status: rr.status, location: loc });
+        if (loc && rr.status >= 300 && rr.status < 400) {
+          try { cur = new URL(loc, cur).href; } catch { break; }
         } else break;
       } catch { break; }
     }
+    clearTimeout(redirSafety);
   } catch(e) {}
-  clearTimeout(redirTimeout);
   report.redirectChain = redirectChain;
   markProgress('redirect', 'done');
 
   // ── HTTP Features ──
   markProgress('httpf', 'running');
-  var httpfTimedOut = false;
-  var httpfTimer = setTimeout(function() { httpfTimedOut = true; markProgress('httpf', 'error'); }, 3000);
   try {
-  const httpFeatures = {};
-  const hdrList = report.headers && report.headers.results ? report.headers.results : [];
-  if (redirectChain.length >= 2 && redirectChain[0].url.startsWith('http://') && redirectChain[redirectChain.length-1].url.startsWith('https://')) {
-    httpFeatures.httpsRedirect = true;
-  } else { httpFeatures.httpsRedirect = false; }
-  const hsts = hdrList.find(h => h.key === 'strict-transport-security');
-  if (hsts) {
-    const val = hsts.value || '';
-    const matchAge = val.match(/max-age=(\d+)/i);
-    const maxAge = matchAge ? parseInt(matchAge[1]) : 0;
-    httpFeatures.hstsMaxAge = maxAge;
-    httpFeatures.hstsIncludeSub = val.toLowerCase().includes('includesubdomains');
-    httpFeatures.hstsPreload = val.toLowerCase().includes('preload');
-    httpFeatures.hstsPreloadReady = maxAge >= 31536000 && httpFeatures.hstsIncludeSub && httpFeatures.hstsPreload;
-  } else { httpFeatures.hstsMaxAge = 0; httpFeatures.hstsPreloadReady = false; }
-  const serverH = hdrList.find(h => h.key === 'server');
-  httpFeatures.server = serverH ? serverH.value : (report.headers_raw && report.headers_raw.server ? report.headers_raw.server : null);
-  const xcto = hdrList.find(h => h.key === 'x-content-type-options');
-  httpFeatures.xctoNoSniff = xcto && xcto.value && xcto.value.toLowerCase().trim() === 'nosniff';
-  report.httpFeatures = httpFeatures;
-  clearTimeout(httpfTimer);
-  if (!httpfTimedOut) markProgress('httpf', 'done');
-  } catch(e) { clearTimeout(httpfTimer); markProgress('httpf', 'error'); }
+    var httpFeatures = {};
+    if (redirectChain.length >= 2 && redirectChain[0].url.startsWith('http://') && redirectChain[redirectChain.length-1].url.startsWith('https://')) {
+      httpFeatures.httpsRedirect = true;
+    } else { httpFeatures.httpsRedirect = false; }
+    httpFeatures.xctoNoSniff = bodyHdrs['x-content-type-options'] && bodyHdrs['x-content-type-options'].toLowerCase().trim() === 'nosniff';
+    var bodyServer = bodyHdrs['server'];
+    httpFeatures.server = bodyServer && bodyServer !== 'cloudflare' ? bodyServer : null;
+    report.httpFeatures = httpFeatures;
+    markProgress('httpf', 'done');
+  } catch { markProgress('httpf', 'error'); }
 
   // ── Build Report ──
   clearInterval(progressTimer);
@@ -685,374 +572,240 @@ async function runAudit() {
 }
 
 function renderReport(r, url) {
-  const container = qs('audit-report');
+  var container = qs('audit-report');
   container.innerHTML = '';
 
-  const criticalIssues = [];
-  const highIssues = [];
-  const mediumIssues = [];
-  const lowIssues = [];
-  const goodItems = [];
-  let scoreDenom = 0;
+  var criticalIssues = [];
+  var highIssues = [];
+  var mediumIssues = [];
+  var lowIssues = [];
+  var goodItems = [];
 
-  // Collect findings
-  if (r.headers) {
-    r.headers.results.forEach(hr => {
-      if (hr.severity === 'high') highIssues.push(hr.detail);
-      else if (hr.severity === 'medium') mediumIssues.push(hr.detail);
-      else if (hr.severity === 'low') lowIssues.push(hr.detail);
-      else if (hr.severity === 'good') goodItems.push(hr.detail);
-    });
-  }
-
-  if (r.ssl && !r.ssl.https) { criticalIssues.push('HTTPS not available'); scoreDenom += 20; }
-
-  if (r.cookies) {
-    r.cookies.forEach(c => {
-      if (!c.secure && c.name.toLowerCase() !== '') mediumIssues.push(`Cookie "${c.name}" missing Secure flag`);
-      if (!c.httponly) lowIssues.push(`Cookie "${c.name}" missing HttpOnly flag`);
-      if (!c.samesite) mediumIssues.push(`Cookie "${c.name}" missing SameSite attribute`);
-    });
-  }
+  // Collect findings from each section
+  if (r.ssl && !r.ssl.https) { criticalIssues.push('HTTPS not available'); }
 
   if (!r.cspDeep) {
     highIssues.push('CSP not configured — no XSS protection');
   } else if (r.cspDeep.directives) {
-    if (r.cspDeep.directives['script-src']?.some(s => s.includes("'unsafe-inline'"))) {
+    var dirs = r.cspDeep.directives;
+    if (dirs['script-src'] && dirs['script-src'].some(function(s) { return s.includes("'unsafe-inline'"); })) {
       highIssues.push("CSP script-src allows 'unsafe-inline'");
     }
-    if (r.cspDeep.directives['script-src']?.some(s => s.includes("'unsafe-eval'"))) {
+    if (dirs['script-src'] && dirs['script-src'].some(function(s) { return s.includes("'unsafe-eval'"); })) {
       highIssues.push("CSP script-src allows 'unsafe-eval'");
     }
-    if (!r.cspDeep.directives['base-uri']) {
-      mediumIssues.push('CSP missing base-uri — script injection via <base> tag');
-    }
-    if (!r.cspDeep.directives['object-src']) {
-      lowIssues.push('CSP missing object-src — Flash/plugin injection risk');
-    }
-    if (r.cspDeep.directives['default-src']?.includes("'none'")) {
-      goodItems.push('CSP uses strict default-src: none ✓');
+    if (!dirs['base-uri']) mediumIssues.push('CSP missing base-uri — script injection via <base> tag');
+    if (!dirs['object-src']) lowIssues.push('CSP missing object-src — plugin injection risk');
+    if (dirs['default-src'] && dirs['default-src'].includes("'none'")) goodItems.push('CSP uses strict default-src: none ✓');
+  }
+
+  if (r.emailSecurity) {
+    var e = r.emailSecurity;
+    if (!e.spf) highIssues.push('SPF record not found — domain spoofing possible');
+    if (!e.dmarc) highIssues.push('DMARC record not found — no email authentication enforcement');
+    if (e.spf && !e.spf.includes('-all')) mediumIssues.push('SPF should use -all (hard fail) instead of ~all (soft fail)');
+    if (e.dmarc) {
+      var dp = e.dmarc.match(/p=(none|quarantine|reject)/i);
+      if (dp && dp[1] === 'none') mediumIssues.push('DMARC policy is p=none — monitoring only, no protection');
     }
   }
 
-  if (r.cors) {
-    if (r.cors.acao === '*') mediumIssues.push('CORS wildcard ACAO — any origin can read');
-    if (r.cors.acac === 'true') highIssues.push('CORS credentials allowed with wildcard — sensitive data at risk');
-  }
-
-  const riskyMethods = r.methods ? r.methods.filter(m => m.allowed && !['GET','POST','HEAD','OPTIONS'].includes(m.method)) : [];
-
-  if (riskyMethods.length) {
-    riskyMethods.forEach(m => highIssues.push(`HTTP ${m.method} enabled on production`));
-  }
-
-  const redirectCount = r.redirectChain ? r.redirectChain.length - 1 : 0;
-  const hasDowngrade = r.redirectChain && r.redirectChain.some(h => h.url && h.url.startsWith('http://'));
-  const hasCrossDomain = r.redirectChain && r.redirectChain.some((h, i) => {
+  var hasDowngrade = r.redirectChain && r.redirectChain.some(function(h) { return h.url && h.url.startsWith('http://'); });
+  var hasCrossDomain = r.redirectChain && r.redirectChain.some(function(h, i) {
     if (i === 0) return false;
     try { return new URL(h.url).hostname !== new URL(url).hostname; } catch { return false; }
   });
-
   if (hasDowngrade) highIssues.push('HTTPS → HTTP protocol downgrade in redirect chain');
   if (hasCrossDomain) lowIssues.push('Cross-domain redirect detected (potential open redirect)');
 
-  // ── Calculate Score ──
-  const baseScore = r.headers ? r.headers.totalScore : 0;
-  const baseMax = r.headers ? r.headers.maxScore : 100;
-  let deduction = criticalIssues.length * 25 + highIssues.length * 10 + mediumIssues.length * 5 + lowIssues.length * 2;
-  deduction = Math.min(deduction, baseMax);
-  const rawScore = Math.max(0, baseScore - deduction);
-  const overallScore = Math.round((rawScore / baseMax) * 100);
-  const scoreColor = overallScore >= 80 ? '#40c060' : overallScore >= 55 ? '#e0b040' : '#e08040';
-  const scoreGrade = severityFromScore(overallScore, 100).grade;
+  // Score: start from 100, deduct per finding severity
+  var baseScore = 100;
+  var deduction = criticalIssues.length * 25 + highIssues.length * 10 + mediumIssues.length * 5 + lowIssues.length * 2;
+  var overallScore = Math.max(0, Math.min(100, baseScore - deduction));
+  var scoreColor = overallScore >= 80 ? '#40c060' : overallScore >= 55 ? '#e0b040' : '#e08040';
+  var scoreGrade = overallScore >= 90 ? 'A+' : overallScore >= 80 ? 'A' : overallScore >= 70 ? 'B' : overallScore >= 55 ? 'C' : overallScore >= 35 ? 'D' : 'F';
 
-  const totalIssues = criticalIssues.length + highIssues.length + mediumIssues.length;
-  const wafText = r.waf && r.waf.length ? r.waf.join(', ') : 'None detected';
-  const techCount = r.tech ? r.tech.length : 0;
-  const cookieCount = r.cookies ? r.cookies.length : 0;
+  var totalIssues = criticalIssues.length + highIssues.length + mediumIssues.length;
+  var wafText = r.waf && r.waf.length ? r.waf.join(', ') : 'None detected';
+  var techCount = r.tech ? r.tech.length : 0;
 
   // ── Executive Summary ──
-  container.innerHTML = `<div class="report-section" style="text-align:center" id="report-summary">
-    <h4>📊 Executive Summary</h4>
-    <div class="score-circle" style="background:${scoreColor}22;color:${scoreColor};border:3px solid ${scoreColor}">
-      ${scoreGrade}
-    </div>
-    <div class="summary-grid">
-      <div class="summary-card"><div class="val" style="color:${scoreColor}">${overallScore}%</div><div class="lbl">Security Score</div></div>
-      <div class="summary-card"><div class="val" style="color:${totalIssues ? '#e08040' : '#40c060'}">${totalIssues}</div><div class="lbl">Issues Found</div></div>
-      <div class="summary-card"><div class="val" style="color:${r.ssl && r.ssl.https ? '#40c060' : '#e04040'}">${r.ssl && r.ssl.https ? 'Yes' : 'No'}</div><div class="lbl">HTTPS</div></div>
-      <div class="summary-card"><div class="val">${r.headers ? r.headers.grade : '—'}</div><div class="lbl">Headers Grade</div></div>
-      <div class="summary-card"><div class="val">${wafText}</div><div class="lbl">WAF</div></div>
-      <div class="summary-card"><div class="val">${techCount}</div><div class="lbl">Technologies</div></div>
-      <div class="summary-card"><div class="val">${cookieCount}</div><div class="lbl">Cookies</div></div>
-      <div class="summary-card"><div class="val" style="color:${riskyMethods.length ? '#e08040' : '#40c060'}">${riskyMethods.length || 0}</div><div class="lbl">Risky Methods</div></div>
-      <div class="summary-card"><div class="val" style="color:${r.performance ? '' : 'var(--text2)'}">${r.performance ? r.performance.ttfb + 'ms' : '—'}</div><div class="lbl">TTFB</div></div>
-    </div>
-    <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
-  </div>`;
+  var summaryHtml = '<div class="report-section" style="text-align:center" id="report-summary">';
+  summaryHtml += '<h4>\uD83D\uDCCA Executive Summary</h4>';
+  summaryHtml += '<div class="score-circle" style="background:' + scoreColor + '22;color:' + scoreColor + ';border:3px solid ' + scoreColor + '">' + scoreGrade + '</div>';
+  summaryHtml += '<div class="summary-grid">';
+  summaryHtml += '<div class="summary-card"><div class="val" style="color:' + scoreColor + '">' + overallScore + '%</div><div class="lbl">Security Score</div></div>';
+  summaryHtml += '<div class="summary-card"><div class="val" style="color:' + (totalIssues ? '#e08040' : '#40c060') + '">' + totalIssues + '</div><div class="lbl">Issues Found</div></div>';
+  summaryHtml += '<div class="summary-card"><div class="val" style="color:' + (r.ssl && r.ssl.https ? '#40c060' : '#e04040') + '">' + (r.ssl && r.ssl.https ? 'Yes' : 'No') + '</div><div class="lbl">HTTPS</div></div>';
+  summaryHtml += '<div class="summary-card"><div class="val">' + (r.cspDeep ? 'Set' : 'Missing') + '</div><div class="lbl">CSP</div></div>';
+  summaryHtml += '<div class="summary-card"><div class="val">' + wafText + '</div><div class="lbl">WAF</div></div>';
+  summaryHtml += '<div class="summary-card"><div class="val">' + techCount + '</div><div class="lbl">Technologies</div></div>';
+  summaryHtml += '<div class="summary-card"><div class="val">' + (r.performance ? r.performance.ttfb + 'ms' : '—') + '</div><div class="lbl">TTFB</div></div>';
+  summaryHtml += '<div class="summary-card"><div class="val">' + (r.emailSecurity ? (r.emailSecurity.spf ? 'SPF\u2713' : 'No SPF') : '—') + '</div><div class="lbl">Email Sec</div></div>';
+  summaryHtml += '</div>';
+  summaryHtml += '<button class="print-btn" onclick="window.print()">\uD83D\uDDA8\uFE0F Print / Save PDF</button>';
+  summaryHtml += '</div>';
+  container.innerHTML = summaryHtml;
 
   // ── Tech Stack ──
   if (r.tech && r.tech.length) {
-    const categories = {};
-    r.tech.forEach(t => {
+    var categories = {};
+    r.tech.forEach(function(t) {
       if (!categories[t.category]) categories[t.category] = [];
       categories[t.category].push(t.name);
     });
-    let techHtml = `<div class="report-section"><h4>⚙️ Technology Stack (${r.tech.length} detected)</h4>`;
-    for (const [cat, techs] of Object.entries(categories)) {
-      techHtml += `<div class="finding info"><strong>${cat}:</strong> ${techs.join(', ')}</div>`;
+    var techHtml = '<div class="report-section"><h4>\u2699\uFE0F Technology Stack (' + r.tech.length + ' detected)</h4>';
+    for (var cat in categories) {
+      techHtml += '<div class="finding info"><strong>' + cat + ':</strong> ' + categories[cat].join(', ') + '</div>';
     }
-    techHtml += `<div class="finding low">Note: Detection is based on headers and HTML patterns. Some technologies may not be detected.</div>`;
-    techHtml += `</div>`;
+    techHtml += '<div class="finding low">Note: Detection based on HTML/headers. Some tech may be undetected.</div>';
+    techHtml += '</div>';
     container.innerHTML += techHtml;
   }
 
   // ── DNS ──
   if (r.dns) {
-    let dnsHtml = `<div class="report-section"><h4>🌐 DNS Records</h4>`;
-    const types = Object.keys(r.dns);
+    var dnsHtml = '<div class="report-section"><h4>\uD83C\uDF10 DNS Records</h4>';
+    var types = Object.keys(r.dns);
     if (types.length) {
-      types.forEach(t => {
-        dnsHtml += `<div class="finding info">${t}: ${r.dns[t].join(', ')}</div>`;
+      types.forEach(function(t) {
+        dnsHtml += '<div class="finding info">' + t + ': ' + r.dns[t].join(', ') + '</div>';
       });
     } else {
-      dnsHtml += `<div class="finding low">No DNS records resolved</div>`;
+      dnsHtml += '<div class="finding low">No DNS records resolved</div>';
     }
-    dnsHtml += `</div>`;
+    dnsHtml += '</div>';
     container.innerHTML += dnsHtml;
   }
 
   // ── Email Security ──
   if (r.emailSecurity) {
-    const e = r.emailSecurity;
+    var e = r.emailSecurity;
     var eHtml = '<div class="report-section"><h4>\uD83D\uDCE7 Email Security (SPF/DKIM/DMARC/BIMI)</h4>';
-    eHtml += '<div class="finding ' + (e.spf ? 'good' : 'high') + '">SPF: ' + (e.spf || '\u274C Not configured \u2014 anyone can spoof your domain') + '</div>';
+    eHtml += '<div class="finding ' + (e.spf ? 'good' : 'high') + '">SPF: ' + (e.spf || '\u274C Not configured') + '</div>';
     if (e.spf) {
       var qualifier = e.spf.match(/\~(all|\?all)/i);
-      if (qualifier) eHtml += '<div class="finding medium">\u26A0\uFE0F SPF softfail (~' + qualifier[1] + ') \u2014 consider using -all for strict rejection</div>';
+      if (qualifier) eHtml += '<div class="finding medium">\u26A0\uFE0F SPF softfail (~' + qualifier[1] + ') \u2014 use -all for strict rejection</div>';
       var mxInclude = (e.spf.match(/include:/g) || []).length;
       if (mxInclude > 10) eHtml += '<div class="finding medium">\u26A0\uFE0F SPF has ' + mxInclude + ' includes \u2014 may exceed DNS lookup limit (10)</div>';
     }
-    eHtml += '<div class="finding ' + (e.dmarc ? 'good' : 'high') + '">DMARC: ' + (e.dmarc || '\u274C Not configured \u2014 receivers can\'t enforce policy') + '</div>';
+    eHtml += '<div class="finding ' + (e.dmarc ? 'good' : 'high') + '">DMARC: ' + (e.dmarc || '\u274C Not configured') + '</div>';
     if (e.dmarc) {
       var pMatch = e.dmarc.match(/p=(none|quarantine|reject)/i);
       if (pMatch) {
-        if (pMatch[1] === 'none') eHtml += '<div class="finding medium">\u26A0\uFE0F DMARC policy is p=none (monitoring only, no enforcement)</div>';
-        else if (pMatch[1] === 'quarantine') eHtml += '<div class="finding info">DMARC policy: quarantine \u2713 (spam folder)</div>';
-        else eHtml += '<div class="finding good">DMARC policy: reject \u2713 (strong protection)</div>';
+        if (pMatch[1] === 'none') eHtml += '<div class="finding medium">\u26A0\uFE0F DMARC p=none (monitoring only, no enforcement)</div>';
+        else if (pMatch[1] === 'quarantine') eHtml += '<div class="finding info">DMARC policy: quarantine \u2713</div>';
+        else eHtml += '<div class="finding good">DMARC policy: reject \u2713 (strong)</div>';
       }
       var pctMatch = e.dmarc.match(/pct=(\d+)/i);
-      if (pctMatch && parseInt(pctMatch[1]) < 100) eHtml += '<div class="finding medium">\u26A0\uFE0F DMARC pct=' + pctMatch[1] + '% \u2014 not fully deployed</div>';
+      if (pctMatch && parseInt(pctMatch[1]) < 100) eHtml += '<div class="finding medium">\u26A0\uFE0F DMARC pct=' + pctMatch[1] + '% \u2014 partial deployment</div>';
     }
-    eHtml += '<div class="finding ' + (e.dkimSelectors.length ? 'good' : 'medium') + '">DKIM: ' + (e.dkimSelectors.length ? e.dkimSelectors.join(', ') + ' (selectors found) \u2713' : 'No common selectors found') + '</div>';
-    eHtml += '<div class="finding ' + (e.bimi ? 'good' : 'low') + '">BIMI: ' + (e.bimi || 'Not configured (optional, for branded indicators)') + '</div>';
+    eHtml += '<div class="finding ' + (e.dkimSelectors.length ? 'good' : 'medium') + '">DKIM: ' + (e.dkimSelectors.length ? e.dkimSelectors.join(', ') + ' found \u2713' : 'No common selectors found') + '</div>';
+    eHtml += '<div class="finding ' + (e.bimi ? 'good' : 'low') + '">BIMI: ' + (e.bimi || 'Not configured (optional)') + '</div>';
     eHtml += '</div>';
     container.innerHTML += eHtml;
-
-    // Scoring
-    if (!e.spf) { highIssues.push('SPF record not found — domain spoofing possible'); }
-    if (!e.dmarc) { highIssues.push('DMARC record not found — no email authentication enforcement'); }
-    if (e.spf && !e.spf.includes('-all')) { mediumIssues.push('SPF should use -all (hard fail) instead of ~all (soft fail)'); }
-    if (e.dmarc) {
-      const dp = e.dmarc.match(/p=(none|quarantine|reject)/i);
-      if (dp && dp[1] === 'none') mediumIssues.push('DMARC policy is p=none — monitoring only, no protection');
-    }
   }
 
   // ── SSL ──
   if (r.ssl) {
-    let sslHtml = `<div class="report-section"><h4>🔒 SSL/TLS</h4>`;
+    var sslHtml = '<div class="report-section"><h4>\uD83D\uDD12 SSL/TLS</h4>';
     if (r.ssl.https) {
-      sslHtml += `<div class="finding good">HTTPS available ✓</div>`;
-      if (r.ssl.hsts) sslHtml += `<div class="finding good">HSTS enabled ✓ ${r.ssl.hstsValue ? '(' + r.ssl.hstsValue + ')' : ''}</div>`;
-      else sslHtml += `<div class="finding high">HSTS not set — cookie hijacking risk on HTTP</div>`;
-      if (r.ssl.server && r.ssl.server !== '—') sslHtml += `<div class="finding info">Server: ${r.ssl.server}</div>`;
+      sslHtml += '<div class="finding good">HTTPS available \u2713</div>';
     } else {
-      sslHtml += `<div class="finding critical">HTTPS not available — all data transmitted in plaintext</div>`;
+      sslHtml += '<div class="finding critical">HTTPS not available \u2014 data transmitted in plaintext</div>';
     }
-    sslHtml += `</div>`;
+    sslHtml += '</div>';
     container.innerHTML += sslHtml;
   }
 
-  // ── Security Headers ──
-  if (r.headers) {
-    let hHtml = `<div class="report-section"><h4>🛡️ Security Headers — Grade: <span style="color:${r.headers.gradeColor}">${r.headers.grade}</span> (${r.headers.totalScore}/${r.headers.maxScore})</h4>`;
-    r.headers.results.forEach(hr => {
-      const icon = hr.severity === 'good' ? '✅' : hr.severity === 'info' ? 'ℹ️' : '⚠️';
-      hHtml += `<div class="finding ${hr.severity}">${icon} <strong>${hr.name}:</strong> ${hr.detail} <span style="opacity:.5">[${hr.score}/${hr.max}]</span></div>`;
-    });
-    hHtml += `</div>`;
-    container.innerHTML += hHtml;
-  }
-
-  // ── CSP Deep ──
+  // ── CSP (from meta tags) ──
   if (r.cspDeep) {
-    let cspHtml = `<div class="report-section"><h4>📋 Content Security Policy — Deep Analysis</h4>`;
-    for (const [dir, vals] of Object.entries(r.cspDeep.directives)) {
-      const v = vals.join(' ');
-      const issues = [];
+    var cspHtml = '<div class="report-section"><h4>\uD83D\uDCCB Content Security Policy</h4>';
+    if (r.cspDeep.source === 'meta') cspHtml += '<div class="finding info">Source: &lt;meta&gt; tag in HTML</div>';
+    for (var dir in r.cspDeep.directives) {
+      var vals = r.cspDeep.directives[dir];
+      var v = vals.join(' ');
+      var issues2 = [];
       if (dir === 'script-src') {
-        if (vals.includes("'unsafe-inline'")) issues.push("⚠️ Allows 'unsafe-inline'");
-        if (vals.includes("'unsafe-eval'")) issues.push("⚠️ Allows 'unsafe-eval'");
+        if (vals.includes("'unsafe-inline'")) issues2.push("\u26A0\uFE0F Allows 'unsafe-inline'");
+        if (vals.includes("'unsafe-eval'")) issues2.push("\u26A0\uFE0F Allows 'unsafe-eval'");
       }
-      if (dir === 'object-src' && v === "'none'") issues.push('✅ Properly restricted');
-      if (dir === 'base-uri' && v === "'none'") issues.push('✅ Prevents base tag injection');
-      const note = issues.length ? ' — ' + issues.join('; ') : '';
-      cspHtml += `<div class="finding info"><strong>${dir}</strong>: ${v}${note}</div>`;
+      if (dir === 'object-src' && v === "'none'") issues2.push('\u2705 Properly restricted');
+      if (dir === 'base-uri' && v === "'none'") issues2.push('\u2705 Prevents base tag injection');
+      var note = issues2.length ? ' \u2014 ' + issues2.join('; ') : '';
+      cspHtml += '<div class="finding info"><strong>' + dir + '</strong>: ' + v + note + '</div>';
     }
-    const missing = [];
-    if (!r.cspDeep.directives['base-uri']) missing.push('base-uri');
-    if (!r.cspDeep.directives['object-src']) missing.push('object-src');
-    if (!r.cspDeep.directives['frame-ancestors']) missing.push('frame-ancestors');
-    if (!r.cspDeep.directives['form-action']) missing.push('form-action');
-    if (missing.length) cspHtml += `<div class="finding medium">Missing directives that would strengthen CSP: ${missing.join(', ')}</div>`;
-    cspHtml += `</div>`;
+    var missing2 = [];
+    if (!r.cspDeep.directives['base-uri']) missing2.push('base-uri');
+    if (!r.cspDeep.directives['object-src']) missing2.push('object-src');
+    if (!r.cspDeep.directives['frame-ancestors']) missing2.push('frame-ancestors');
+    if (!r.cspDeep.directives['form-action']) missing2.push('form-action');
+    if (missing2.length) cspHtml += '<div class="finding medium">Missing directives: ' + missing2.join(', ') + '</div>';
+    cspHtml += '</div>';
     container.innerHTML += cspHtml;
   } else {
-    container.innerHTML += `<div class="report-section"><h4>📋 Content Security Policy</h4><div class="finding high">CSP not configured — no XSS protection</div></div>`;
+    container.innerHTML += '<div class="report-section"><h4>\uD83D\uDCCB Content Security Policy</h4><div class="finding high">CSP not configured \u2014 no XSS protection</div></div>';
   }
 
-  // ── CORS ──
-  if (r.cors) {
-    let corsHtml = `<div class="report-section"><h4>🌍 CORS Configuration</h4>`;
-    if (r.cors.acao) {
-      if (r.cors.acao === '*') corsHtml += `<div class="finding medium">⚠️ Access-Control-Allow-Origin: * — any origin can read responses</div>`;
-      else corsHtml += `<div class="finding info">ACAO: ${r.cors.acao}</div>`;
-    } else corsHtml += `<div class="finding good">ACAO not exposed (standard for non-API origins) ✓</div>`;
-    if (r.cors.acac === 'true') corsHtml += `<div class="finding high">⚠️ Credentials allowed with CORS — sensitive data at risk</div>`;
-    if (r.cors.acam) corsHtml += `<div class="finding info">Allowed methods: ${r.cors.acam}</div>`;
-    if (r.cors.acah) corsHtml += `<div class="finding info">Allowed headers: ${r.cors.acah}</div>`;
-    corsHtml += `</div>`;
-    container.innerHTML += corsHtml;
-  }
-
-  // ── Cookie Analysis ──
-  if (r.cookies && r.cookies.length) {
-    let cookieHtml = `<div class="report-section"><h4>🍪 Cookie Security Analysis (${r.cookies.length} cookies)</h4>`;
-    r.cookies.forEach(c => {
-      const flags = [];
-      if (c.secure) flags.push('Secure ✓'); else flags.push('Secure ✗');
-      if (c.httponly) flags.push('HttpOnly ✓'); else flags.push('HttpOnly ✗');
-      if (c.samesite) flags.push(`SameSite=${c.samesite}`); else flags.push('SameSide ✗');
-      cookieHtml += `<div class="finding ${!c.secure || !c.httponly ? 'medium' : 'good'}"><strong>${c.name}</strong> — ${flags.join(', ')}${c.domain ? ' Domain: ' + c.domain : ''}${c.path ? ' Path: ' + c.path : ''}${c.maxAge ? ' Max-Age: ' + c.maxAge + 's' : ''}</div>`;
-    });
-    cookieHtml += `</div>`;
-    container.innerHTML += cookieHtml;
-  } else if (r.cookies !== undefined) {
-    container.innerHTML += `<div class="report-section"><h4>🍪 Cookie Security Analysis</h4><div class="finding info">No cookies set by this page</div></div>`;
+  // ── WAF ──
+  if (r.waf && r.waf.length) {
+    container.innerHTML += '<div class="report-section"><h4>\uD83D\uDD25 WAF Detection</h4><div class="finding info">' + r.waf.join(', ') + '</div></div>';
+  } else {
+    container.innerHTML += '<div class="report-section"><h4>\uD83D\uDD25 WAF Detection</h4><div class="finding info">None detected</div></div>';
   }
 
   // ── HTTP Features ──
   if (r.httpFeatures) {
-    const f = r.httpFeatures;
-    let fHtml = '<div class="report-section"><h4>⚡ HTTP Features</h4>';
-    fHtml += '<div class="finding ' + (f.httpsRedirect ? 'good' : 'medium') + '">HTTP → HTTPS redirect: ' + (f.httpsRedirect ? '&#10003; Present' : '&#10007; Not detected (or no HTTP available)') + '</div>';
+    var f = r.httpFeatures;
+    var fHtml = '<div class="report-section"><h4>\u26A1 HTTP Features</h4>';
+    fHtml += '<div class="finding ' + (f.httpsRedirect ? 'good' : 'medium') + '">HTTP \u2192 HTTPS redirect: ' + (f.httpsRedirect ? '\u2713 Present' : '\u2717 Not detected') + '</div>';
     if (f.server) fHtml += '<div class="finding info">Server: ' + f.server + '</div>';
-    var hstsStatus = f.hstsPreloadReady ? 'good' : (f.hstsMaxAge > 0 ? 'info' : 'low');
-    var hstsText = f.hstsPreloadReady ? '&#10003; Yes (max-age&#8805;31536000 + includeSubDomains + preload)' : (f.hstsMaxAge > 0 ? 'Partially configured (max-age=' + f.hstsMaxAge + 's)' : 'Not preload-ready');
-    fHtml += '<div class="finding ' + hstsStatus + '">HSTS Preload Ready: ' + hstsText + '</div>';
-    fHtml += '<div class="finding ' + (f.xctoNoSniff ? 'good' : 'medium') + '">X-Content-Type-Options: ' + (f.xctoNoSniff ? 'nosniff &#10003;' : '&#10007; Missing — MIME-sniffing allowed') + '</div>';
+    fHtml += '<div class="finding ' + (f.xctoNoSniff ? 'good' : 'medium') + '">X-Content-Type-Options: ' + (f.xctoNoSniff ? 'nosniff \u2713' : '\u2717 Missing \u2014 MIME-sniffing allowed') + '</div>';
     fHtml += '</div>';
     container.innerHTML += fHtml;
-    if (!f.httpsRedirect) { lowIssues.push('No HTTP→HTTPS redirect — users may connect over plain HTTP'); }
-    if (f.hstsPreloadReady) { goodItems.push('HSTS preload eligible ✓'); }
-    if (!f.xctoNoSniff) { mediumIssues.push('Missing X-Content-Type-Options: nosniff — MIME-sniffing risk'); }
-  }
-
-  // ── WAF ──
-  if (r.waf !== undefined) {
-    let wafHtml = `<div class="report-section"><h4>🔥 WAF / CDN Detection</h4>`;
-    if (r.waf.length) {
-      r.waf.forEach(w => wafHtml += `<div class="finding info">${w} detected</div>`);
-    } else {
-      wafHtml += `<div class="finding low">No WAF/CDN detected based on current fingerprints (${WAF_SIGNATURES.length} signatures checked)</div>`;
-    }
-    wafHtml += `</div>`;
-    container.innerHTML += wafHtml;
-  }
-
-  // ── HTTP Methods ──
-  if (r.methods) {
-    let mHtml = `<div class="report-section"><h4>🔧 HTTP Methods</h4>`;
-    const blocked = r.methods.filter(m => !m.allowed);
-    const allowed = r.methods.filter(m => m.allowed);
-    const risky = allowed.filter(m => !['GET','POST','HEAD','OPTIONS'].includes(m.method));
-    if (risky.length) {
-      risky.forEach(m => mHtml += `<div class="finding high">⚠️ ${m.method} — allowed (HTTP ${m.status})</div>`);
-    }
-    if (blocked.length) {
-      blocked.forEach(m => mHtml += `<div class="finding good">${m.method} — blocked (HTTP ${m.status}) ✓</div>`);
-    }
-    if (!risky.length) mHtml += `<div class="finding good">No risky methods allowed (only GET/POST/HEAD/OPTIONS) ✓</div>`;
-    mHtml += `</div>`;
-    container.innerHTML += mHtml;
   }
 
   // ── Redirect Chain ──
-  if (r.redirectChain && r.redirectChain.length > 1) {
-    let redirHtml = `<div class="report-section"><h4>↪️ Redirect Chain (${r.redirectChain.length - 1} hops)</h4>`;
-    const startDomain = new URL(url).hostname;
-    r.redirectChain.forEach((h, i) => {
-      const isRedir = i < r.redirectChain.length - 1;
-      let hopDomain = '?';
-      try { hopDomain = new URL(h.url).hostname; } catch {}
-      const crossDomain = i > 0 && hopDomain !== startDomain;
-      redirHtml += `<div class="finding ${crossDomain && isRedir ? 'medium' : 'info'}">Hop ${i+1}: HTTP ${h.status} → ${h.url}${crossDomain && isRedir ? ' (cross-domain)' : ''}</div>`;
+  if (r.redirectChain && r.redirectChain.length >= 2) {
+    var redirHtml = '<div class="report-section"><h4>\u27A1\uFE0F Redirect Chain (' + (r.redirectChain.length - 1) + ' hops)</h4>';
+    r.redirectChain.forEach(function(h, i) {
+      var statusCls = h.status && h.status < 400 ? 'good' : (h.status && h.status >= 400 ? 'high' : 'low');
+      var statusTxt = h.status ? h.status + (h.location ? ' \u2192' : ' (final)') : 'error';
+      redirHtml += '<div class="finding ' + statusCls + '">' + (i+1) + '. ' + h.url + ' <span style="opacity:.5">[' + statusTxt + ']</span>' + (h.location ? '<br><span style="opacity:.6;font-size:.75rem">Location: ' + h.location + '</span>' : '') + '</div>';
     });
-    if (hasDowngrade) redirHtml += `<div class="finding high">⚠️ Protocol downgrade detected (HTTPS → HTTP)</div>`;
-    redirHtml += `</div>`;
+    if (hasDowngrade) redirHtml += '<div class="finding medium">\u26A0\uFE0F Insecure HTTP detected in chain</div>';
+    redirHtml += '</div>';
     container.innerHTML += redirHtml;
+  } else if (r.redirectChain) {
+    container.innerHTML += '<div class="report-section"><h4>\u27A1\uFE0F Redirect Chain</h4><div class="finding info">No redirects detected (direct access)</div></div>';
   }
 
   // ── Performance ──
   if (r.performance) {
-    const ttfb = r.performance.ttfb;
-    const perfGrade = ttfb < 200 ? 'good' : ttfb < 500 ? 'info' : ttfb < 1000 ? 'medium' : 'high';
-    const perfLabel = ttfb < 200 ? 'Excellent ✓' : ttfb < 500 ? 'Good' : ttfb < 1000 ? 'Needs improvement' : 'Slow — consider optimizing';
-    container.innerHTML += `<div class="report-section"><h4>⏱️ Performance</h4><div class="finding ${perfGrade}">TTFB (Time To First Byte): ${ttfb}ms — ${perfLabel}</div></div>`;
-  }
-
-  // ── Open Graph / Meta ──
-  if (r.fullBodySample) {
-    const ogTitle = r.fullBodySample.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i);
-    const ogDesc = r.fullBodySample.match(/<meta[^>]+property="og:description"[^>]+content="([^"]+)"/i);
-    const ogImage = r.fullBodySample.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i);
-    const generator = r.fullBodySample.match(/<meta[^>]+name="generator"[^>]+content="([^"]+)"/i);
-    if (ogTitle || ogDesc || ogImage || generator) {
-      let metaHtml = `<div class="report-section"><h4>🔍 Meta & Social Tags</h4>`;
-      if (generator) metaHtml += `<div class="finding info">Generator: ${generator[1]}</div>`;
-      if (ogTitle) metaHtml += `<div class="finding info">OG Title: ${ogTitle[1]}</div>`;
-      if (ogDesc) metaHtml += `<div class="finding info">OG Description: ${ogDesc[1].substring(0, 100)}${ogDesc[1].length > 100 ? '...' : ''}</div>`;
-      if (ogImage) metaHtml += `<div class="finding info">OG Image: ${ogImage[1]}</div>`;
-      metaHtml += `</div>`;
-      container.innerHTML += metaHtml;
-    }
+    var perfClass = r.performance.ttfb < 500 ? 'good' : (r.performance.ttfb < 1500 ? 'info' : 'medium');
+    container.innerHTML += '<div class="report-section"><h4>\u23F1\uFE0F Performance</h4>'
+      + '<div class="finding ' + perfClass + '">Time to first byte: ' + r.performance.ttfb + 'ms' + (r.performance.ttfb < 500 ? ' (fast \u2713)' : r.performance.ttfb < 1500 ? '' : ' (slow \u2014 consider optimizing)') + '</div></div>';
   }
 
   // ── Recommendations ──
-  container.innerHTML += `<div class="report-section" id="report-recommendations"><h4>💡 Prioritized Recommendations (${totalIssues} issues)</h4>`;
+  var allRecs = [];
+  criticalIssues.forEach(function(t) { allRecs.push({ text: t, sev: 'critical' }); });
+  highIssues.forEach(function(t) { if (!allRecs.find(function(x) { return x.text === t; })) allRecs.push({ text: t, sev: 'high' }); });
+  mediumIssues.forEach(function(t) { if (!allRecs.find(function(x) { return x.text === t; })) allRecs.push({ text: t, sev: 'medium' }); });
+  lowIssues.forEach(function(t) { if (!allRecs.find(function(x) { return x.text === t; })) allRecs.push({ text: t, sev: 'low' }); });
 
-  const recs = [];
-  if (r.ssl && !r.ssl.https) recs.push({ sev: 'critical', text: 'Enable HTTPS with a valid TLS certificate. All traffic is currently unencrypted.' });
-  if (r.ssl && !r.ssl.hsts && r.ssl.https) recs.push({ sev: 'high', text: 'Enable HSTS with max-age≥31536000 and includeSubDomains to enforce HTTPS.' });
-
-  recs.push(...criticalIssues.map(t => ({ sev: 'critical', text: t })));
-  recs.push(...highIssues.map(t => ({ sev: 'high', text: t })));
-  recs.push(...mediumIssues.map(t => ({ sev: 'medium', text: t })));
-  recs.push(...lowIssues.map(t => ({ sev: 'low', text: t })));
-
-  if (!recs.length) recs.push({ sev: 'low', text: 'No critical issues found. Review the detailed sections for minor improvements.' });
-
-  recs.forEach(rec => {
-    container.innerHTML += `<div class="recommendation rec-${rec.sev}"><strong>[${rec.sev.toUpperCase()}]</strong> ${rec.text}</div>`;
+  var recHtml = '<div class="report-section" id="report-recommendations"><h4>\uD83D\uDCA1 Prioritized Recommendations (' + allRecs.length + ' issues)</h4>';
+  allRecs.forEach(function(rec) {
+    recHtml += '<div class="recommendation rec-' + rec.sev + '">' + rec.text + '</div>';
   });
-  container.innerHTML += `</div>`;
+  recHtml += '</div>';
+  container.innerHTML += recHtml;
 
-  // ── Print button at bottom too ──
-  container.innerHTML += `<div style="text-align:center;margin-top:1rem">
-    <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF Report</button>
-    <button class="copy-btn" onclick="copyReport()">📋 Copy Report Summary</button>
-  </div>`;
+  // ── Print button at bottom ──
+  container.innerHTML += '<div style="text-align:center;margin-top:1rem">'
+    + '<button class="print-btn" onclick="window.print()">\uD83D\uDDA8\uFE0F Print / Save PDF Report</button>'
+    + '<button class="copy-btn" onclick="copyReport()">\uD83D\uDCCB Copy Report Summary</button>'
+    + '</div>';
 }
 
 function copyReport() {
