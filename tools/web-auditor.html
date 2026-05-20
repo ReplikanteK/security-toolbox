@@ -713,7 +713,7 @@ function renderReport(r, url) {
     });
   }
 
-  if (r.cspDeep === null) {
+  if (!r.cspDeep) {
     highIssues.push('CSP not configured — no XSS protection');
   } else if (r.cspDeep.directives) {
     if (r.cspDeep.directives['script-src']?.some(s => s.includes("'unsafe-inline'"))) {
