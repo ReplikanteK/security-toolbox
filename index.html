@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Security Toolbox — Free Security Tools for Bug Hunters</title>
-<meta name="description" content="23 free online security tools for bug bounty hunters and developers. JWT decoder, CVE search, CVSS calculator, SSL checker, CSP evaluator, and more. Privacy-first, all client-side.">
-<meta property="og:title" content="Security Toolbox — Free Security Tools for Bug Hunters">
-<meta property="og:description" content="27 free online security tools. Full web auditor, JWT decoder/attacker, CVE search, CVSS calculator, SSL checker, CSP evaluator, WAF detector, and more. All client-side.">
+<title>Security Toolbox — Free Web Security Auditor & 27 Security Tools</title>
+<meta name="description" content="Free web security auditor: enter any URL for a full report. DNS, SSL/TLS, security headers grade (A+ to F), CORS, WAF detection, HTTP methods, redirects. 27 free security tools. Privacy-first, all client-side.">
+<meta property="og:title" content="Security Toolbox — Free Web Security Auditor + 27 Tools">
+<meta property="og:description" content="Free web security auditor: full site report in seconds. DNS, SSL/TLS, headers grade (A+ to F), CORS, WAF, HTTP methods, redirects. 27 free tools. All client-side.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://replikantek.github.io/security-toolbox/">
 <link rel="stylesheet" href="css/style.css">
@@ -28,13 +28,32 @@
 <div class="container">
 
 <section class="hero">
-  <h2>Free <span>security</span> tools</h2>
-  <p class="tagline">Privacy-first tools built from real bug bounty experience. Every tool runs entirely in your browser — nothing is sent to any server.</p>
+  <h2><span>Web Auditor</span> — Full Security Audit</h2>
+  <p class="tagline">Enter any URL and get a complete security report in seconds. DNS, SSL/TLS, security headers (A+ grade), CORS, WAF detection, HTTP methods, redirect chain — with prioritized recommendations.</p>
 
-  <div class="search-box">
+  <div class="search-box" style="max-width:620px">
     <span class="search-icon">🔍</span>
-    <input type="text" id="tool-search" placeholder="Search tools... (e.g. jwt, cve, dns)" oninput="filterTools()">
+    <input type="text" id="audit-url-hero" placeholder="Enter a URL to audit... (e.g. https://example.com)" value="https://example.com" onkeydown="if(event.key==='Enter')runAuditFromHero()">
+    <button onclick="runAuditFromHero()" style="position:absolute;right:4px;top:4px;bottom:4px;background:var(--accent);color:#0a0e14;border:none;border-radius:6px;padding:0 1rem;font-family:var(--font);font-size:.8rem;font-weight:600;cursor:pointer">Audit</button>
   </div>
+
+  <div style="margin-top:.6rem;font-size:.75rem;color:var(--text2);display:flex;justify-content:center;gap:1rem;flex-wrap:wrap">
+    <span>🌐 DNS</span>
+    <span>🔒 SSL/TLS</span>
+    <span>🛡️ Headers</span>
+    <span>🌍 CORS</span>
+    <span>🔥 WAF</span>
+    <span>🔧 Methods</span>
+    <span>↪️ Redirects</span>
+  </div>
+
+  <details style="margin-top:1.2rem;max-width:400px;margin-left:auto;margin-right:auto">
+    <summary style="cursor:pointer;font-size:.75rem;color:var(--text2);text-align:center">🔍 Search individual tools</summary>
+    <div class="search-box" style="margin-top:.5rem">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="tool-search" placeholder="Search tools... (e.g. jwt, cve, dns)" oninput="filterTools()" style="font-size:.8rem;padding:.6rem 1rem .6rem 2.4rem">
+    </div>
+  </details>
 
   <div class="stats-bar">
     <div class="num">27</div><div class="label">Tools</div></div>
@@ -80,8 +99,8 @@
     <a href="tools/web-auditor.html" class="featured-card" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(0,212,170,.08) 0%,rgba(14,165,233,.08) 100%);border-color:var(--accent)">
       <div class="icon">📋</div>
       <h4>⭐ Web Auditor — Full Security Audit</h4>
-      <p>Enter any URL and get a complete security report: DNS, SSL/TLS, security headers (A+ grade), CORS, WAF detection, HTTP methods, redirect chain analysis, and prioritized recommendations. Runs 7 checks in parallel.</p>
-      <span class="tag" style="color:var(--accent);border-color:var(--accent)">flagship</span>
+      <p>Enter any URL and get a complete security report: DNS, SSL/TLS, security headers (A+ grade), CORS, WAF detection, HTTP methods, redirect chain analysis, and prioritized recommendations. 7 checks in parallel.</p>
+      <span class="tag" style="color:var(--accent);border-color:var(--accent)">⭐ flagship</span>
     </a>
   </div>
 </section>
@@ -320,6 +339,12 @@
 </footer>
 
 <script>
+function runAuditFromHero() {
+  const url = document.getElementById('audit-url-hero').value.trim();
+  if (url) {
+    window.location.href = 'tools/web-auditor.html?url=' + encodeURIComponent(url);
+  }
+}
 function filterTools() {
   const q = document.getElementById('tool-search').value.toLowerCase().trim();
   const cards = document.querySelectorAll('.tool-card');

@@ -124,7 +124,7 @@
   <p class="desc">Comprehensive security audit for any URL. Runs DNS, SSL/TLS, security headers, CORS, WAF, HTTP methods, redirect chain, and more — then generates a full report with prioritized recommendations.</p>
 
   <label for="audit-url">Target URL</label>
-  <input type="text" id="audit-url" placeholder="https://example.com" value="https://example.com">
+  <input type="text" id="audit-url" placeholder="https://example.com" value="https://example.com" onkeydown="if(event.key==='Enter')runAudit()">
   <div class="actions">
     <button onclick="runAudit()">Run Audit</button>
     <button class="secondary" onclick="resetAudit()">Reset</button>
@@ -597,6 +597,15 @@ function resetAudit() {
   qs('audit-status').textContent = 'Enter a URL and click Run Audit.';
   qs('audit-status').className = 'output';
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const urlParam = params.get('url');
+  if (urlParam) {
+    qs('audit-url').value = urlParam;
+    setTimeout(runAudit, 300);
+  }
+});
 </script>
 </body>
 </html>
