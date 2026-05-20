@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSP Evaluator — Security Toolbox</title>
+<meta name="description" content="Analyze Content-Security-Policy headers. Detect weaknesses like unsafe-inline, wildcards, missing nonces, and form-action gaps. Free CSP security checker.">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for bug hunters & developers</span>
+  <span class="badge">beta</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>CSP Evaluator</h2>
+  <p class="desc">Paste a Content-Security-Policy header to analyze its security posture. Detects dangerous directives, missing protections, and common misconfigurations.</p>
+
+  <label for="csp-input">Content-Security-Policy Header</label>
+  <textarea id="csp-input" rows="4">default-src 'self'; script-src 'self' https://cdn.example.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src *; object-src 'none'; base-uri 'none'; form-action 'self'</textarea>
+  <div class="actions">
+    <button onclick="evaluate()">Evaluate</button>
+    <button class="secondary" onclick="clearOutput()">Clear</button>
+  </div>
+
+  <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Analysis</h3>
+  <div id="csp-output" class="output">Paste a CSP policy and click Evaluate.</div>
+</div>
+
+<footer>
+  <p>Built by <a href="https://github.com/ReplikanteK">K</a> · All processing client-side</p>
+</footer>
+
+<script>
+function cleanOutput() {
+  const el = document.getElementById('csp-output');
+  el.className = 'output';
+  el.innerHTML = '';
+  return el;
+}
+
+function appendLine(el, text, color) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  if (color) div.style.color = color;
+  el.appendChild(div);
+}
+
+function appendSection(el, title) {
+  const div = document.createElement('div');
+  div.textContent = title;
+  div.style.marginTop = '10px';
+  div.style.fontWeight = '700';
+  div.style.color = '#e0e0e0';
+  el.appendChild(div);
+}
+
+const CSP_DIRECTIVES = {
+  'default-src': { desc: 'Fallback for all resource types' },
+  'script-src': { desc: 'JavaScript sources' },
+  'style-src': { desc: 'CSS sources' },
+  'img-src': { desc: 'Image sources' },
+  'font-src': { desc: 'Font sources' },
+  'connect-src': { desc: 'Fetch/XMLHttpRequest/WebSocket sources' },
+  'frame-src': { desc: 'Frame sources' },
+  'frame-ancestors': { desc: 'Who can embed this page in a frame' },
+  'object-src': { desc: 'Plugin sources (Flash, Java, etc.)' },
+  'media-src': { desc: 'Audio/video sources' },
+  'manifest-src': { desc: 'Web manifest sources' },
+  'worker-src': { desc: 'Web Worker sources' },
+  'base-uri': { desc: 'Restricts <base> tag URLs' },
+  'form-action': { desc: 'Form submission targets' },
+  'report-uri': { desc: 'Reporting endpoint (deprecated in CSP v3)' },
+  'report-to': { desc: 'Reporting endpoint (CSP v3)' },
+  'upgrade-insecure-requests': { desc: 'Upgrade HTTP to HTTPS' },
+  'block-all-mixed-content': { desc: 'Block mixed content' },
+  'navigate-to': { desc: 'Restricts navigation targets' },
+  'require-trusted-types-for': { desc: 'Require Trusted Types' },
+};
+
+const SEVERITY_FLAGS = [
+  {
+    check: (dir, vals) => dir === 'default-src' && vals.includes("'unsafe-inline'"),
+    severity: 'high',
+    msg: "unsafe-inline in default-src — allows inline scripts/styles globally"
+  },
+  {
+    check: (dir, vals) => dir === 'script-src' && vals.includes("'unsafe-inline'") && !vals.find(v => v.startsWith("'nonce-") || v.startsWith("'sha")),
+    severity: 'high',
+    msg: "unsafe-inline in script-src without nonce/hash — XSS protection severely reduced"
+  },
+  {
+    check: (dir, vals) => dir === 'script-src' && vals.includes("'unsafe-eval'"),
+    severity: 'medium',
+    msg: "unsafe-eval in script-src — allows eval(), setTimeout(string), etc."
+  },
+  {
+    check: (dir, vals) => vals.includes('*') && dir !== 'img-src',
+    severity: 'high',
+    msg: `Wildcard (*) in ${dir} — allows all sources`
+  },
+  {
+    check: (dir, vals) => dir === 'img-src' && vals.includes('*'),
+    severity: 'low',
+    msg: "Wildcard (*) in img-src — tracking pixel risk (often acceptable)"
+  },
+  {
+    check: (dir, vals) => !dir.startsWith('report') && dir !== 'upgrade-insecure-requests' && dir !== 'block-all-mixed-content' && vals.length === 0,
+    severity: 'warning',
+    msg: `Empty ${dir} — no sources defined`
+  },
+  {
+    check: (dir, vals) => dir === 'base-uri' && !vals.length,
+    severity: 'medium',
+    msg: "base-uri not set — attackers can inject <base> to hijack relative URLs"
+  },
+  {
+    check: (dir, vals) => dir === 'base-uri' && vals.includes("'self'"),
+    severity: 'low',
+    msg: "base-uri self — good, but consider 'none' for stricter protection"
+  },
+  {
+    check: (dir, vals) => dir === 'object-src' && !vals.length,
+    severity: 'medium',
+    msg: "object-src not set — plugins (Flash, Java) may be loaded if default-src allows"
+  },
+  {
+    check: (dir, vals) => dir === 'form-action' && !vals.length,
+    severity: 'medium',
+    msg: "form-action not set — forms can submit anywhere (phishing risk)"
+  },
+  {
+    check: (dir, vals) => dir === 'frame-ancestors' && !vals.length,
+    severity: 'low',
+    msg: "frame-ancestors not set — may allow framing (clickjacking). Use X-Frame-Options as fallback."
+  },
+  {
+    check: (dir, vals) => vals.some(v => v.startsWith('http://')),
+    severity: 'high',
+    msg: `HTTP source in ${dir} — ${vals.filter(v => v.startsWith('http://')).join(', ')}. Use HTTPS.`
+  },
+  {
+    check: (dir, vals) => vals.some(v => v.startsWith('data:')),
+    severity: 'medium',
+    msg: `data: URI in ${dir} — allows inline data injection`
+  },
+  {
+    check: (dir, vals) => vals.some(v => v.startsWith('https:') && !v.includes('://')),
+    severity: 'info',
+    msg: `Scheme-only source (https:) in ${dir} — allows any HTTPS origin`
+  },
+];
+
+function evaluate() {
+  const input = document.getElementById('csp-input').value.trim();
+  const output = cleanOutput();
+
+  if (!input) {
+    output.textContent = 'Enter a CSP policy string.';
+    output.className = 'output error';
+    return;
+  }
+
+  // Check for multiple policies
+  const policies = input.includes(',') ? input.split(',').map(s => s.trim()) : [input];
+
+  // Parse directives
+  const dirs = {};
+  policies.forEach(policy => {
+    policy.split(';').forEach(directive => {
+      const trimmed = directive.trim();
+      if (!trimmed) return;
+      const parts = trimmed.split(/\s+/);
+      const name = parts[0].toLowerCase();
+      const values = parts.slice(1);
+      if (!dirs[name]) dirs[name] = [];
+      dirs[name].push(...values);
+    });
+  });
+
+  const dirCount = Object.keys(dirs).length;
+  appendLine(output, `CSP with ${dirCount} directive(s) over ${policies.length} policy/policies`);
+  appendLine(output, '');
+
+  // ── Directives Breakdown ──
+  appendSection(output, '📋 Directives');
+  Object.entries(dirs).forEach(([dir, vals]) => {
+    const info = CSP_DIRECTIVES[dir];
+    const desc = info ? info.desc : 'Unknown directive';
+    const unique = [...new Set(vals)];
+    appendLine(output, `  ${dir}: ${unique.join(' ')}`);
+    appendLine(output, `    ${desc}`, '#a0a0a0');
+  });
+
+  appendLine(output, '');
+
+  // ── Issues ──
+  appendSection(output, '⚠️ Issues Found');
+  const issues = [];
+
+  SEVERITY_FLAGS.forEach(({ check, severity, msg }) => {
+    for (const [dir, vals] of Object.entries(dirs)) {
+      if (check(dir, vals)) {
+        issues.push({ severity, msg, dir });
+      }
+    }
+  });
+
+  // Also check for missing critical directives
+  const critical = ['default-src', 'script-src'];
+  critical.forEach(dir => {
+    if (!dirs[dir]) {
+      issues.push({ severity: 'high', msg: `${dir} not declared — browser uses fallback (often 'default-src')`, dir });
+    }
+  });
+
+  if (!dirs['base-uri']) {
+    issues.push({ severity: 'medium', msg: 'base-uri not set — <base> injection possible', dir: 'base-uri' });
+  }
+  if (!dirs['form-action']) {
+    issues.push({ severity: 'medium', msg: 'form-action not set — forms can submit to any origin', dir: 'form-action' });
+  }
+  if (!dirs['object-src'] && (!dirs['default-src'] || !dirs['default-src'].includes("'none'"))) {
+    issues.push({ severity: 'medium', msg: 'object-src not restricted — plugins may be loaded', dir: 'object-src' });
+  }
+
+  if (issues.length === 0) {
+    appendLine(output, '✅ No issues found — CSP is well-configured!', '#40c060');
+  } else {
+    issues.sort((a, b) => {
+      const order = { critical: 0, high: 1, medium: 2, low: 3, info: 4, warning: 5 };
+      return (order[a.severity] || 9) - (order[b.severity] || 9);
+    });
+
+    let highCount = 0, mediumCount = 0;
+    issues.forEach(issue => {
+      if (issue.severity === 'high' || issue.severity === 'critical') highCount++;
+      if (issue.severity === 'medium') mediumCount++;
+      const icon = issue.severity === 'critical' || issue.severity === 'high' ? '❌' : issue.severity === 'medium' ? '⚠️' : issue.severity === 'low' ? '⚠️' : 'ℹ️';
+      const color = issue.severity === 'critical' || issue.severity === 'high' ? '#e06060' : issue.severity === 'medium' ? '#e0b040' : issue.severity === 'low' ? '#a0a0a0' : '#6090c0';
+      const label = `[${issue.severity.toUpperCase()}]`;
+      appendLine(output, `${icon} ${label} ${issue.msg}`, color);
+    });
+
+    appendLine(output, '');
+    appendLine(output, `── Summary: ${highCount} high, ${mediumCount} medium issues`, highCount > 0 ? '#e06060' : '#e0b040');
+  }
+
+  // ── Recommendations ──
+  appendLine(output, '');
+  appendSection(output, '💡 Recommendations');
+  if (!dirs['base-uri']) appendLine(output, '  • Set base-uri to \'self\' or \'none\' to prevent <base> injection');
+  if (!dirs['form-action']) appendLine(output, '  • Set form-action to \'self\' to prevent form phishing');
+  if (dirs['script-src'] && dirs['script-src'].includes("'unsafe-inline'")) appendLine(output, '  • Replace unsafe-inline in script-src with nonces or hashes');
+  if (dirs['default-src'] && dirs['default-src'].includes("'unsafe-inline'")) appendLine(output, '  • Remove unsafe-inline from default-src and set explicit per-directive policies');
+  if (!dirs['upgrade-insecure-requests'] && !dirs['block-all-mixed-content']) appendLine(output, '  • Add upgrade-insecure-requests to force HTTPS');
+  if (!dirs['frame-ancestors']) appendLine(output, '  • Set frame-ancestors to \'self\' or \'none\' for clickjacking protection');
+  appendLine(output, '  • Use report-to/report-uri to monitor CSP violations');
+}
+
+function clearOutput() {
+  const el = document.getElementById('csp-output');
+  el.className = 'output';
+  el.textContent = 'Paste a CSP policy and click Evaluate.';
+}
+</script>
+</body>
+</html>
