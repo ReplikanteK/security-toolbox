@@ -193,11 +193,11 @@ const CHECKS = [
 ];
 
 const WAF_SIGNATURES = [
-  { name: 'Cloudflare', headers: { 'server': 'cloudflare', 'cf-ray': null }, body: ['Attention Required! | Cloudflare', 'cf-error-page'] },
-  { name: 'AWS WAF', headers: { 'x-amz-cf-id': null, 'x-amzn-requestid': null }, body: ['Request Blocked by AWS WAF', 'AWSWAF'] },
-  { name: 'Akamai', headers: { 'x-akamai-transformed': null }, body: ['AkamaiGHost', 'Akamai Image Server'] },
+  { name: 'Cloudflare', headers: { 'server': 'cloudflare', 'cf-ray': null }, body: ['Attention Required! | Cloudflare', 'cf-error-page'], nsPattern: /cloudflare/i },
+  { name: 'AWS WAF', headers: { 'x-amz-cf-id': null, 'x-amzn-requestid': null }, body: ['Request Blocked by AWS WAF', 'AWSWAF'], nsPattern: /awsdns/i },
+  { name: 'Akamai', headers: { 'x-akamai-transformed': null }, body: ['AkamaiGHost', 'Akamai Image Server'], nsPattern: /akamai/i },
   { name: 'Fastly', headers: { 'x-fastly-request-id': null, 'x-served-by': null }, body: [] },
-  { name: 'Imperva', headers: { 'x-iinfo': null }, body: ['Incapsula incident', '_Incapsula_Resource'] },
+  { name: 'Imperva', headers: { 'x-iinfo': null }, body: ['Incapsula incident', '_Incapsula_Resource'], nsPattern: /incapsula/i },
   { name: 'Cloudfront', headers: { 'x-amz-cf-pop': null, 'x-amz-cf-id': null }, body: [] },
   { name: 'Sucuri', headers: { 'x-sucuri-id': null, 'x-sucuri-cache': null }, body: [] },
   { name: 'F5 BIG-IP', headers: { 'x-application-context': null }, body: ['The requested URL was rejected'] },
@@ -495,6 +495,11 @@ async function runAudit() {
         var hv = bodyHdrs[key];
         if (sig.headers[key] === null && hv) { match = true; break; }
         if (typeof sig.headers[key] === 'string' && hv && hv.includes(sig.headers[key])) { match = true; break; }
+      }
+      if (!match && sig.nsPattern && report.dns && report.dns.NS) {
+        for (var ni = 0; ni < report.dns.NS.length; ni++) {
+          if (sig.nsPattern.test(report.dns.NS[ni])) { match = true; break; }
+        }
       }
       if (!match) {
         for (var bi = 0; bi < (sig.body || []).length; bi++) {
