@@ -9,6 +9,7 @@
   <url><loc>https://replikantek.github.io/security-toolbox/tools/cvss-calculator.html</loc><priority>0.9</priority></url>
   <url><loc>https://replikantek.github.io/security-toolbox/tools/security-headers.html</loc><priority>0.9</priority></url>
   <url><loc>https://replikantek.github.io/security-toolbox/tools/takeover-checker.html</loc><priority>0.9</priority></url>
+  <url><loc>https://replikantek.github.io/security-toolbox/tools/web-auditor.html</loc><priority>1.0</priority></url>
   <url><loc>https://replikantek.github.io/security-toolbox/tools/waf-detector.html</loc><priority>0.8</priority></url>
   <url><loc>https://replikantek.github.io/security-toolbox/tools/csp-evaluator.html</loc><priority>0.8</priority></url>
   <url><loc>https://replikantek.github.io/security-toolbox/tools/hash-identifier.html</loc><priority>0.8</priority></url>

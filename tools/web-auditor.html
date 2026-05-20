@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web Auditor — Security Toolbox</title>
+<meta name="description" content="Comprehensive security audit for any website. Checks DNS, SSL/TLS, security headers, CORS, WAF, HTTP methods, redirects, and more. Generates a full report with prioritized fixes.">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+.progress-bar {
+  display: flex;
+  gap: .5rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+.progress-item {
+  font-size: .75rem;
+  padding: .3rem .7rem;
+  border-radius: 4px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  transition: all .3s;
+}
+.progress-item.done { border-color: var(--green); color: var(--green); }
+.progress-item.running { border-color: var(--accent2); color: var(--accent2); animation: pulse 1.5s infinite; }
+.progress-item.error { border-color: var(--red); color: var(--red); }
+.progress-item.skip { opacity: .4; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+.report-section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+}
+.report-section h4 {
+  font-size: .9rem;
+  margin-bottom: .8rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.report-section .finding { font-size: .82rem; margin-bottom: .3rem; padding-left: .5rem; }
+.report-section .finding.critical { color: #e04040; border-left: 2px solid #e04040; }
+.report-section .finding.high { color: #e08040; border-left: 2px solid #e08040; }
+.report-section .finding.medium { color: #e0b040; border-left: 2px solid #e0b040; }
+.report-section .finding.low { color: #a0a0a0; border-left: 2px solid #a0a0a0; }
+.report-section .finding.info { color: #6090c0; border-left: 2px solid #6090c0; }
+.report-section .finding.good { color: #40c060; border-left: 2px solid #40c060; }
+
+.score-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 auto 1rem;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: .8rem;
+  margin: 1rem 0;
+}
+.summary-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: .8rem;
+  text-align: center;
+}
+.summary-card .val { font-size: 1.2rem; font-weight: 700; }
+.summary-card .lbl { font-size: .65rem; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin-top: .2rem; }
+
+.recommendation {
+  padding: .6rem .8rem;
+  margin-bottom: .4rem;
+  border-radius: 4px;
+  font-size: .82rem;
+  border-left: 3px solid;
+}
+.rec-critical { background: rgba(224,64,64,.1); border-color: #e04040; }
+.rec-high { background: rgba(224,128,64,.1); border-color: #e08040; }
+.rec-medium { background: rgba(224,176,64,.1); border-color: #e0b040; }
+.rec-low { background: rgba(160,160,160,.1); border-color: #a0a0a0; }
+
+.copy-btn {
+  font-size: .75rem;
+  padding: .3rem .8rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text2);
+  cursor: pointer;
+  margin-top: .5rem;
+}
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sec<span>Toolbox</span></h1>
+  <span class="subtitle">tools for security researchers & developers</span>
+  <nav>
+    <a href="../index.html#tools">Tools</a>
+    <a href="../about.html">About</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">Source</a>
+  </nav>
+  <span class="badge">27 tools</span>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Web Auditor</h2>
+  <p class="desc">Comprehensive security audit for any URL. Runs DNS, SSL/TLS, security headers, CORS, WAF, HTTP methods, redirect chain, and more — then generates a full report with prioritized recommendations.</p>
+
+  <label for="audit-url">Target URL</label>
+  <input type="text" id="audit-url" placeholder="https://example.com" value="https://example.com">
+  <div class="actions">
+    <button onclick="runAudit()">Run Audit</button>
+    <button class="secondary" onclick="resetAudit()">Reset</button>
+  </div>
+
+  <div id="audit-progress" class="progress-bar" style="display:none"></div>
+  <div id="audit-report"></div>
+  <div id="audit-status" class="output" style="margin-top:1.5rem">Enter a URL and click Run Audit. The audit checks DNS, SSL, headers, CORS, WAF, methods, and redirects. Results update as each check completes.</div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+  </div>
+  <p>Open source · All processing client-side · No tracking</p>
+</footer>
+
+<script>
+const CHECKS = [
+  { id: 'dns', label: 'DNS Records', icon: '🌐' },
+  { id: 'ssl', label: 'SSL/TLS', icon: '🔒' },
+  { id: 'headers', label: 'Security Headers', icon: '🛡️' },
+  { id: 'cors', label: 'CORS', icon: '🌍' },
+  { id: 'waf', label: 'WAF Detection', icon: '🔥' },
+  { id: 'methods', label: 'HTTP Methods', icon: '🔧' },
+  { id: 'redirect', label: 'Redirect Chain', icon: '↪️' },
+];
+
+const HEADER_WEIGHTS = {
+  'strict-transport-security': { weight: 25, name: 'HSTS' },
+  'content-security-policy': { weight: 25, name: 'CSP' },
+  'x-frame-options': { weight: 15, name: 'X-Frame-Options' },
+  'x-content-type-options': { weight: 10, name: 'X-Content-Type-Options' },
+  'referrer-policy': { weight: 10, name: 'Referrer-Policy' },
+  'permissions-policy': { weight: 5, name: 'Permissions-Policy' },
+  'x-xss-protection': { weight: 5, name: 'X-XSS-Protection' },
+  'access-control-allow-origin': { weight: 5, name: 'CORS ACAO' },
+};
+
+const WAF_SIGNATURES = [
+  { name: 'Cloudflare', headers: { 'server': 'cloudflare', 'cf-ray': null }, body: ['Attention Required! | Cloudflare'] },
+  { name: 'AWS WAF', headers: { 'x-amz-cf-id': null, 'x-amzn-requestid': null }, body: ['Request Blocked by AWS WAF'] },
+  { name: 'Akamai', headers: { 'x-akamai-transformed': null }, body: ['AkamaiGHost'] },
+  { name: 'Fastly', headers: { 'x-fastly-request-id': null }, body: [] },
+  { name: 'Imperva', headers: { 'x-iinfo': null }, body: ['Incapsula incident'] },
+];
+
+const TAKEOVER_SIGNATURES = [
+  { service: 'AWS S3', fps: ['NoSuchBucket', 'The specified bucket does not exist'] },
+  { service: 'GitHub Pages', fps: ['There isn\'t a GitHub Pages site', 'Repository not found'] },
+  { service: 'Heroku', fps: ['There is no app hosted at this URL', 'No such app'] },
+];
+
+function qs(s) { return document.getElementById(s); }
+
+function setProgress() {
+  const bar = qs('audit-progress');
+  bar.style.display = 'flex';
+  bar.innerHTML = CHECKS.map(c =>
+    `<div class="progress-item" id="p-${c.id}">${c.icon} ${c.label}</div>`
+  ).join('');
+}
+function markProgress(id, state) {
+  const el = qs(`p-${id}`);
+  if (el) { el.className = `progress-item ${state}`; }
+}
+
+const SECURITY_HEADER_CHECKS = [
+  { key: 'strict-transport-security', name: 'HSTS', weight: 25,
+    grade: v => !v ? { s: 0, d: 'Missing — cookie hijacking via HTTP', sev: 'high' }
+      : v.includes('max-age=') && parseInt((v.match(/max-age=(\d+)/)||[,0])[1]) >= 31536000
+        ? { s: 25, d: 'Set with long max-age ✓', sev: 'good' }
+        : { s: 10, d: 'Set but max-age < 1 year or missing includeSubDomains', sev: 'medium' } },
+  { key: 'content-security-policy', name: 'CSP', weight: 25,
+    grade: v => !v ? { s: 0, d: 'Missing — XSS protection relies entirely on developer discipline', sev: 'high' }
+      : v.includes("'unsafe-inline'") && !v.includes("'nonce-")
+        ? { s: 5, d: "Weak — allows 'unsafe-inline' without nonce", sev: 'high' }
+        : { s: 20, d: 'Set ✓', sev: 'good' } },
+  { key: 'x-frame-options', name: 'X-Frame-Options', weight: 15,
+    grade: v => !v ? { s: 0, d: 'Missing — clickjacking risk', sev: 'high' }
+      : v.toLowerCase() === 'deny' ? { s: 15, d: 'DENY ✓', sev: 'good' }
+      : { s: 10, d: `Set to ${v}`, sev: 'low' } },
+  { key: 'x-content-type-options', name: 'X-Content-Type-Options', weight: 10,
+    grade: v => !v ? { s: 0, d: 'Missing — MIME sniffing risk', sev: 'medium' }
+      : { s: 10, d: 'nosniff ✓', sev: 'good' } },
+  { key: 'referrer-policy', name: 'Referrer-Policy', weight: 10,
+    grade: v => !v ? { s: 3, d: 'Missing — referrer leakage possible', sev: 'low' }
+      : ['no-referrer','same-origin','strict-origin','strict-origin-when-cross-origin'].includes(v.toLowerCase())
+        ? { s: 10, d: `${v} ✓`, sev: 'good' }
+        : { s: 5, d: `Weak: ${v}`, sev: 'low' } },
+  { key: 'permissions-policy', name: 'Permissions-Policy', weight: 5,
+    grade: v => !v ? { s: 0, d: 'Missing', sev: 'low' } : { s: 5, d: 'Set ✓', sev: 'good' } },
+  { key: 'x-xss-protection', name: 'X-XSS-Protection', weight: 5,
+    grade: v => !v ? { s: 0, d: 'Deprecated but still used by some browsers', sev: 'low' }
+      : { s: 5, d: 'Set ✓', sev: 'good' } },
+  { key: 'access-control-allow-origin', name: 'CORS ACAO', weight: 5,
+    grade: v => !v ? { s: 5, d: 'Not exposed (non-API) ✓', sev: 'good' }
+      : v === '*' ? { s: 0, d: 'Wildcard — any origin can read', sev: 'medium' }
+      : { s: 3, d: `Restricted to ${v}`, sev: 'info' } },
+];
+
+async function dnsQuery(name, type) {
+  try {
+    const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=${type}`, { headers: { 'Accept': 'application/dns-json' } });
+    if (!r.ok) return [];
+    const d = await r.json();
+    return d.Answer || [];
+  } catch { return []; }
+}
+
+function severityFromScore(s, max) {
+  const pct = (s / max) * 100;
+  if (pct >= 90) return { grade: 'A+', color: '#40c060' };
+  if (pct >= 80) return { grade: 'A', color: '#60c040' };
+  if (pct >= 70) return { grade: 'B', color: '#80c040' };
+  if (pct >= 55) return { grade: 'C', color: '#e0b040' };
+  if (pct >= 35) return { grade: 'D', color: '#e08040' };
+  return { grade: 'F', color: '#e04040' };
+}
+
+async function runAudit() {
+  const url = qs('audit-url').value.trim();
+  if (!url) return;
+  let parsed;
+  try {
+    parsed = new URL(url);
+    if (!['http:','https:'].includes(parsed.protocol)) throw Error();
+  } catch(_) {
+    qs('audit-status').textContent = 'Invalid URL';
+    qs('audit-status').className = 'output error';
+    return;
+  }
+
+  qs('audit-report').innerHTML = '';
+  qs('audit-status').style.display = 'none';
+  setProgress();
+
+  const report = {};
+  const hostname = parsed.hostname;
+
+  // ── DNS ──
+  markProgress('dns', 'running');
+  try {
+    const types = ['A','AAAA','MX','NS','TXT','CNAME'];
+    const all = await Promise.all(types.map(t => dnsQuery(hostname, t)));
+    const dnsRecs = {};
+    types.forEach((t,i) => {
+      if (all[i].length) dnsRecs[t] = all[i].map(r => r.data.replace(/\.$/,''));
+    });
+    report.dns = dnsRecs;
+    markProgress('dns', Object.keys(dnsRecs).length ? 'done' : 'skip');
+  } catch { markProgress('dns', 'error'); }
+
+  // ── SSL (via HTTPS check) ──
+  markProgress('ssl', 'running');
+  try {
+    // Check if HTTPS is available
+    const httpsUrl = url.replace(/^http:/, 'https:');
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 8000);
+    const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(httpsUrl)}`, { method: 'HEAD', signal: ctrl.signal });
+    const hsts = resp.headers.get('strict-transport-security');
+    const server = resp.headers.get('server') || '—';
+    const certInfo = resp.headers.get('x-proxy-ssl') || null;
+    report.ssl = { https: true, hsts: !!hsts, hstsValue: hsts, server, certInfo };
+    markProgress('ssl', 'done');
+  } catch {
+    report.ssl = { https: false, hsts: false, server: '—' };
+    // Try HTTP fallback
+    if (url.startsWith('http://')) {
+      try {
+        const ctrl2 = new AbortController();
+        setTimeout(() => ctrl2.abort(), 5000);
+        await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { method: 'HEAD', signal: ctrl2.signal });
+        report.ssl.httpAvailable = true;
+      } catch {}
+    }
+    markProgress('ssl', 'done');
+  }
+
+  // ── Security Headers + CORS + WAF ──
+  markProgress('headers', 'running');
+  markProgress('cors', 'running');
+  markProgress('waf', 'running');
+  try {
+    const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { method: 'GET' });
+    report.status = resp.status;
+
+    const hdrs = {};
+    resp.headers.forEach((v,k) => { hdrs[k.toLowerCase()] = v; });
+
+    // Headers analysis
+    const secResults = SECURITY_HEADER_CHECKS.map(c => {
+      const val = hdrs[c.key];
+      const g = c.grade(val);
+      return { name: c.name, key: c.key, score: g.s, max: c.weight, detail: g.d, severity: g.sev, value: val || '—' };
+    });
+    const totalScore = secResults.reduce((a,r) => a+r.score, 0);
+    const maxScore = secResults.reduce((a,r) => a+r.max, 0);
+    const hGrade = severityFromScore(totalScore, maxScore);
+    report.headers = { results: secResults, totalScore, maxScore, grade: hGrade.grade, gradeColor: hGrade.color };
+
+    // CORS
+    const acao = hdrs['access-control-allow-origin'];
+    const acac = hdrs['access-control-allow-credentials'];
+    const acam = hdrs['access-control-allow-methods'];
+    report.cors = { acao, acac, acam };
+
+    // WAF
+    const body = await resp.text().catch(() => '');
+    const bodySample = body.substring(0, 3000);
+    const wafDetected = [];
+    for (const sig of WAF_SIGNATURES) {
+      let match = false;
+      for (const [k,v] of Object.entries(sig.headers)) {
+        const hv = hdrs[k];
+        if (v === null && hv) { match = true; break; }
+        if (typeof v === 'string' && hv && hv.includes(v)) { match = true; break; }
+      }
+      if (!match) {
+        for (const fp of (sig.body || [])) {
+          if (bodySample.includes(fp)) { match = true; break; }
+        }
+      }
+      if (match) wafDetected.push(sig.name);
+    }
+    report.waf = wafDetected;
+
+    markProgress('headers', 'done');
+    markProgress('cors', 'done');
+    markProgress('waf', wafDetected.length ? 'done' : 'done');
+  } catch(e) {
+    report.headersError = e.message;
+    markProgress('headers', 'error');
+    markProgress('cors', 'error');
+    markProgress('waf', 'error');
+  }
+
+  // ── HTTP Methods ──
+  markProgress('methods', 'running');
+  const methods = ['GET','POST','HEAD','OPTIONS','PUT','DELETE','PATCH','TRACE'];
+  const methodResults = [];
+  for (const m of methods) {
+    try {
+      const c = new AbortController();
+      setTimeout(() => c.abort(), 5000);
+      const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { method: m, signal: c.signal });
+      methodResults.push({ method: m, status: r.status, allowed: r.status < 400 });
+    } catch { methodResults.push({ method: m, status: null, allowed: false }); }
+  }
+  report.methods = methodResults;
+  markProgress('methods', 'done');
+
+  // ── Redirect Chain ──
+  markProgress('redirect', 'running');
+  const redirectChain = [];
+  let cur = url;
+  for (let i = 0; i < 5; i++) {
+    try {
+      const c = new AbortController();
+      setTimeout(() => c.abort(), 5000);
+      const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(cur)}`, { method: 'HEAD', signal: c.signal });
+      const loc = r.headers.get('location');
+      redirectChain.push({ url: cur, status: r.status, location: loc });
+      if (loc && r.status >= 300 && r.status < 400) {
+        cur = new URL(loc, cur).href;
+      } else break;
+    } catch { break; }
+  }
+  report.redirectChain = redirectChain;
+  markProgress('redirect', 'done');
+
+  // ── Build Report ──
+  renderReport(report, url);
+}
+
+function renderReport(r, url) {
+  const container = qs('audit-report');
+  container.innerHTML = '';
+
+  // ── Summary ──
+  const criticalCount = [];
+  const highCount = [];
+  const mediumCount = [];
+  const goodCount = [];
+
+  // Count from headers
+  if (r.headers) {
+    r.headers.results.forEach(hr => {
+      if (hr.severity === 'high') highCount.push(hr);
+      else if (hr.severity === 'medium') mediumCount.push(hr);
+      else if (hr.severity === 'good') goodCount.push(hr);
+    });
+  }
+
+  // SSL
+  if (r.ssl && !r.ssl.https) highCount.push({ name: 'HTTPS not available' });
+
+  // CORS
+  if (r.cors && r.cors.acao === '*') mediumCount.push({ name: 'CORS wildcard' });
+
+  // WAF
+  const wafText = r.waf && r.waf.length ? r.waf.join(', ') : 'None detected';
+
+  // Methods
+  const riskyMethods = r.methods ? r.methods.filter(m => m.allowed && !['GET','POST','HEAD','OPTIONS'].includes(m.method)) : [];
+
+  // Redirects
+  const redirectCount = r.redirectChain ? r.redirectChain.length - 1 : 0;
+  const hasDowngrade = r.redirectChain && r.redirectChain.some(h => h.url && h.url.startsWith('http://'));
+
+  const totalIssues = criticalCount.length + highCount.length + mediumCount.length;
+  const overallScore = r.headers ? Math.round((r.headers.totalScore / r.headers.maxScore) * 100) : 50;
+  const scoreColor = overallScore >= 80 ? '#40c060' : overallScore >= 55 ? '#e0b040' : '#e08040';
+
+  let summaryHtml = `<div class="report-section" style="text-align:center">
+    <h4>📊 Executive Summary</h4>
+    <div class="score-circle" style="background:${scoreColor}22;color:${scoreColor};border:3px solid ${scoreColor}">
+      ${overallScore}%
+    </div>
+    <div class="summary-grid">
+      <div class="summary-card"><div class="val" style="color:${scoreColor}">${r.headers ? r.headers.grade : '—'}</div><div class="lbl">Headers Grade</div></div>
+      <div class="summary-card"><div class="val" style="color:${r.ssl && r.ssl.https ? '#40c060' : '#e08040'}">${r.ssl && r.ssl.https ? 'Yes' : 'No'}</div><div class="lbl">HTTPS</div></div>
+      <div class="summary-card"><div class="val">${wafText}</div><div class="lbl">WAF</div></div>
+      <div class="summary-card"><div class="val" style="color:${riskyMethods.length ? '#e08040' : '#40c060'}">${riskyMethods.length || 0}</div><div class="lbl">Risky Methods</div></div>
+      <div class="summary-card"><div class="val">${redirectCount}</div><div class="lbl">Redirects</div></div>
+      <div class="summary-card"><div class="val" style="color:${highCount.length ? '#e08040' : '#40c060'}">${highCount.length}</div><div class="lbl">High Issues</div></div>
+    </div>
+  </div>`;
+  container.innerHTML += summaryHtml;
+
+  // ── DNS ──
+  if (r.dns) {
+    let dnsHtml = `<div class="report-section"><h4>🌐 DNS Records</h4>`;
+    const types = Object.keys(r.dns);
+    if (types.length) {
+      types.forEach(t => {
+        dnsHtml += `<div class="finding info">${t}: ${r.dns[t].join(', ')}</div>`;
+      });
+    } else {
+      dnsHtml += `<div class="finding low">No DNS records resolved</div>`;
+    }
+    dnsHtml += `</div>`;
+    container.innerHTML += dnsHtml;
+  }
+
+  // ── SSL ──
+  if (r.ssl) {
+    let sslHtml = `<div class="report-section"><h4>🔒 SSL/TLS</h4>`;
+    if (r.ssl.https) {
+      sslHtml += `<div class="finding good">HTTPS available ✓</div>`;
+      if (r.ssl.hsts) sslHtml += `<div class="finding good">HSTS enabled ✓</div>`;
+      else sslHtml += `<div class="finding high">HSTS not set — cookie hijacking risk on HTTP</div>`;
+      if (r.ssl.server && r.ssl.server !== '—') sslHtml += `<div class="finding info">Server: ${r.ssl.server}</div>`;
+    } else {
+      sslHtml += `<div class="finding high">HTTPS not available — all data transmitted in plaintext</div>`;
+      if (r.ssl.httpAvailable) sslHtml += `<div class="finding info">HTTP version is accessible</div>`;
+    }
+    sslHtml += `</div>`;
+    container.innerHTML += sslHtml;
+  }
+
+  // ── Security Headers ──
+  if (r.headers) {
+    let hHtml = `<div class="report-section"><h4>🛡️ Security Headers — Grade: <span style="color:${r.headers.gradeColor}">${r.headers.grade}</span> (${r.headers.totalScore}/${r.headers.maxScore})</h4>`;
+    r.headers.results.forEach(hr => {
+      hHtml += `<div class="finding ${hr.severity}">${hr.name}: ${hr.detail}</div>`;
+    });
+    hHtml += `</div>`;
+    container.innerHTML += hHtml;
+  }
+
+  // ── CORS ──
+  if (r.cors) {
+    let corsHtml = `<div class="report-section"><h4>🌍 CORS Configuration</h4>`;
+    if (r.cors.acao) {
+      if (r.cors.acao === '*') corsHtml += `<div class="finding medium">Access-Control-Allow-Origin: * — any origin can read responses</div>`;
+      else corsHtml += `<div class="finding info">ACAO: ${r.cors.acao}</div>`;
+    } else corsHtml += `<div class="finding good">ACAO not exposed (standard for non-API origins) ✓</div>`;
+    if (r.cors.acac === 'true') corsHtml += `<div class="finding medium">Credentials allowed with CORS — sensitive data at risk</div>`;
+    if (r.cors.acam) corsHtml += `<div class="finding info">Allowed methods: ${r.cors.acam}</div>`;
+    corsHtml += `</div>`;
+    container.innerHTML += corsHtml;
+  }
+
+  // ── WAF ──
+  if (r.waf !== undefined) {
+    let wafHtml = `<div class="report-section"><h4>🔥 WAF / CDN Detection</h4>`;
+    if (r.waf.length) {
+      r.waf.forEach(w => wafHtml += `<div class="finding info">${w} detected</div>`);
+    } else {
+      wafHtml += `<div class="finding low">No WAF/CDN detected based on current fingerprints</div>`;
+    }
+    wafHtml += `</div>`;
+    container.innerHTML += wafHtml;
+  }
+
+  // ── HTTP Methods ──
+  if (r.methods) {
+    let mHtml = `<div class="report-section"><h4>🔧 HTTP Methods</h4>`;
+    const blocked = r.methods.filter(m => !m.allowed);
+    const allowed = r.methods.filter(m => m.allowed);
+    const risky = allowed.filter(m => !['GET','POST','HEAD','OPTIONS'].includes(m.method));
+    if (risky.length) {
+      risky.forEach(m => mHtml += `<div class="finding high">${m.method} — allowed (HTTP ${m.status})</div>`);
+    }
+    if (blocked.length) {
+      blocked.forEach(m => mHtml += `<div class="finding good">${m.method} — blocked (HTTP ${m.status}) ✓</div>`);
+    }
+    if (!risky.length) mHtml += `<div class="finding good">No risky methods allowed ✓</div>`;
+    mHtml += `</div>`;
+    container.innerHTML += mHtml;
+  }
+
+  // ── Redirect Chain ──
+  if (r.redirectChain && r.redirectChain.length > 1) {
+    let redirHtml = `<div class="report-section"><h4>↪️ Redirect Chain (${r.redirectChain.length - 1} hops)</h4>`;
+    const startDomain = new URL(url).hostname;
+    r.redirectChain.forEach((h, i) => {
+      const isRedir = i < r.redirectChain.length - 1;
+      let hopDomain = '?';
+      try { hopDomain = new URL(h.url).hostname; } catch {}
+      const crossDomain = i > 0 && hopDomain !== startDomain;
+      redirHtml += `<div class="finding ${crossDomain && isRedir ? 'medium' : 'info'}">Hop ${i+1}: HTTP ${h.status} → ${h.url}${crossDomain && isRedir ? ' (cross-domain)' : ''}</div>`;
+    });
+    if (hasDowngrade) redirHtml += `<div class="finding high">Protocol downgrade detected (HTTPS → HTTP)</div>`;
+    redirHtml += `</div>`;
+    container.innerHTML += redirHtml;
+  }
+
+  // ── Recommendations ──
+  container.innerHTML += `<div class="report-section"><h4>💡 Prioritized Recommendations</h4>`;
+
+  const recs = [];
+  if (r.ssl && !r.ssl.https) recs.push({ sev: 'critical', text: 'Enable HTTPS with a valid TLS certificate. All traffic is currently unencrypted.' });
+  if (r.ssl && !r.ssl.hsts && r.ssl.https) recs.push({ sev: 'high', text: 'Enable HSTS with max-age≥31536000 and includeSubDomains to enforce HTTPS.' });
+
+  if (r.headers) {
+    r.headers.results.filter(hr => hr.severity === 'high').forEach(hr => {
+      recs.push({ sev: 'high', text: hr.detail });
+    });
+    r.headers.results.filter(hr => hr.severity === 'medium').forEach(hr => {
+      recs.push({ sev: 'medium', text: hr.detail });
+    });
+  }
+
+  if (r.cors && r.cors.acao === '*') recs.push({ sev: 'medium', text: 'Restrict CORS ACAO to specific origins instead of wildcard.' });
+  if (r.cors && r.cors.acac === 'true') recs.push({ sev: 'medium', text: 'Avoid credentials with CORS unless absolutely necessary.' });
+
+  if (riskyMethods.length) {
+    riskyMethods.forEach(m => recs.push({ sev: 'high', text: `Disable ${m.method} on production endpoints.` }));
+  }
+
+  if (hasDowngrade) recs.push({ sev: 'high', text: 'Fix protocol downgrade: ensure all redirects within the chain use HTTPS.' });
+
+  if (!recs.length) recs.push({ sev: 'low', text: 'No critical issues found. Review the detailed sections for minor improvements.' });
+
+  recs.forEach(rec => {
+    container.innerHTML += `<div class="recommendation rec-${rec.sev}"><strong>[${rec.sev.toUpperCase()}]</strong> ${rec.text}</div>`;
+  });
+  container.innerHTML += `</div>`;
+}
+
+function resetAudit() {
+  qs('audit-report').innerHTML = '';
+  qs('audit-progress').style.display = 'none';
+  qs('audit-status').style.display = 'block';
+  qs('audit-status').textContent = 'Enter a URL and click Run Audit.';
+  qs('audit-status').className = 'output';
+}
+</script>
+</body>
+</html>
