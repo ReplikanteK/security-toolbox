@@ -323,9 +323,9 @@ footer {
   font-size: .75rem;
   border-top: 1px solid var(--border);
 }
-footer .links { display: flex; justify-content: center; gap: 1.2rem; margin-bottom: .5rem; font-size: .78rem; }
-footer .links a { color: var(--text2); }
-footer .links a:hover { color: var(--accent); }
+footer .links, footer .footer-links { display: flex; justify-content: center; gap: 1.2rem; margin-bottom: .5rem; font-size: .78rem; }
+footer .links a, footer .footer-links a { color: var(--text2); }
+footer .links a:hover, footer .footer-links a:hover { color: var(--accent); }
 footer .note { opacity: .55; font-size: .68rem; margin-top: .3rem; }
 
 /* ── Tool page ── */
@@ -383,13 +383,13 @@ footer .note { opacity: .55; font-size: .68rem; margin-top: .3rem; }
   transition: opacity .15s;
 }
 .tool-page button:hover { opacity: .85; }
-.tool-page button.sec {
+.tool-page button.sec, .tool-page button.secondary {
   background: var(--bg3);
   color: var(--text);
   border: 1px solid var(--border);
   transition: background .15s;
 }
-.tool-page button.sec:hover { background: var(--bg4); }
+.tool-page button.sec:hover, .tool-page button.secondary:hover { background: var(--bg4); }
 .tool-page .actions { display: flex; gap: .5rem; margin-top: .75rem; flex-wrap: wrap; }
 .tool-page .output {
   background: var(--bg2);

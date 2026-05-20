@@ -16,7 +16,7 @@
 <body>
 
 <header>
-  <a href="/" class="logo" style="text-decoration:none">
+  <a href="." class="logo" style="text-decoration:none">
     <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="%2300d4aa" d="M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z"/><path fill="%2300d4aa" d="M15 10l-3 5h2v5l3-5h-2z"/></svg>
     <span>Sec</span>Toolbox
   </a>
@@ -24,6 +24,7 @@
   <nav>
     <a href="#tools">Tools</a>
     <a href="about.html">About</a>
+    <a href="privacy.html">Privacy</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
     <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
     <button id="theme-toggle">☀️</button>
@@ -34,13 +35,13 @@
 
 <section class="hero">
   <h2><span>Web Auditor</span> &mdash; Full Security Audit</h2>
-  <p class="tagline">Enter any URL for a complete security report: DNS, SSL/TLS, security headers (A+&ndash;F), CORS, WAF, tech stack, cookies, CSP, HTTP methods, redirect chain. All client-side, no data stored.</p>
+  <p class="tagline">Enter any URL for a complete security report: DNS, email security, SSL/TLS, CSP analysis, WAF detection, tech stack, HTTP features, performance, redirect chain. All client-side, no data stored.</p>
   <div class="audit-form">
     <input type="text" id="audit-url-hero" placeholder="https://example.com" value="https://example.com" onkeydown="if(event.key==='Enter')runAudit()" spellcheck="false" autocomplete="url">
     <button onclick="runAudit()">Audit</button>
   </div>
   <div class="checks">
-    <span>🌐 DNS</span><span>🔒 SSL/TLS</span><span>🛡️ Headers</span><span>🌍 CORS</span><span>🔥 WAF</span><span>📧 Email</span><span>⚡ HTTP</span><span>🔧 Methods</span><span>↪️ Redirects</span>
+    <span>🌐 DNS</span><span>🔒 SSL/TLS</span><span>📧 Email</span><span>📋 CSP</span><span>🔥 WAF</span><span>⚙️ Tech</span><span>⚡ HTTP</span><span>⏱️ Perf</span><span>↪️ Redirects</span>
   </div>
 </section>
 
@@ -57,7 +58,7 @@
     <a href="tools/web-auditor.html" class="featured-card featured-main">
       <div class="icon">📋</div>
       <h4>Web Auditor</h4>
-      <p>Complete website security audit &mdash; 13 checks in one report. DNS, SSL/TLS, security headers grade, CORS, WAF detection, tech stack, cookies, CSP deep analysis, TTFB, HTTP methods, redirect chain. Prioritized recommendations.</p>
+      <p>Complete website security audit &mdash; 9 checks in one report. DNS, email security, SSL/TLS, CSP analysis, WAF detection, tech stack, HTTP features, performance, redirect chain. Prioritized recommendations.</p>
       <span class="tag">flagship</span>
     </a>
     <a href="tools/jwt-attacker.html" class="featured-card">
@@ -308,6 +309,7 @@
 <footer>
   <div class="links">
     <a href="about.html">About</a>
+    <a href="privacy.html">Privacy</a>
     <a href="privacy.html">Privacy</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
     <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
