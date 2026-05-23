@@ -599,13 +599,17 @@ async function runAudit() {
   var stepLabel = document.getElementById('progress-step');
   if (stepLabel) stepLabel.textContent = '\u2705 Complete!';
   try { renderReport(report, url); } catch(e) {
-    qs('audit-report').innerHTML = '<div class="output error">Error generating report: ' + e.message + '</div>';
+    qs('audit-report').innerHTML = '<div class="output error">Error generating report: ' + esc(e.message) + '</div>';
   }
   } catch(e) {
     clearInterval(progressTimer);
-    qs('audit-report').innerHTML = '<div class="output error">Audit failed: ' + e.message + '</div>';
+    qs('audit-report').innerHTML = '<div class="output error">Audit failed: ' + esc(e.message) + '</div>';
     qs('audit-progress').style.display = 'none';
   }
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function renderReport(r, url) {
@@ -677,7 +681,7 @@ function renderReport(r, url) {
   var httpsColor = r.ssl && r.ssl.https === true ? '#40c060' : (r.ssl && r.ssl.proxyFailed ? '#e0b040' : '#e04040');
   summaryHtml += '<div class="summary-card"><div class="val" style="color:' + httpsColor + '">' + httpsLabel + '</div><div class="lbl">HTTPS</div></div>';
   summaryHtml += '<div class="summary-card"><div class="val">' + (r.cspDeep ? 'Set' : 'Missing') + '</div><div class="lbl">CSP</div></div>';
-  summaryHtml += '<div class="summary-card"><div class="val">' + wafText + '</div><div class="lbl">WAF</div></div>';
+  summaryHtml += '<div class="summary-card"><div class="val">' + esc(wafText) + '</div><div class="lbl">WAF</div></div>';
   summaryHtml += '<div class="summary-card"><div class="val">' + techCount + '</div><div class="lbl">Technologies</div></div>';
   summaryHtml += '<div class="summary-card"><div class="val">' + (r.performance ? r.performance.ttfb + 'ms' : '—') + '</div><div class="lbl">TTFB</div></div>';
   summaryHtml += '<div class="summary-card"><div class="val">' + (r.emailSecurity ? (r.emailSecurity.spf ? 'SPF\u2713' : 'No SPF') : '—') + '</div><div class="lbl">Email Sec</div></div>';
@@ -695,7 +699,7 @@ function renderReport(r, url) {
     });
     var techHtml = '<div class="report-section"><h4>\u2699\uFE0F Technology Stack (' + r.tech.length + ' detected)</h4>';
     for (var cat in categories) {
-      techHtml += '<div class="finding info"><strong>' + cat + ':</strong> ' + categories[cat].join(', ') + '</div>';
+      techHtml += '<div class="finding info"><strong>' + esc(cat) + ':</strong> ' + categories[cat].map(function(n) { return esc(n); }).join(', ') + '</div>';
     }
     techHtml += '<div class="finding low">Note: Detection based on HTML/headers. Some tech may be undetected.</div>';
     techHtml += '</div>';
@@ -708,7 +712,7 @@ function renderReport(r, url) {
     var types = Object.keys(r.dns);
     if (types.length) {
       types.forEach(function(t) {
-        dnsHtml += '<div class="finding info">' + t + ': ' + r.dns[t].join(', ') + '</div>';
+        dnsHtml += '<div class="finding info">' + t + ': ' + r.dns[t].map(function(v) { return esc(v); }).join(', ') + '</div>';
       });
     } else {
       dnsHtml += '<div class="finding low">No DNS records resolved</div>';
@@ -721,14 +725,14 @@ function renderReport(r, url) {
   if (r.emailSecurity) {
     var e = r.emailSecurity;
     var eHtml = '<div class="report-section"><h4>\uD83D\uDCE7 Email Security (SPF/DKIM/DMARC/BIMI)</h4>';
-    eHtml += '<div class="finding ' + (e.spf ? 'good' : 'high') + '">SPF: ' + (e.spf || '\u274C Not configured') + '</div>';
+    eHtml += '<div class="finding ' + (e.spf ? 'good' : 'high') + '">SPF: ' + esc(e.spf || '\u274C Not configured') + '</div>';
     if (e.spf) {
       var qualifier = e.spf.match(/\~(all|\?all)/i);
-      if (qualifier) eHtml += '<div class="finding medium">\u26A0\uFE0F SPF softfail (~' + qualifier[1] + ') \u2014 use -all for strict rejection</div>';
+      if (qualifier) eHtml += '<div class="finding medium">\u26A0\uFE0F SPF softfail (~' + esc(qualifier[1]) + ') \u2014 use -all for strict rejection</div>';
       var mxInclude = (e.spf.match(/include:/g) || []).length;
       if (mxInclude > 10) eHtml += '<div class="finding medium">\u26A0\uFE0F SPF has ' + mxInclude + ' includes \u2014 may exceed DNS lookup limit (10)</div>';
     }
-    eHtml += '<div class="finding ' + (e.dmarc ? 'good' : 'high') + '">DMARC: ' + (e.dmarc || '\u274C Not configured') + '</div>';
+    eHtml += '<div class="finding ' + (e.dmarc ? 'good' : 'high') + '">DMARC: ' + esc(e.dmarc || '\u274C Not configured') + '</div>';
     if (e.dmarc) {
       var pMatch = e.dmarc.match(/p=(none|quarantine|reject)/i);
       if (pMatch) {
@@ -737,10 +741,10 @@ function renderReport(r, url) {
         else eHtml += '<div class="finding good">DMARC policy: reject \u2713 (strong)</div>';
       }
       var pctMatch = e.dmarc.match(/pct=(\d+)/i);
-      if (pctMatch && parseInt(pctMatch[1]) < 100) eHtml += '<div class="finding medium">\u26A0\uFE0F DMARC pct=' + pctMatch[1] + '% \u2014 partial deployment</div>';
+      if (pctMatch && parseInt(pctMatch[1]) < 100) eHtml += '<div class="finding medium">\u26A0\uFE0F DMARC pct=' + esc(pctMatch[1]) + '% \u2014 partial deployment</div>';
     }
-    eHtml += '<div class="finding ' + (e.dkimSelectors.length ? 'good' : 'medium') + '">DKIM: ' + (e.dkimSelectors.length ? e.dkimSelectors.join(', ') + ' found \u2713' : 'No common selectors found') + '</div>';
-    eHtml += '<div class="finding ' + (e.bimi ? 'good' : 'low') + '">BIMI: ' + (e.bimi || 'Not configured (optional)') + '</div>';
+    eHtml += '<div class="finding ' + (e.dkimSelectors.length ? 'good' : 'medium') + '">DKIM: ' + (e.dkimSelectors.length ? e.dkimSelectors.map(function(s) { return esc(s); }).join(', ') + ' found \u2713' : 'No common selectors found') + '</div>';
+    eHtml += '<div class="finding ' + (e.bimi ? 'good' : 'low') + '">BIMI: ' + esc(e.bimi || 'Not configured (optional)') + '</div>';
     eHtml += '</div>';
     container.innerHTML += eHtml;
   }
@@ -774,7 +778,7 @@ function renderReport(r, url) {
       if (dir === 'object-src' && v === "'none'") issues2.push('\u2705 Properly restricted');
       if (dir === 'base-uri' && v === "'none'") issues2.push('\u2705 Prevents base tag injection');
       var note = issues2.length ? ' \u2014 ' + issues2.join('; ') : '';
-      cspHtml += '<div class="finding info"><strong>' + dir + '</strong>: ' + v + note + '</div>';
+      cspHtml += '<div class="finding info"><strong>' + esc(dir) + '</strong>: ' + esc(v) + note + '</div>';
     }
     var missing2 = [];
     if (!r.cspDeep.directives['base-uri']) missing2.push('base-uri');
@@ -790,7 +794,7 @@ function renderReport(r, url) {
 
   // ── WAF ──
   if (r.waf && r.waf.length) {
-    container.innerHTML += '<div class="report-section"><h4>\uD83D\uDD25 WAF Detection</h4><div class="finding info">' + r.waf.join(', ') + '</div></div>';
+    container.innerHTML += '<div class="report-section"><h4>\uD83D\uDD25 WAF Detection</h4><div class="finding info">' + r.waf.map(function(w) { return esc(w); }).join(', ') + '</div></div>';
   } else {
     container.innerHTML += '<div class="report-section"><h4>\uD83D\uDD25 WAF Detection</h4><div class="finding info">None detected (' + WAF_SIGNATURES.length + ' signatures checked via headers/DNS/body)</div></div>';
   }
@@ -800,7 +804,7 @@ function renderReport(r, url) {
     var f = r.httpFeatures;
     var fHtml = '<div class="report-section"><h4>\u26A1 HTTP Features</h4>';
     fHtml += '<div class="finding ' + (f.httpsRedirect ? 'good' : 'medium') + '">HTTP \u2192 HTTPS redirect: ' + (f.httpsRedirect ? '\u2713 Present' : '\u2717 Not detected') + '</div>';
-    if (f.server) fHtml += '<div class="finding info">Server: ' + f.server + '</div>';
+    if (f.server) fHtml += '<div class="finding info">Server: ' + esc(f.server) + '</div>';
     fHtml += '<div class="finding ' + (f.xctoNoSniff ? 'good' : 'medium') + '">X-Content-Type-Options: ' + (f.xctoNoSniff ? 'nosniff \u2713' : '\u2717 Missing \u2014 MIME-sniffing allowed') + '</div>';
     fHtml += '</div>';
     container.innerHTML += fHtml;
@@ -812,7 +816,7 @@ function renderReport(r, url) {
     r.redirectChain.forEach(function(h, i) {
       var statusCls = h.status && h.status < 400 ? 'good' : (h.status && h.status >= 400 ? 'high' : 'low');
       var statusTxt = h.status ? h.status + (h.location ? ' \u2192' : ' (final)') : 'error';
-      redirHtml += '<div class="finding ' + statusCls + '">' + (i+1) + '. ' + h.url + ' <span style="opacity:.5">[' + statusTxt + ']</span>' + (h.location ? '<br><span style="opacity:.6;font-size:.75rem">Location: ' + h.location + '</span>' : '') + '</div>';
+      redirHtml += '<div class="finding ' + statusCls + '">' + (i+1) + '. ' + esc(h.url) + ' <span style="opacity:.5">[' + statusTxt + ']</span>' + (h.location ? '<br><span style="opacity:.6;font-size:.75rem">Location: ' + esc(h.location) + '</span>' : '') + '</div>';
     });
     if (hasDowngrade) redirHtml += '<div class="finding medium">\u26A0\uFE0F Insecure HTTP detected in chain</div>';
     redirHtml += '</div>';
@@ -831,12 +835,12 @@ function renderReport(r, url) {
   // ── Meta Tags (from HTML) ──
   if (r.pageTitle || r.metaTags) {
     var metaHtml = '<div class="report-section"><h4>\uD83D\uDD0D Page Meta</h4>';
-    if (r.pageTitle) metaHtml += '<div class="finding info"><strong>Title:</strong> ' + r.pageTitle + '</div>';
+    if (r.pageTitle) metaHtml += '<div class="finding info"><strong>Title:</strong> ' + esc(r.pageTitle) + '</div>';
     if (r.metaTags) {
-      if (r.metaTags.generator) metaHtml += '<div class="finding info"><strong>Generator:</strong> ' + r.metaTags.generator + '</div>';
-      if (r.metaTags.ogTitle) metaHtml += '<div class="finding info"><strong>OG Title:</strong> ' + r.metaTags.ogTitle.substring(0, 100) + (r.metaTags.ogTitle.length > 100 ? '...' : '') + '</div>';
-      if (r.metaTags.ogDesc) metaHtml += '<div class="finding info"><strong>OG Description:</strong> ' + r.metaTags.ogDesc.substring(0, 120) + (r.metaTags.ogDesc.length > 120 ? '...' : '') + '</div>';
-      if (r.metaTags.ogImage) metaHtml += '<div class="finding info"><strong>OG Image:</strong> ' + r.metaTags.ogImage.substring(0, 80) + (r.metaTags.ogImage.length > 80 ? '...' : '') + '</div>';
+      if (r.metaTags.generator) metaHtml += '<div class="finding info"><strong>Generator:</strong> ' + esc(r.metaTags.generator) + '</div>';
+      if (r.metaTags.ogTitle) metaHtml += '<div class="finding info"><strong>OG Title:</strong> ' + esc(r.metaTags.ogTitle.substring(0, 100)) + (r.metaTags.ogTitle.length > 100 ? '...' : '') + '</div>';
+      if (r.metaTags.ogDesc) metaHtml += '<div class="finding info"><strong>OG Description:</strong> ' + esc(r.metaTags.ogDesc.substring(0, 120)) + (r.metaTags.ogDesc.length > 120 ? '...' : '') + '</div>';
+      if (r.metaTags.ogImage) metaHtml += '<div class="finding info"><strong>OG Image:</strong> ' + esc(r.metaTags.ogImage.substring(0, 80)) + (r.metaTags.ogImage.length > 80 ? '...' : '') + '</div>';
     }
     metaHtml += '</div>';
     container.innerHTML += metaHtml;

@@ -94,6 +94,7 @@
 </footer>
 
 <script>
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 async function generateHashes() {
   var scriptText = document.getElementById('chg-script').value.trim();
   var styleText = document.getElementById('chg-style').value.trim();
@@ -110,8 +111,8 @@ async function generateHashes() {
       var hash = await computeHash(scriptText, a);
       var shortName = a.replace('SHA-', 'sha');
       html += '<div class="chg-hash" onclick="copyCSPHash(this)" title="Click to copy">';
-      html += '<span class="algo">' + shortName + '-</span><span class="val">' + hash + '</span>';
-      html += '<div class="note">\'<span class="algo">' + shortName + '</span>-<span class="val">' + hash + '</span>\' → CSP directive: script-src</div>';
+      html += '<span class="algo">' + esc(shortName) + '-</span><span class="val">' + esc(hash) + '</span>';
+      html += '<div class="note">\'<span class="algo">' + esc(shortName) + '</span>-<span class="val">' + esc(hash) + '</span>\' → CSP directive: script-src</div>';
       html += '</div>';
     }
   }
@@ -122,8 +123,8 @@ async function generateHashes() {
       var hash = await computeHash(styleText, a);
       var shortName = a.replace('SHA-', 'sha');
       html += '<div class="chg-hash" onclick="copyCSPHash(this)" title="Click to copy">';
-      html += '<span class="algo">' + shortName + '-</span><span class="val">' + hash + '</span>';
-      html += '<div class="note">\'<span class="algo">' + shortName + '</span>-<span class="val">' + hash + '</span>\' → CSP directive: style-src</div>';
+      html += '<span class="algo">' + esc(shortName) + '-</span><span class="val">' + esc(hash) + '</span>';
+      html += '<div class="note">\'<span class="algo">' + esc(shortName) + '</span>-<span class="val">' + esc(hash) + '</span>\' → CSP directive: style-src</div>';
       html += '</div>';
     }
   }
