@@ -143,13 +143,11 @@ function escapeHtmlPoC(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function generatePoC() {
-  var url = document.getElementById('csrf-url').value.trim();
-  var method = document.getElementById('csrf-method').value;
-  var encoding = document.getElementById('csrf-encoding').value;
-  var autosubmit = document.getElementById('csrf-autosubmit').checked;
-  var headersRaw = document.getElementById('csrf-custom-headers').value.trim();
+function escapeJsStr(str) {
+  return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+}
 
+function buildParams() {
   var keys = document.querySelectorAll('.param-key');
   var vals = document.querySelectorAll('.param-val');
   var params = [];
@@ -158,6 +156,16 @@ function generatePoC() {
     var v = vals[i].value.trim();
     if (k) params.push({ key: k, value: v });
   }
+  return params;
+}
+
+function generatePoC() {
+  var url = document.getElementById('csrf-url').value.trim();
+  var method = document.getElementById('csrf-method').value;
+  var encoding = document.getElementById('csrf-encoding').value;
+  var autosubmit = document.getElementById('csrf-autosubmit').checked;
+  var headersRaw = document.getElementById('csrf-custom-headers').value.trim();
+  var params = buildParams();
 
   var lines = [];
   lines.push('<!DOCTYPE html>');
@@ -172,31 +180,44 @@ function generatePoC() {
     if (autosubmit) {
       lines.push('  <script>document.getElementById(\'poc-link\').click();<' + '/script>');
     }
-  } else {
-    lines.push('  <form action="' + escapeHtmlPoC(url) + '" method="' + method + '"');
+  } else if (encoding === 'json' || encoding === 'plain') {
+    lines.push('  <script>');
+    lines.push('  var xhr = new XMLHttpRequest();');
+    lines.push('  xhr.open("' + method + '", "' + escapeHtmlPoC(url) + '", true);');
 
-    if (encoding === 'multipart') {
-      lines.push('        enctype="multipart/form-data"');
-    }
+    var ct = encoding === 'json' ? 'application/json' : 'text/plain';
+    lines.push('  xhr.setRequestHeader("Content-Type", "' + ct + '");');
 
-    var ct = '';
-    if (encoding === 'json') ct = 'application/json';
-    else if (encoding === 'plain') ct = 'text/plain';
-    if (ct) {
-      lines.push(lines.pop() + '>');
-    } else {
-      lines.push(lines.pop() + '>');
+    if (headersRaw) {
+      headersRaw.split('\n').forEach(function(h) {
+        h = h.trim();
+        if (h) {
+          var sep = h.indexOf(':');
+          if (sep > 0) lines.push('  xhr.setRequestHeader("' + escapeHtmlPoC(h.slice(0, sep).trim()) + '", "' + escapeHtmlPoC(h.slice(sep + 1).trim()) + '");');
+        }
+      });
     }
 
     if (encoding === 'json') {
       var jsonObj = {};
       params.forEach(function(p) { jsonObj[p.key] = p.value; });
-      lines.push('    <input type="hidden" name="data" value=\'' + escapeHtmlPoC(JSON.stringify(jsonObj)) + '\'>');
+      lines.push('  xhr.send(\'' + escapeJsStr(JSON.stringify(jsonObj)) + '\');');
     } else {
-      params.forEach(function(p) {
-        lines.push('    <input type="hidden" name="' + escapeHtmlPoC(p.key) + '" value="' + escapeHtmlPoC(p.value) + '">');
-      });
+      var textBody = params.map(function(p) { return p.key + '=' + p.value; }).join('&');
+      lines.push('  xhr.send(\'' + escapeJsStr(textBody) + '\');');
     }
+    lines.push('  <' + '/script>');
+  } else {
+    // urlencoded or multipart — use HTML form
+    lines.push('  <form action="' + escapeHtmlPoC(url) + '" method="' + method + '"');
+    if (encoding === 'multipart') {
+      lines.push('        enctype="multipart/form-data"');
+    }
+    lines.push(lines.pop() + '>');
+
+    params.forEach(function(p) {
+      lines.push('    <input type="hidden" name="' + escapeHtmlPoC(p.key) + '" value="' + escapeHtmlPoC(p.value) + '">');
+    });
 
     if (autosubmit) {
       lines.push('    <script>document.forms[0].submit();<' + '/script>');
@@ -204,15 +225,14 @@ function generatePoC() {
       lines.push('    <input type="submit" value="Submit">');
     }
     lines.push('  </form>');
-  }
 
-  // Custom headers note (cannot be set via HTML form, but useful for awareness)
-  if (headersRaw) {
-    lines.push('  <!--');
-    lines.push('  Note: Custom headers cannot be set via HTML form submission.');
-    lines.push('  These headers are documented for manual use with a proxy like Burp Suite:');
-    lines.push('  ' + headersRaw.split('\n').join('\n  // '));
-    lines.push('  -->');
+    if (headersRaw) {
+      lines.push('  <!--');
+      lines.push('  Note: Custom headers cannot be set via HTML form submission.');
+      lines.push('  These headers are documented for manual use with a proxy like Burp Suite:');
+      lines.push('  ' + headersRaw.split('\n').join('\n  // '));
+      lines.push('  -->');
+    }
   }
 
   lines.push('</body>');

@@ -303,8 +303,25 @@ function generate() {
     lines.push('const helmet = require("helmet");');
     lines.push('app.use(helmet({');
     var opts = [];
-    if (csp) opts.push('  contentSecurityPolicy: { directives: { ' + dirs.map(function(d) { var p = d.indexOf(' '); return '"' + d.slice(0,p) + '": ["' + d.slice(p+1).replace(/'/g, '').split(' ').join('", "') + '"]'; }).join(', ') + ' } }');
-    if (!csp) opts.push('  contentSecurityPolicy: false');
+    if (csp) {
+      var cspDirs = dirs.map(function(d) {
+        var p = d.indexOf(' ');
+        var dirName = d.slice(0, p);
+        var camelName = dirName.replace(/-([a-z])/g, function(g) { return g[1].toUpperCase(); });
+        var vals = d.slice(p + 1);
+        // Wrap CSP keywords in extra quotes for helmet config
+        var arr = vals.split(/\s+/).map(function(v) {
+          if (v === "'none'" || v === "'self'" || v === "'unsafe-inline'" || v === "'unsafe-eval'" || v === "'strict-dynamic'") {
+            return '"' + v + '"';
+          }
+          return '"' + v + '"';
+        });
+        return '    ' + camelName + ': [' + arr.join(', ') + ']';
+      });
+      opts.push('  contentSecurityPolicy: {\n    directives: {\n' + cspDirs.join(',\n') + '\n    }\n  }');
+    } else {
+      opts.push('  contentSecurityPolicy: false');
+    }
     if (hsts) opts.push('  hsts: { maxAge: ' + (parseInt(hsts.match(/\d+/)?.[0] || '31536000')) + ', includeSubDomains: ' + (hsts.includes('includeSubDomains') ? 'true' : 'false') + ', preload: ' + (hsts.includes('preload') ? 'true' : 'false') + ' }');
     if (!hsts) opts.push('  hsts: false');
     if (xfo) opts.push('  frameguard: { action: "' + xfo.toLowerCase() + '" }');
