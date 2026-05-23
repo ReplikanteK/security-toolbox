@@ -33,7 +33,7 @@
 <div class="tool-page">
   <a href="../index.html" class="back">← Back to tools</a>
   <h2>WAF Detector</h2>
-  <p class="desc">Detect Web Application Firewalls, CDNs, and reverse proxies from HTTP response headers and body fingerprints. Useful for recon and understanding your target's infrastructure.</p>
+  <p class="desc">Detect Web Application Firewalls, CDNs, and reverse proxies from HTTP response headers and body fingerprints. Useful for recon and understanding your target's infrastructure. Note: header-based detection may show the CORS proxy (Cloudflare) instead of the target — DNS-based detection is more reliable.</p>
 
   <label for="waf-url">URL</label>
   <input type="text" id="waf-url" placeholder="https://example.com" value="https://www.cloudflare.com">

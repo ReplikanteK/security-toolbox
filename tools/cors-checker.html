@@ -33,7 +33,7 @@
 <div class="tool-page">
   <a href="../index.html" class="back">← Back to tools</a>
   <h2>CORS Checker</h2>
-  <p class="desc">Test CORS headers returned by a URL. Checks Access-Control-Allow-Origin and credentials. Note: uses a CORS proxy — custom Origin headers are not forwarded, so reflection detection is approximate. Verify results with curl.</p>
+  <p class="desc">Test CORS headers returned by a URL. Checks Access-Control-Allow-Origin and credentials. Note: uses a CORS proxy — custom Origin headers are not forwarded, and all response headers come from the proxy (not the target). Verify results with <code>curl -H 'Origin: https://evil.com'</code>.</p>
 
   <label for="cors-url">URL to test</label>
   <input type="text" id="cors-url" placeholder="https://api.example.com/endpoint" value="https://api.github.com">
