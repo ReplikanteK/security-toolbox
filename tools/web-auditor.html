@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Web Auditor — SecuriTool</title>
-<meta name="description" content="Free web security auditor: DNS, email security (SPF/DKIM/DMARC), SSL/TLS, WAF, tech stack, CSP meta analysis, performance, redirect chain. Generates prioritized PDF-ready report.">
+<meta name="description" content="Free web security auditor: DNS, email security (SPF/DKIM/DMARC), tech stack, CSP meta analysis. Generates prioritized PDF-ready report. Header checks need curl.">
 <link rel="stylesheet" href="../css/style.css">
 <style>
 .progress-track { flex:1; height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
@@ -139,7 +139,7 @@
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/web-auditor.html">
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What does a web security audit check?","acceptedAnswer":{"@type":"Answer","text":"A web security audit checks DNS records (A, AAAA, MX, NS, TXT, CNAME), email security configuration (SPF, DKIM, DMARC, BIMI), SSL/TLS availability, Content-Security-Policy headers, WAF detection, technology stack, HTTP security features, page performance (TTFB), and redirect chain analysis."}},{"@type":"Question","name":"How does the Web Auditor work?","acceptedAnswer":{"@type":"Answer","text":"Enter any URL and click Run Audit. The tool performs 9 parallel checks using DNS-over-HTTPS for DNS records, a privacy proxy for HTTP header/body analysis, and HTML parsing for CSP meta tags and tech stack detection. Results are displayed in a prioritized report with a security score from A+ to F."}},{"@type":"Question","name":"Is the Web Auditor safe to use?","acceptedAnswer":{"@type":"Answer","text":"Yes. The Web Auditor runs entirely in your browser. DNS queries use Cloudflare DNS-over-HTTPS (encrypted). HTTP analysis uses a privacy proxy that only fetches headers and body text. No data is stored on any server."}}]}
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What does a web security audit check?","acceptedAnswer":{"@type":"Answer","text":"A web security audit checks DNS records (A, AAAA, MX, NS, TXT, CNAME), email security configuration (SPF, DKIM, DMARC, BIMI), Content-Security-Policy meta tags, technology stack, and page metadata (title, OG tags)."}},{"@type":"Question","name":"How does the Web Auditor work?","acceptedAnswer":{"@type":"Answer","text":"Enter any URL and click Run Audit. The tool uses DNS-over-HTTPS for DNS and email security records, and fetches the page HTML via a privacy proxy for CSP meta tags, tech stack detection, and page metadata. Results are displayed in a prioritized report with a security score from A+ to F."}},{"@type":"Question","name":"Is the Web Auditor safe to use?","acceptedAnswer":{"@type":"Answer","text":"Yes. The Web Auditor runs entirely in your browser. DNS queries use Cloudflare DNS-over-HTTPS (encrypted). The HTML fetch goes through a privacy proxy that only retrieves the page body. No data is stored on any server. Note: header-based checks (SSL, WAF, redirects) require running curl directly on your machine."}}]}
   </script>
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
@@ -163,7 +163,7 @@
 <div class="tool-page">
   <a href="../index.html" class="back">← Back to tools</a>
   <h2>Web Auditor</h2>
-  <p class="desc">Comprehensive security audit for any URL. Checks DNS, SSL/TLS, WAF, tech stack, CSP (from meta tags), email security (SPF/DKIM/DMARC), TTFB, redirect chain, and HTTP features. Generates a full PDF-ready report with prioritized recommendations.</p>
+  <p class="desc">Security audit for any URL. Checks DNS, email security (SPF/DKIM/DMARC), tech stack, CSP meta tags, and page meta. Generates a PDF-ready report with prioritized recommendations. Note: header-based checks (SSL, WAF, redirects) require running curl directly.</p>
 
   <label for="audit-url">Target URL</label>
   <input type="text" id="audit-url" placeholder="https://example.com" value="https://example.com" onkeydown="if(event.key==='Enter')runAudit()">
@@ -174,7 +174,7 @@
 
   <div id="audit-progress" class="progress-bar" style="display:none"></div>
   <div id="audit-report"></div>
-  <div id="audit-status" class="output" style="margin-top:1.5rem">Enter a URL and click Run Audit. The audit checks DNS, SSL, headers, CORS, WAF, tech stack, cookies, CSP, performance, methods, and redirects. Results include a full report with prioritized recommendations. Use the Print button to export as PDF.</div>
+  <div id="audit-status" class="output" style="margin-top:1.5rem">Enter a URL and click Run Audit. The audit checks DNS records, email security (SPF/DKIM/DMARC), tech stack, CSP meta tags, and page metadata. Results include a full report with prioritized recommendations. Use the Print button to export as PDF.</div>
 </div>
 
 <footer>
@@ -199,13 +199,8 @@ TODO: Carbon Ads monetization
 const CHECKS = [
   { id: 'dns', label: 'DNS Records', icon: '🌐' },
   { id: 'emailsec', label: 'Email Security', icon: '📧' },
-  { id: 'ssl', label: 'SSL/TLS', icon: '🔒' },
   { id: 'csp', label: 'CSP Analysis', icon: '📋' },
-  { id: 'waf', label: 'WAF Detection', icon: '🔥' },
-  { id: 'httpf', label: 'HTTP Features', icon: '⚡' },
   { id: 'tech', label: 'Tech Stack', icon: '⚙️' },
-  { id: 'perf', label: 'Performance', icon: '⏱️' },
-  { id: 'redirect', label: 'Redirect Chain', icon: '↪️' },
 ];
 
 const WAF_SIGNATURES = [
@@ -427,44 +422,15 @@ async function runAudit() {
     markProgress('emailsec', 'done');
   } catch { markProgress('emailsec', 'error'); }
 
-  // ── SSL + Body fetch (try HTTPS via proxy, fallback HTTP) ──
-  markProgress('ssl', 'running');
-  markProgress('perf', 'running');
-  var sslState = { https: null };
+  // ── Body fetch (via proxy) ──
   try {
-    var fetchUrl = url.replace(/^http:/, 'https:');
+    var fetchUrl = url;
     var ctrl = new AbortController();
-    var perfStart = performance.now();
     setTimeout(function() { ctrl.abort(); }, 6000);
     var resp = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(fetchUrl), { signal: ctrl.signal });
     body = await resp.text().catch(function() { return ''; });
-    var perfTime = Math.round(performance.now() - perfStart);
-    report.performance = { ttfb: perfTime };
     resp.headers.forEach(function(v,k) { bodyHdrs[k.toLowerCase()] = v; });
-    report.status = resp.status;
-    sslState = { https: true };
-    markProgress('ssl', 'done');
-    markProgress('perf', 'done');
-  } catch(e) {
-    /* Proxy HTTPS failed — don't assume no HTTPS, could be proxy issue */
-    sslState = { https: null, proxyFailed: true };
-    /* Try HTTP as fallback for body/headers */
-    try {
-      var httpUrl = url.startsWith('https://') ? url.replace(/^https:/, 'http:') : url;
-      var ctrl2 = new AbortController();
-      var perfStart2 = performance.now();
-      setTimeout(function() { ctrl2.abort(); }, 6000);
-      var resp2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(httpUrl), { signal: ctrl2.signal });
-      body = await resp2.text().catch(function() { return ''; });
-      var perfTime2 = Math.round(performance.now() - perfStart2);
-      if (!report.performance) report.performance = { ttfb: perfTime2 };
-      resp2.headers.forEach(function(v,k) { bodyHdrs[k.toLowerCase()] = v; });
-      report.status = resp2.status;
-    } catch(e2) { /* both failed */ }
-    markProgress('ssl', 'done');
-    markProgress('perf', report.performance ? 'done' : 'error');
-  }
-  report.ssl = sslState;
+  } catch(e) { /* body fetch failed */ }
 
   // ── CSP Analysis (from meta tags in body) ──
   markProgress('csp', 'running');
@@ -480,16 +446,7 @@ async function runAudit() {
       });
       cspMeta = { raw: cspRaw, directives: directives, source: 'meta' };
     }
-    /* also check for CSP header from allorigins (proxy might forward it) */
-    var cspHeader = bodyHdrs['content-security-policy'];
-    if (cspHeader && !cspMeta) {
-      var directives2 = {};
-      cspHeader.split(';').forEach(function(d) {
-        var parts = d.trim().split(/\s+/);
-        if (parts.length && parts[0]) directives2[parts[0]] = parts.slice(1);
-      });
-      cspMeta = { raw: cspHeader, directives: directives2, source: 'header' };
-    }
+
     report.cspDeep = cspMeta;
     markProgress('csp', 'done');
   } catch { markProgress('csp', 'error'); }
@@ -502,12 +459,7 @@ async function runAudit() {
     for (var wi = 0; wi < WAF_SIGNATURES.length; wi++) {
       var sig = WAF_SIGNATURES[wi];
       var match = false;
-      for (var key in sig.headers) {
-        var hv = bodyHdrs[key];
-        if (sig.headers[key] === null && hv) { match = true; break; }
-        if (typeof sig.headers[key] === 'string' && hv && hv.includes(sig.headers[key])) { match = true; break; }
-      }
-      if (!match && sig.nsPattern && report.dns && report.dns.NS) {
+      if (sig.nsPattern && report.dns && report.dns.NS) {
         for (var ni = 0; ni < report.dns.NS.length; ni++) {
           if (sig.nsPattern.test(report.dns.NS[ni])) { match = true; break; }
         }
@@ -536,42 +488,9 @@ async function runAudit() {
     markProgress('tech', 'done');
   } catch { markProgress('tech', 'error'); }
 
-  // ── Redirect Chain ──
-  markProgress('redirect', 'running');
-  var redirectChain = [];
-  var cur = url;
-  try {
-    var redirSafety = setTimeout(function() { report.redirectChain = redirectChain; markProgress('redirect', 'done'); }, 8000);
-    for (var ri = 0; ri < 3; ri++) {
-      try {
-        var rc = new AbortController();
-        setTimeout(function() { rc.abort(); }, 3000);
-        var rr = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(cur), { method: 'GET', signal: rc.signal });
-        var loc = rr.headers.get('location');
-        redirectChain.push({ url: cur, status: rr.status, location: loc });
-        if (loc && rr.status >= 300 && rr.status < 400) {
-          try { cur = new URL(loc, cur).href; } catch { break; }
-        } else break;
-      } catch { break; }
-    }
-    clearTimeout(redirSafety);
-  } catch(e) {}
-  report.redirectChain = redirectChain;
-  markProgress('redirect', 'done');
 
-  // ── HTTP Features ──
-  markProgress('httpf', 'running');
-  try {
-    var httpFeatures = {};
-    if (redirectChain.length >= 2 && redirectChain[0].url.startsWith('http://') && redirectChain[redirectChain.length-1].url.startsWith('https://')) {
-      httpFeatures.httpsRedirect = true;
-    } else { httpFeatures.httpsRedirect = false; }
-    httpFeatures.xctoNoSniff = bodyHdrs['x-content-type-options'] && bodyHdrs['x-content-type-options'].toLowerCase().trim() === 'nosniff';
-    var bodyServer = bodyHdrs['server'];
-    httpFeatures.server = bodyServer && bodyServer !== 'cloudflare' ? bodyServer : null;
-    report.httpFeatures = httpFeatures;
-    markProgress('httpf', 'done');
-  } catch { markProgress('httpf', 'error'); }
+
+
 
   // ── Meta tags from body ──
   try {
@@ -620,8 +539,6 @@ function renderReport(r, url) {
   var goodItems = [];
 
   // Collect findings from each section
-  if (r.ssl && r.ssl.https === false) { criticalIssues.push('HTTPS not available'); }
-
   if (!r.cspDeep) {
     highIssues.push('CSP not configured — no XSS protection');
   } else if (r.cspDeep.directives) {
@@ -648,14 +565,6 @@ function renderReport(r, url) {
     }
   }
 
-  var hasDowngrade = r.redirectChain && r.redirectChain.some(function(h) { return h.url && h.url.startsWith('http://'); });
-  var hasCrossDomain = r.redirectChain && r.redirectChain.some(function(h, i) {
-    if (i === 0) return false;
-    try { return new URL(h.url).hostname !== new URL(url).hostname; } catch { return false; }
-  });
-  if (hasDowngrade) highIssues.push('HTTPS → HTTP protocol downgrade in redirect chain');
-  if (hasCrossDomain) lowIssues.push('Cross-domain redirect detected (potential open redirect)');
-
   // Score: start from 100, deduct per finding severity
   var baseScore = 100;
   var deduction = criticalIssues.length * 25 + highIssues.length * 10 + mediumIssues.length * 5 + lowIssues.length * 2;
@@ -674,13 +583,9 @@ function renderReport(r, url) {
   summaryHtml += '<div class="summary-grid">';
   summaryHtml += '<div class="summary-card"><div class="val" style="color:' + scoreColor + '">' + overallScore + '%</div><div class="lbl">Security Score</div></div>';
   summaryHtml += '<div class="summary-card"><div class="val" style="color:' + (totalIssues ? '#e08040' : '#40c060') + '">' + totalIssues + '</div><div class="lbl">Issues Found</div></div>';
-  var httpsLabel = r.ssl && r.ssl.https === true ? 'Yes' : (r.ssl && r.ssl.proxyFailed ? '?' : 'No');
-  var httpsColor = r.ssl && r.ssl.https === true ? '#40c060' : (r.ssl && r.ssl.proxyFailed ? '#e0b040' : '#e04040');
-  summaryHtml += '<div class="summary-card"><div class="val" style="color:' + httpsColor + '">' + httpsLabel + '</div><div class="lbl">HTTPS</div></div>';
   summaryHtml += '<div class="summary-card"><div class="val">' + (r.cspDeep ? 'Set' : 'Missing') + '</div><div class="lbl">CSP</div></div>';
   summaryHtml += '<div class="summary-card"><div class="val">' + esc(wafText) + '</div><div class="lbl">WAF</div></div>';
   summaryHtml += '<div class="summary-card"><div class="val">' + techCount + '</div><div class="lbl">Technologies</div></div>';
-  summaryHtml += '<div class="summary-card"><div class="val">' + (r.performance ? r.performance.ttfb + 'ms' : '—') + '</div><div class="lbl">TTFB</div></div>';
   summaryHtml += '<div class="summary-card"><div class="val">' + (r.emailSecurity ? (r.emailSecurity.spf ? 'SPF\u2713' : 'No SPF') : '—') + '</div><div class="lbl">Email Sec</div></div>';
   summaryHtml += '</div>';
   summaryHtml += '<button class="print-btn" onclick="window.print()">\uD83D\uDDA8\uFE0F Print / Save PDF</button>';
@@ -698,7 +603,7 @@ function renderReport(r, url) {
     for (var cat in categories) {
       techHtml += '<div class="finding info"><strong>' + esc(cat) + ':</strong> ' + categories[cat].map(function(n) { return esc(n); }).join(', ') + '</div>';
     }
-    techHtml += '<div class="finding low">Note: Detection based on HTML/headers. Some tech may be undetected.</div>';
+    techHtml += '<div class="finding low">Note: Body-based detection. Header-based detections (server, CDN, cookies) need curl verify.</div>';
     techHtml += '</div>';
     container.innerHTML += techHtml;
   }
@@ -746,20 +651,6 @@ function renderReport(r, url) {
     container.innerHTML += eHtml;
   }
 
-  // ── SSL ──
-  if (r.ssl) {
-    var sslHtml = '<div class="report-section"><h4>\uD83D\uDD12 SSL/TLS</h4>';
-    if (r.ssl.https === true) {
-      sslHtml += '<div class="finding good">HTTPS available \u2713</div>';
-    } else if (r.ssl.proxyFailed) {
-      sslHtml += '<div class="finding medium">\u26A0\uFE0F Proxy check inconclusive \u2014 site likely uses HTTPS (verify with <code>curl -I https://...</code>)</div>';
-    } else {
-      sslHtml += '<div class="finding critical">HTTPS not available \u2014 data transmitted in plaintext</div>';
-    }
-    sslHtml += '</div>';
-    container.innerHTML += sslHtml;
-  }
-
   // ── CSP (from meta tags) ──
   if (r.cspDeep) {
     var cspHtml = '<div class="report-section"><h4>\uD83D\uDCCB Content Security Policy</h4>';
@@ -793,40 +684,7 @@ function renderReport(r, url) {
   if (r.waf && r.waf.length) {
     container.innerHTML += '<div class="report-section"><h4>\uD83D\uDD25 WAF Detection</h4><div class="finding info">' + r.waf.map(function(w) { return esc(w); }).join(', ') + '</div></div>';
   } else {
-    container.innerHTML += '<div class="report-section"><h4>\uD83D\uDD25 WAF Detection</h4><div class="finding info">None detected (' + WAF_SIGNATURES.length + ' signatures checked via headers/DNS/body)</div></div>';
-  }
-
-  // ── HTTP Features ──
-  if (r.httpFeatures) {
-    var f = r.httpFeatures;
-    var fHtml = '<div class="report-section"><h4>\u26A1 HTTP Features</h4>';
-    fHtml += '<div class="finding ' + (f.httpsRedirect ? 'good' : 'medium') + '">HTTP \u2192 HTTPS redirect: ' + (f.httpsRedirect ? '\u2713 Present' : '\u2717 Not detected') + '</div>';
-    if (f.server) fHtml += '<div class="finding info">Server: ' + esc(f.server) + '</div>';
-    fHtml += '<div class="finding ' + (f.xctoNoSniff ? 'good' : 'medium') + '">X-Content-Type-Options: ' + (f.xctoNoSniff ? 'nosniff \u2713' : '\u2717 Missing \u2014 MIME-sniffing allowed') + '</div>';
-    fHtml += '</div>';
-    container.innerHTML += fHtml;
-  }
-
-  // ── Redirect Chain ──
-  if (r.redirectChain && r.redirectChain.length >= 2) {
-    var redirHtml = '<div class="report-section"><h4>\u27A1\uFE0F Redirect Chain (' + (r.redirectChain.length - 1) + ' hops)</h4>';
-    r.redirectChain.forEach(function(h, i) {
-      var statusCls = h.status && h.status < 400 ? 'good' : (h.status && h.status >= 400 ? 'high' : 'low');
-      var statusTxt = h.status ? h.status + (h.location ? ' \u2192' : ' (final)') : 'error';
-      redirHtml += '<div class="finding ' + statusCls + '">' + (i+1) + '. ' + esc(h.url) + ' <span style="opacity:.5">[' + statusTxt + ']</span>' + (h.location ? '<br><span style="opacity:.6;font-size:.75rem">Location: ' + esc(h.location) + '</span>' : '') + '</div>';
-    });
-    if (hasDowngrade) redirHtml += '<div class="finding medium">\u26A0\uFE0F Insecure HTTP detected in chain</div>';
-    redirHtml += '</div>';
-    container.innerHTML += redirHtml;
-  } else if (r.redirectChain) {
-    container.innerHTML += '<div class="report-section"><h4>\u27A1\uFE0F Redirect Chain</h4><div class="finding info">No redirects detected (direct access)</div></div>';
-  }
-
-  // ── Performance ──
-  if (r.performance) {
-    var perfClass = r.performance.ttfb < 500 ? 'good' : (r.performance.ttfb < 1500 ? 'info' : 'medium');
-    container.innerHTML += '<div class="report-section"><h4>\u23F1\uFE0F Performance</h4>'
-      + '<div class="finding ' + perfClass + '">Time to first byte: ' + r.performance.ttfb + 'ms' + (r.performance.ttfb < 500 ? ' (fast \u2713)' : r.performance.ttfb < 1500 ? '' : ' (slow \u2014 consider optimizing)') + '</div></div>';
+    container.innerHTML += '<div class="report-section"><h4>\uD83D\uDD25 WAF Detection</h4><div class="finding info">None detected</div></div>';
   }
 
   // ── Meta Tags (from HTML) ──

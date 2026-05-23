@@ -145,11 +145,7 @@ async function runEmailCheck() {
     a = await dnsQuery(domain, 'A');
   } catch(e) { a = null; }
 
-  try {
-    progress.textContent = '⏳ Checking HTTP status...';
-    var httpR = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('http://' + domain), { method: 'HEAD', signal: AbortSignal.timeout(5000) });
-    hasHttp = httpR.status > 0;
-  } catch(e) { hasHttp = false; }
+  hasHttp = a && a.length > 0;
 
   progress.style.display = 'none';
 

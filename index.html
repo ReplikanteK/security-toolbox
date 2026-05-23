@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SecuriTool — Free Web Security Tools & Auditor</title>
-<meta name="description" content="Free web security tools: URL auditor (DNS, SSL, headers, CORS, WAF), JWT decoder/attacker/playground, CVE search, CSP evaluator/generator, CSRF PoC generator, subdomain scanner, email security checker, and 30+ tools. All client-side, no tracking.">
+<meta name="description" content="Free web security tools: URL auditor (DNS, SSL, headers, CORS, WAF), JWT decoder/attacker/playground, CVE search, CSP evaluator/generator, CSRF PoC generator, subdomain scanner, email security checker, and 26+ tools. All client-side, no tracking.">
 <meta property="og:title" content="SecuriTool — Free Web Security Tools">
-<meta property="og:description" content="29 free security tools: full web auditor, JWT analysis, CVE search, email security. Privacy-first (no cookies), all client-side.">
+<meta property="og:description" content="26 free security tools: full web auditor, JWT analysis, CVE search, email security. Privacy-first (no cookies), all client-side.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://securitool.js.org/">
 <link rel="stylesheet" href="css/style.css">
@@ -17,10 +17,10 @@
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/">
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"WebApplication","name":"SecuriTool","url":"https://securitool.js.org/","description":"29 free client-side web security tools: web auditor, JWT analyzer, CVE search, email security checker, CSP evaluator, subdomain scanner, and more. All client-side, zero tracking.","applicationCategory":"SecurityApplication","operatingSystem":"Any","browserRequirements":"JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"ReplikanteK","url":"https://github.com/ReplikanteK"}}
+  {"@context":"https://schema.org","@type":"WebApplication","name":"SecuriTool","url":"https://securitool.js.org/","description":"26 free client-side web security tools: web auditor, JWT analyzer, CVE search, email security checker, CSP evaluator, subdomain scanner, and more. All client-side, zero tracking.","applicationCategory":"SecurityApplication","operatingSystem":"Any","browserRequirements":"JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"ReplikanteK","url":"https://github.com/ReplikanteK"}}
   </script>
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is SecuriTool?","acceptedAnswer":{"@type":"Answer","text":"SecuriTool is a free collection of 30+ client-side web security tools for researchers and developers. It includes a full web auditor, JWT decoder, attacker, and playground, CVE search, email security checker (SPF/DKIM/DMARC), CSP evaluator and hash generator, CSRF PoC generator, policy generator, subdomain scanner, and more. All tools run in your browser with zero data sent to servers."}},{"@type":"Question","name":"Is SecuriTool free?","acceptedAnswer":{"@type":"Answer","text":"Yes, SecuriTool is completely free and open source under the MIT License. There are no paywalls, no signups, and no hidden limits. All 30+ tools are available immediately in your browser."}},{"@type":"Question","name":"Does SecuriTool track me or collect my data?","acceptedAnswer":{"@type":"Answer","text":"No. SecuriTool uses GoatCounter for anonymous page view counting with no cookies or personal data collection. All security analysis tools run entirely client-side — your data never leaves your browser. External API calls (DNS, CVE search) are clearly indicated."}},{"@type":"Question","name":"What checks does the Web Auditor perform?","acceptedAnswer":{"@type":"Answer","text":"The Web Auditor performs 9 security checks: DNS records, email security (SPF/DKIM/DMARC/BIMI), SSL/TLS availability, Content-Security-Policy analysis, WAF detection (Cloudflare, AWS, Akamai, Fastly, and more), technology stack detection, HTTP features (redirects, HSTS, X-Content-Type-Options), performance (TTFB), and redirect chain analysis."}},{"@type":"Question","name":"Can I run SecuriTool offline?","acceptedAnswer":{"@type":"Answer","text":"Most tools work offline after the first visit. Tools that require external APIs (DNS Lookup, CVE Search, Web Auditor via proxy) need internet access. The page can be installed as a Progressive Web App for offline access to client-side tools."}},{"@type":"Question","name":"What technologies does SecuriTool detect?","acceptedAnswer":{"@type":"Answer","text":"The Web Auditor detects over 60 technologies across categories: servers (Nginx, Apache, IIS), frameworks (React, Vue, Django, Rails), CMS (WordPress, Drupal, Joomla), CDNs (Cloudflare, Fastly, Cloudfront), hosting (Netlify, Vercel, GitHub Pages), analytics (Google Analytics, Hotjar), and more via header and HTML pattern matching."}}]}
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is SecuriTool?","acceptedAnswer":{"@type":"Answer","text":"SecuriTool is a free collection of 30+ client-side web security tools for researchers and developers. It includes a full web auditor, JWT decoder, attacker, and playground, CVE search, email security checker (SPF/DKIM/DMARC), CSP evaluator and hash generator, CSRF PoC generator, policy generator, subdomain scanner, and more. All tools run in your browser with zero data sent to servers."}},{"@type":"Question","name":"Is SecuriTool free?","acceptedAnswer":{"@type":"Answer","text":"Yes, SecuriTool is completely free and open source under the MIT License. There are no paywalls, no signups, and no hidden limits. All 26+ tools are available immediately in your browser."}},{"@type":"Question","name":"Does SecuriTool track me or collect my data?","acceptedAnswer":{"@type":"Answer","text":"No. SecuriTool uses GoatCounter for anonymous page view counting with no cookies or personal data collection. All security analysis tools run entirely client-side — your data never leaves your browser. External API calls (DNS, CVE search) are clearly indicated."}},{"@type":"Question","name":"What checks does the Web Auditor perform?","acceptedAnswer":{"@type":"Answer","text":"The Web Auditor checks DNS records, email security (SPF/DKIM/DMARC/BIMI), Content-Security-Policy meta tags, technology stack detection, and page metadata (title, OG tags). Header-based checks (SSL, WAF, redirects) require running curl directly."}},{"@type":"Question","name":"Can I run SecuriTool offline?","acceptedAnswer":{"@type":"Answer","text":"Most tools work offline after the first visit. Tools that require external APIs (DNS Lookup, CVE Search, Web Auditor via proxy) need internet access. The page can be installed as a Progressive Web App for offline access to client-side tools."}},{"@type":"Question","name":"What technologies does SecuriTool detect?","acceptedAnswer":{"@type":"Answer","text":"The Web Auditor detects over 60 technologies across categories: servers (Nginx, Apache, IIS), frameworks (React, Vue, Django, Rails), CMS (WordPress, Drupal, Joomla), CDNs (Cloudflare, Fastly, Cloudfront), hosting (Netlify, Vercel, GitHub Pages), analytics (Google Analytics, Hotjar), and more via header and HTML pattern matching."}}]}
   </script>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0a0e17">
@@ -61,7 +61,7 @@
     <a href="tools/web-auditor.html" class="featured-card featured-main">
       <div class="icon">📋</div>
       <h4>Web Auditor</h4>
-      <p>Complete website security audit &mdash; 9 checks in one report. DNS, email security, SSL/TLS, CSP analysis, WAF detection, tech stack, HTTP features, performance, redirect chain. Prioritized recommendations.</p>
+      <p>Website security audit: DNS, email security (SPF/DKIM/DMARC), tech stack, CSP meta, page meta. Prioritized recommendations.</p>
       <span class="tag">flagship</span>
     </a>
     <a href="tools/jwt-attacker.html" class="featured-card">
@@ -123,18 +123,13 @@
 <div class="category" data-cat="reconnaissance">
   <div class="category-header">
     <h3>🔍 Reconnaissance</h3>
-    <span class="count">8 tools</span>
+    <span class="count">4 tools</span>
   </div>
   <div class="tool-grid">
     <a href="tools/dns-lookup.html" class="tool-card" data-tags="dns lookup domain resolve mx ns txt">
       <div class="icon">🌐</div>
       <h4>DNS Lookup</h4>
       <p>A, AAAA, MX, NS, TXT, CNAME via DNS-over-HTTPS.</p>
-    </a>
-    <a href="tools/http-probe.html" class="tool-card" data-tags="http probe headers status code">
-      <div class="icon">📡</div>
-      <h4>HTTP Probe</h4>
-      <p>Status codes, security headers (HSTS, CSP, XFO).</p>
     </a>
     <a href="tools/subdomain-scanner.html" class="tool-card" data-tags="subdomain discovery scan dns">
       <div class="icon">🧭</div>
@@ -146,26 +141,10 @@
       <h4>Port Scanner</h4>
       <p>38 common ports for attack surface mapping.</p>
     </a>
-    <a href="tools/ssl-checker.html" class="tool-card" data-tags="ssl tls certificate chain hsts">
-      <div class="icon">🔒</div>
-      <h4>SSL/TLS Checker</h4>
-      <p>Certificate chain, expiration, HSTS, headers.</p>
-    </a>
-
     <a href="tools/takeover-checker.html" class="tool-card" data-tags="subdomain takeover cname aws heroku">
       <div class="icon">🚩</div>
       <h4>Takeover Checker</h4>
       <p>Unclaimed services on AWS, GitHub, Heroku, 20+.</p>
-    </a>
-    <a href="tools/waf-detector.html" class="tool-card" data-tags="waf cloudflare cloudfront akamai detect">
-      <div class="icon">🛡️</div>
-      <h4>WAF Detector</h4>
-      <p>Identify WAF/CDN from headers and body fingerprints.</p>
-    </a>
-    <a href="tools/http-methods.html" class="tool-card" data-tags="http put delete trace options method">
-      <div class="icon">🔧</div>
-      <h4>HTTP Methods</h4>
-      <p>Test allowed methods, detect risky configurations.</p>
     </a>
   </div>
 </div>

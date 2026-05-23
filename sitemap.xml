@@ -15,13 +15,7 @@
   <url><loc>https://securitool.js.org/tools/cvss-calculator.html</loc><priority>0.6</priority></url>
   <url><loc>https://securitool.js.org/tools/cookie-analyzer.html</loc><priority>0.6</priority></url>
   <url><loc>https://securitool.js.org/tools/graphql-introspect.html</loc><priority>0.6</priority></url>
-  <url><loc>https://securitool.js.org/tools/waf-detector.html</loc><priority>0.6</priority></url>
-  <url><loc>https://securitool.js.org/tools/dns-lookup.html</loc><priority>0.6</priority></url>
-  <url><loc>https://securitool.js.org/tools/http-probe.html</loc><priority>0.6</priority></url>
-  <url><loc>https://securitool.js.org/tools/port-scanner.html</loc><priority>0.6</priority></url>
-  <url><loc>https://securitool.js.org/tools/ssl-checker.html</loc><priority>0.6</priority></url>
 
-  <url><loc>https://securitool.js.org/tools/http-methods.html</loc><priority>0.5</priority></url>
   <url><loc>https://securitool.js.org/tools/hash-identifier.html</loc><priority>0.5</priority></url>
   <url><loc>https://securitool.js.org/tools/hash-compare.html</loc><priority>0.5</priority></url>
   <url><loc>https://securitool.js.org/tools/entropy-checker.html</loc><priority>0.5</priority></url>
