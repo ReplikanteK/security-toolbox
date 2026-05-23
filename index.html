@@ -47,7 +47,7 @@
 
 <section class="hero">
   <h2><span>Web Auditor</span> &mdash; Full Security Audit</h2>
-  <p class="tagline">Enter any URL for a complete security report: DNS, email security, SSL/TLS, CSP analysis, WAF detection, tech stack, HTTP features, performance, redirect chain. All client-side, no data stored.</p>
+  <p class="tagline">Enter any URL for a complete security report. All client-side, no data stored.</p>
   <div class="audit-form">
     <input type="text" id="audit-url-hero" placeholder="https://example.com" value="https://example.com" onkeydown="if(event.key==='Enter')runAudit()" spellcheck="false" autocomplete="url">
     <button onclick="runAudit()">Audit</button>
@@ -56,13 +56,6 @@
     <span>🌐 DNS</span><span>🔒 SSL/TLS</span><span>📧 Email</span><span>📋 CSP</span><span>🔥 WAF</span><span>⚙️ Tech</span><span>⚡ HTTP</span><span>⏱️ Perf</span><span>↪️ Redirects</span>
   </div>
 </section>
-
-<div class="stats">
-  <div class="stat"><div class="num">30</div><div class="label">Tools</div></div>
-  <div class="stat"><div class="num">100%</div><div class="label">Client-side</div></div>
-  <div class="stat"><div class="num">0</div><div class="label">Trackers</div></div>
-  <div class="stat"><div class="num">Free</div><div class="label">Forever</div></div>
-</div>
 
 <section style="padding-top:1.5rem">
   <div class="section-title">⭐ Featured</div>
@@ -114,6 +107,15 @@
 
 <div class="section-title" id="tools" style="scroll-margin-top:calc(var(--header-h) + 1rem)">🔍 All Tools</div>
 
+<div class="cat-filters">
+  <button class="cat-filter active" data-cat="all" onclick="filterCategory('all')">All</button>
+  <button class="cat-filter" data-cat="reconnaissance" onclick="filterCategory('reconnaissance')">🔍 Recon</button>
+  <button class="cat-filter" data-cat="analysis" onclick="filterCategory('analysis')">📊 Analysis</button>
+  <button class="cat-filter" data-cat="developer" onclick="filterCategory('developer')">⚙️ Dev</button>
+  <button class="cat-filter" data-cat="crypto" onclick="filterCategory('crypto')">🔒 Crypto</button>
+  <button class="cat-filter" data-cat="testing" onclick="filterCategory('testing')">🧪 Testing</button>
+</div>
+
 <div style="margin-bottom:1.25rem">
   <input type="text" id="tool-search" placeholder="Search tools&hellip; (e.g. jwt, dns, hash)" oninput="filterTools()" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.6rem .8rem;font-family:var(--font);font-size:.82rem;color:var(--text);outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor=''">
 </div>
@@ -123,7 +125,7 @@
 <div class="category" data-cat="reconnaissance">
   <div class="category-header">
     <h3>🔍 Reconnaissance</h3>
-    <span class="count">9 tools</span>
+    <span class="count">8 tools</span>
   </div>
   <div class="tool-grid">
     <a href="tools/dns-lookup.html" class="tool-card" data-tags="dns lookup domain resolve mx ns txt">
@@ -351,21 +353,31 @@ function runAudit() {
   var url = document.getElementById('audit-url-hero').value.trim();
   if (url) window.location.href = 'tools/web-auditor.html?url=' + encodeURIComponent(url);
 }
+var currentCat = 'all';
+function filterCategory(cat) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-filter').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.cat === cat);
+  });
+  filterTools();
+}
 function filterTools() {
   var q = document.getElementById('tool-search').value.toLowerCase().trim();
-  var cards = document.querySelectorAll('.tool-card');
   var categories = document.querySelectorAll('.category');
   var noResults = document.getElementById('no-results');
   var visible = 0;
-  cards.forEach(function(card) {
-    var text = (card.textContent + ' ' + (card.dataset.tags || '')).toLowerCase();
-    var match = !q || text.includes(q);
-    card.style.display = match ? '' : 'none';
-    if (match) visible++;
-  });
   categories.forEach(function(cat) {
-    var hasVisible = Array.from(cat.querySelectorAll('.tool-card')).some(function(c) { return c.style.display !== 'none'; });
-    cat.style.display = hasVisible ? '' : 'none';
+    var catMatch = currentCat === 'all' || cat.dataset.cat === currentCat;
+    cat.style.display = catMatch ? '' : 'none';
+    if (catMatch) {
+      var cardsInCat = cat.querySelectorAll('.tool-card');
+      cardsInCat.forEach(function(card) {
+        var text = (card.textContent + ' ' + (card.dataset.tags || '')).toLowerCase();
+        var match = !q || text.includes(q);
+        card.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+    }
   });
   noResults.style.display = visible === 0 ? 'block' : 'none';
 }
