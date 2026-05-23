@@ -6,7 +6,7 @@
 <title>CSRF PoC Generator — SecuriTool</title>
 <meta name="description" content="Generate Cross-Site Request Forgery (CSRF) proof-of-concept HTML forms for security testing. Supports GET/POST, JSON, multipart, custom headers, and auto-submit.">
 <link rel="stylesheet" href="../css/style.css">
-<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <style>
 .csrf-form { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1rem; }
 .csrf-form label { display: block; font-size: .78rem; color: var(--text2); margin-top: .6rem; margin-bottom: .2rem; }
@@ -40,10 +40,8 @@
   <span class="logo-sub">free security tools</span>
   <nav>
     <a href="../index.html#tools">Tools</a>
-    <a href="../about.html">About</a>
-    <a href="../privacy.html">Privacy</a>
+    <a href="../blog/">Blog</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
-    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
     <button id="theme-toggle">☀️</button>
   </nav>
 </header>
@@ -111,7 +109,6 @@
   <div class="footer-links">
     <a href="../about.html">About</a>
     <a href="../privacy.html">Privacy</a>
-    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
     <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
   </div>
   <p>Open source &middot; All processing client-side &middot; Privacy-first</p>

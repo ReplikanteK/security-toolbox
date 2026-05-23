@@ -6,7 +6,7 @@
 <title>CSP Hash Generator — SecuriTool</title>
 <meta name="description" content="Generate SHA-256/384/512 hashes for inline scripts and styles to use in Content-Security-Policy hash-source directives. Supports strict-dynamic policies.">
 <link rel="stylesheet" href="../css/style.css">
-<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <style>
 .chg-panel { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
 @media (max-width:700px) { .chg-panel { grid-template-columns: 1fr; } }
@@ -34,10 +34,8 @@
   <span class="logo-sub">free security tools</span>
   <nav>
     <a href="../index.html#tools">Tools</a>
-    <a href="../about.html">About</a>
-    <a href="../privacy.html">Privacy</a>
+    <a href="../blog/">Blog</a>
     <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
-    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
     <button id="theme-toggle">☀️</button>
   </nav>
 </header>
@@ -86,7 +84,6 @@
   <div class="footer-links">
     <a href="../about.html">About</a>
     <a href="../privacy.html">Privacy</a>
-    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
     <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
   </div>
   <p>Open source &middot; All processing client-side &middot; Privacy-first</p>
