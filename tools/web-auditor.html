@@ -438,8 +438,12 @@ async function runAudit() {
   // ── crt.sh Subdomain Discovery ──
   markProgress('crt', 'running');
   try {
-    var crtResp = await fetch('https://crt.sh/?q=%25.' + encodeURIComponent(hostname) + '&output=json', { signal: AbortSignal.timeout(8000) });
+    var crtCtrl = new AbortController();
+    setTimeout(function() { crtCtrl.abort(); }, 8000);
+    var crtResp = await fetch('https://crt.sh/?q=%25.' + encodeURIComponent(hostname) + '&output=json', { signal: crtCtrl.signal });
     if (crtResp.ok) {
+      var ct = (crtResp.headers.get('content-type') || '').includes('json');
+      if (!ct) { report.crtSubdomains = []; } else {
       var crtData = await crtResp.json();
       var unique = {};
       crtData.forEach(function(e) {
@@ -449,7 +453,7 @@ async function runAudit() {
         });
       });
       report.crtSubdomains = Object.keys(unique).sort();
-    }
+    } }
     markProgress('crt', 'done');
   } catch { markProgress('crt', 'error'); }
 
