@@ -437,6 +437,7 @@ async function runAudit() {
 
   // ── crt.sh Subdomain Discovery ──
   markProgress('crt', 'running');
+  report.crtLink = 'https://crt.sh/?q=' + encodeURIComponent('%25.' + hostname);
   try {
     var crtCtrl = new AbortController();
     setTimeout(function() { crtCtrl.abort(); }, 8000);
@@ -446,16 +447,21 @@ async function runAudit() {
       if (!ct) { report.crtSubdomains = []; } else {
       var crtData = await crtResp.json();
       var unique = {};
-      crtData.forEach(function(e) {
-        (e.name_value || '').split('\n').forEach(function(n) {
-          var s = n.trim().toLowerCase();
-          if (s.endsWith('.' + hostname) && s !== hostname && !s.startsWith('*.')) unique[s] = true;
-        });
-      });
+      for (var i = 0; i < crtData.length; i++) {
+        var names = (crtData[i].name_value || '').split('\n');
+        for (var j = 0; j < names.length; j++) {
+          var n = names[j].trim().toLowerCase();
+          if (n && n !== hostname && n.indexOf('*') === -1) unique[n] = true;
+        }
+      }
       report.crtSubdomains = Object.keys(unique).sort();
     } }
     markProgress('crt', 'done');
-  } catch { markProgress('crt', 'error'); }
+  } catch {
+    report.crtSubdomains = [];
+    report.crtDown = true;
+    markProgress('crt', 'error');
+  }
 
   // ── Body fetch (via proxy) ──
   try {
@@ -941,17 +947,19 @@ function renderReport(r, url) {
   }
 
   // ── subdomain discovery ──
-  if (r.crtSubdomains) {
-    var crtHtml = '<div class="report-section"><h4>\uD83D\uDCE1 Subdomain Discovery (crt.sh)</h4>';
-    if (r.crtSubdomains.length === 0) {
-      crtHtml += '<div class="finding good">No additional subdomains found via Certificate Transparency ✓</div>';
-    } else {
-      crtHtml += '<div class="finding info">' + r.crtSubdomains.length + ' subdomain(s) discovered</div>';
-      r.crtSubdomains.forEach(function(s) { crtHtml += '<div class="finding low">' + esc(s) + '</div>'; });
-    }
-    crtHtml += '</div>';
-    container.innerHTML += crtHtml;
-  }
+   if (r.crtSubdomains) {
+     var crtHtml = '<div class="report-section"><h4>\uD83D\uDCE1 Subdomain Discovery (crt.sh)</h4>';
+     if (r.crtDown) {
+       crtHtml += '<div class="finding warn">crt.sh service temporarily unavailable. <a href="' + esc(r.crtLink) + '" target="_blank" rel="noopener">Check manually on crt.sh \u2197</a></div>';
+     } else if (r.crtSubdomains.length === 0) {
+       crtHtml += '<div class="finding good">No additional subdomains found via Certificate Transparency ✓</div>';
+     } else {
+       crtHtml += '<div class="finding info">' + r.crtSubdomains.length + ' subdomain(s) discovered</div>';
+       r.crtSubdomains.forEach(function(s) { crtHtml += '<div class="finding low">' + esc(s) + '</div>'; });
+     }
+     crtHtml += '</div>';
+     container.innerHTML += crtHtml;
+   }
 
   // ── HTML Comments ──
   if (r.comments && r.comments.total > 0) {
