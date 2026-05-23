@@ -140,7 +140,7 @@
 
 <ul>
   <li><strong>A log.Fatalf denial-of-service</strong> in a major Go SDK: A production <code>log.Fatalf</code> call that calls <code>os.Exit(1)</code> on any signing error, with dead <code>return nil, err</code> code below it — the function never returns normally. This crash-level bug was in the SDK's core remote signing flow (CVSS 6.5).</li>
-  <li><strong>An authentication bypass</strong> in a popular Mattermost plugin: The <code>checkPluginRequest</code> function only verified that a header was present, not that the caller was authorized. Any plugin could steal OAuth secrets, encryption keys, and webhook tokens by calling the exposed API endpoints (CVSS 8.8).</li>
+  <li><strong>An authentication bypass</strong> in a popular collaboration platform plugin: The authorization check only verified that a header was present, not that the caller was authorized. Any plugin could steal OAuth secrets, encryption keys, and webhook tokens by calling the exposed API endpoints (CVSS 8.8).</li>
   <li><strong>A heap overflow in a legacy C parser</strong>: As described earlier, a TNEF parser function with a zero-length wraparound that allocated 0 bytes and then wrote past the buffer. The PoC was 33 bytes (Critical).</li>
 </ul>
 
