@@ -248,7 +248,7 @@ const TECH_SIGNATURES = [
   { name: 'Spring Boot', category: 'Framework', probe: h => h['set-cookie']?.includes('SESSION') || h['x-application-context'] },
   { name: 'WordPress', category: 'CMS', probe: (h, b) => b?.includes('wp-content') || b?.includes('wp-json') || b?.includes('wp-includes') || b?.includes('WordPress ') },
   { name: 'Drupal', category: 'CMS', probe: (h, b) => b?.includes('Drupal.settings') || b?.includes('Drupal.extensions') },
-  { name: 'Joomla', category: 'CMS', probe: (h, b) => b?.includes('joomla') || b?.includes('Joomla') },
+  { name: 'Joomla', category: 'CMS', probe: (h, b) => b?.includes('/components/com_') || b?.includes('/modules/mod_') || /<meta[^>]+generator[^>]+content=["'][^"']*Joomla/i.test(b || '') || /<option[^>]*>Joomla/i.test(b || '') },
   { name: 'Shopify', category: 'E-commerce', probe: (h, b) => b?.includes('myshopify') || h['x-shopid'] || b?.includes('Shopify.theme') },
   { name: 'Magento', category: 'E-commerce', probe: h => h['set-cookie']?.includes('mage-') || h['x-magento'] },
   { name: 'WooCommerce', category: 'E-commerce', probe: (h, b) => b?.includes('woocommerce') || b?.includes('WooCommerce') },
