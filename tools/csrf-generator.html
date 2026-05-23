@@ -116,10 +116,7 @@
 </footer>
 
 <script>
-function toggleEncoding() {
-  var e = document.getElementById('csrf-encoding').value;
-  document.getElementById('csrf-custom-headers').disabled = (e === 'json');
-}
+function toggleEncoding() {}
 
 function toggleMethod() {}
 
@@ -141,7 +138,7 @@ function escapeHtmlPoC(str) {
 }
 
 function escapeJsStr(str) {
-  return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
 }
 
 function buildParams() {
@@ -190,7 +187,7 @@ function generatePoC() {
         h = h.trim();
         if (h) {
           var sep = h.indexOf(':');
-          if (sep > 0) lines.push('  xhr.setRequestHeader("' + escapeHtmlPoC(h.slice(0, sep).trim()) + '", "' + escapeHtmlPoC(h.slice(sep + 1).trim()) + '");');
+          if (sep > 0) lines.push('  xhr.setRequestHeader("' + escapeJsStr(h.slice(0, sep).trim()) + '", "' + escapeJsStr(h.slice(sep + 1).trim()) + '");');
         }
       });
     }

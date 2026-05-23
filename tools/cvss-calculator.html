@@ -210,12 +210,9 @@ function calc() {
 }
 
 function roundUp(val) {
-  const int = Math.floor(val);
-  const dec = val - int;
-  if (dec === 0) return int;
-  if (dec <= 0.5) return int + 0.5;
-  return Math.ceil(val);
+  return Math.ceil(val * 10) / 10;
 }
+document.addEventListener('DOMContentLoaded', calc);
 </script>
 <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
 <script>

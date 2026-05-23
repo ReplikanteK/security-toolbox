@@ -307,6 +307,7 @@ const TECH_SIGNATURES = [
 function qs(s) { return document.getElementById(s); }
 
 var auditStartTime = 0;
+var auditRunning = false;
 var progressTimer = null;
 function setProgress() {
   const bar = qs('audit-progress');
@@ -374,6 +375,8 @@ function severityFromScore(s, max) {
 }
 
 async function runAudit() {
+  if (auditRunning) return;
+  auditRunning = true;
   try {
   const url = qs('audit-url').value.trim();
   if (!url) return;
@@ -464,9 +467,9 @@ async function runAudit() {
   markProgress('csp', 'running');
   try {
     var cspMeta = null;
-    var metaMatch = body.match(/<meta[^>]+http-equiv=[\"']Content-Security-Policy[\"'][^>]+content=[\"']([^\"']+)[\"'][^>]*>/i);
+    var metaMatch = body.match(/<meta[^>]+http-equiv=(?:"Content-Security-Policy"|'Content-Security-Policy')[^>]+content=(?:"([^"]*)"|'([^']*)')[^>]*>/i);
     if (metaMatch) {
-      var cspRaw = metaMatch[1];
+      var cspRaw = metaMatch[1] !== undefined ? metaMatch[1] : metaMatch[2];
       var directives = {};
       cspRaw.split(';').forEach(function(d) {
         var parts = d.trim().split(/\s+/);
@@ -653,6 +656,7 @@ async function runAudit() {
     qs('audit-report').innerHTML = '<div class="output error">Audit failed: ' + esc(e.message) + '</div>';
     qs('audit-progress').style.display = 'none';
   }
+  auditRunning = false;
 }
 
 function esc(s) {
@@ -727,7 +731,7 @@ function renderReport(r, url) {
 
   // Base tag findings
   if (r.baseTag) {
-    mediumIssues.push('Base tag present (href=' + r.baseTag.href + ') — potential script injection vector if attacker controls it');
+    mediumIssues.push('Base tag present (href=' + esc(r.baseTag.href) + ') — potential script injection vector if attacker controls it');
   }
 
   // crt.sh findings

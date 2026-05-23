@@ -96,13 +96,9 @@ fragment TypeRef on __Type {
 function formatTypeRef(type) {
   if (!type) return 'null';
   if (type.name) return type.name;
-  let s = '';
-  let t = type;
-  while (t) {
-    s += t.kind === 'NON_NULL' ? '!' : t.kind === 'LIST' ? '[]' : '';
-    t = t.ofType;
-  }
-  return s || type.kind;
+  if (type.kind === 'NON_NULL') return formatTypeRef(type.ofType) + '!';
+  if (type.kind === 'LIST') return '[' + formatTypeRef(type.ofType) + ']';
+  return type.kind || 'null';
 }
 
 function cleanOutput() {

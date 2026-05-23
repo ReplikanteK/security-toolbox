@@ -106,8 +106,10 @@ const COMMON_PORTS = [
 
 let scanRunning = false;
 let abortController = null;
+let scanStopped = false;
 
 async function scanPorts() {
+  if (scanRunning) return;
   const target = document.getElementById('ps-target').value.trim();
   const output = document.getElementById('ps-output');
   const counter = document.getElementById('ps-counter');
@@ -150,6 +152,7 @@ async function scanPorts() {
   }
 
   scanRunning = false;
+  if (scanStopped) { return; }
 
   const lines = [
     found.length > 0
@@ -170,27 +173,27 @@ async function scanPorts() {
 
 async function checkPort(host, port, signal) {
   try {
-    const httpUrl = port === 443 || port > 1023
-      ? `https://${host}:${port}`
-      : `http://${host}:${port}`;
-
-    const resp = await fetch(httpUrl, {
-      signal,
-      mode: 'no-cors',
-      cache: 'no-cache',
+    const resp = await fetch(`http://${host}:${port}`, {
+      signal, mode: 'no-cors', cache: 'no-cache',
     }).catch(() => null);
+    if (resp && (resp.type === 'opaque' || resp.ok)) return 'Responds (no-cors)';
+    if (resp && resp.ok) return `HTTP ${resp.status}`;
+  } catch {}
 
-    // no-cors means we get opaque response but can still detect connectivity
-    if (resp && resp.type === 'opaque') return 'Responds (no-cors)';
-    if (resp && resp.ok) return `HTTP ${resp.status} ${resp.statusText}`;
-    return null;
-  } catch {
-    return null;
-  }
+  try {
+    const resp = await fetch(`https://${host}:${port}`, {
+      signal, mode: 'no-cors', cache: 'no-cache',
+    }).catch(() => null);
+    if (resp && (resp.type === 'opaque' || resp.ok)) return 'Responds (no-cors)';
+    if (resp && resp.ok) return `HTTP ${resp.status}`;
+  } catch {}
+
+  return null;
 }
 
 function stopPortScan() {
   scanRunning = false;
+  scanStopped = true;
   if (abortController) abortController.abort();
   document.getElementById('ps-output').textContent += '\n\n⚠️ Scan stopped by user.';
 }

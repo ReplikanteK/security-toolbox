@@ -171,8 +171,11 @@ const WORDLIST_FULL = [
 
 let running = false;
 let abortController = null;
+let sdStopped = false;
 
 async function scan() {
+  if (running) return;
+  sdStopped = false;
   const domain = document.getElementById('sd-domain').value.trim();
   const mode = document.getElementById('sd-mode').value;
   const output = document.getElementById('sd-results');
@@ -214,6 +217,7 @@ async function scan() {
   }
 
   running = false;
+  if (sdStopped) { return; }
   if (found.length === 0) {
     output.className = 'output';
     output.textContent = `No subdomains found for ${domain} using the ${modeLabel} wordlist.\n\nTry a local tool like subfinder or amass for comprehensive scans.`;
@@ -227,7 +231,7 @@ async function scan() {
 async function checkSubdomain(sub, domain, signal) {
   const fqdn = `${sub}.${domain}`;
   try {
-    const resp = await fetch(`https://cloudflare-dns.com/dns-query?name=${fqdn}&type=A`, {
+    const resp = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(fqdn)}&type=A`, {
       headers: { 'Accept': 'application/dns-json' },
       signal
     });
@@ -245,6 +249,7 @@ async function checkSubdomain(sub, domain, signal) {
 
 function stopScan() {
   running = false;
+  sdStopped = true;
   if (abortController) abortController.abort();
   document.getElementById('sd-results').textContent += '\n\n⚠️ Scan stopped by user.';
 }

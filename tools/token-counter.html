@@ -135,7 +135,7 @@ function estimateTokens(text) {
       const wordStart = i;
       while (i < text.length && /[a-zA-Z0-9'']/.test(text[i])) i++;
       const wordLen = i - wordStart;
-      tokens += Math.floor(wordLen / 4); // ~4 chars per token
+      tokens += Math.floor((wordLen - 1) / 4); // first char counted above
     } else if (/[,.!?;:]/.test(text[i])) {
       i++; // Single char token
     } else if (/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]/.test(text[i])) {

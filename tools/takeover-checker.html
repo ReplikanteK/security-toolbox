@@ -95,6 +95,8 @@ const TAKEOVER_SIGNATURES = [
   { service: 'Kinsta', fingerprints: ['No site configured', 'The site you are looking for could not be found'] },
 ];
 
+var toRunning = false;
+
 const CNAME_FINGERPRINTS = [
   { service: 'AWS S3', cname: ['s3.amazonaws.com', 's3-website', 's3-'] },
   { service: 'AWS CloudFront', cname: ['cloudfront.net'] },
@@ -159,6 +161,8 @@ async function dnsQuery(name, type) {
 }
 
 async function checkTakeover() {
+  if (toRunning) return;
+  toRunning = true;
   const url = document.getElementById('takeover-url').value.trim();
   const output = cleanOutput();
 
@@ -275,6 +279,7 @@ async function checkTakeover() {
   appendLine(output, '  1. Claim the service on the respective platform');
   appendLine(output, '  2. Or remove the DNS record pointing to the unclaimed service');
   appendLine(output, '  3. For bug bounty: document the full chain and report');
+  toRunning = false;
 }
 
 function clearOutput() {
