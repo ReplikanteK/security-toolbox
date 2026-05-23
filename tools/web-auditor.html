@@ -808,11 +808,15 @@ function renderReport(r, url) {
   }
 
   // ── SRI ──
-  if (r.sri && r.sri.total > 0) {
+  if (r.sri) {
     var sriHtml = '<div class="report-section"><h4>\uD83D\uDD17 Subresource Integrity</h4>';
-    sriHtml += '<div class="finding ' + (r.sri.unprotected === 0 ? 'good' : 'high') + '">' + r.sri.protected + '/' + r.sri.total + ' resources have integrity attribute</div>';
-    if (r.sri.unprotected > 0) {
-      r.sri.resources.forEach(function(u) { sriHtml += '<div class="finding high">\u274C ' + esc(u) + '</div>'; });
+    if (r.sri.total === 0) {
+      sriHtml += '<div class="finding good">No external resources to check ✓</div>';
+    } else {
+      sriHtml += '<div class="finding ' + (r.sri.unprotected === 0 ? 'good' : 'high') + '">' + r.sri.protected + '/' + r.sri.total + ' resources have integrity attribute</div>';
+      if (r.sri.unprotected > 0) {
+        r.sri.resources.forEach(function(u) { sriHtml += '<div class="finding high">\u274C ' + esc(u) + '</div>'; });
+      }
     }
     sriHtml += '</div>';
     container.innerHTML += sriHtml;
@@ -832,30 +836,45 @@ function renderReport(r, url) {
   }
 
   // ── Form Security ──
-  if (r.formSec && r.formSec.forms > 0) {
+  if (r.formSec) {
     var fHtml = '<div class="report-section"><h4>\uD83D\uDCDD Form Security</h4>';
-    fHtml += '<div class="finding info">' + r.formSec.forms + ' form(s) found</div>';
-    if (r.formSec.httpAction > 0) fHtml += '<div class="finding high">\u26A0\uFE0F ' + r.formSec.httpAction + ' form(s) with HTTP action (no TLS)</div>';
-    if (r.formSec.pwNoAutocomplete > 0) fHtml += '<div class="finding medium">\u26A0\uFE0F ' + r.formSec.pwNoAutocomplete + ' password field(s) without autocomplete=off</div>';
-    fHtml += '<div class="finding ' + (r.formSec.hasCsrf ? 'good' : 'medium') + '">CSRF token: ' + (r.formSec.hasCsrf ? 'Present ✓' : 'Not detected') + '</div>';
+    if (r.formSec.forms === 0) {
+      fHtml += '<div class="finding good">No forms found ✓</div>';
+    } else {
+      fHtml += '<div class="finding info">' + r.formSec.forms + ' form(s) found</div>';
+      if (r.formSec.httpAction > 0) fHtml += '<div class="finding high">\u26A0\uFE0F ' + r.formSec.httpAction + ' form(s) with HTTP action (no TLS)</div>';
+      if (r.formSec.pwNoAutocomplete > 0) fHtml += '<div class="finding medium">\u26A0\uFE0F ' + r.formSec.pwNoAutocomplete + ' password field(s) without autocomplete=off</div>';
+      fHtml += '<div class="finding ' + (r.formSec.hasCsrf ? 'good' : 'medium') + '">CSRF token: ' + (r.formSec.hasCsrf ? 'Present ✓' : 'Not detected') + '</div>';
+    }
     fHtml += '</div>';
     container.innerHTML += fHtml;
   }
 
   // ── Iframe Analysis ──
-  if (r.iframes && r.iframes.total > 0) {
+  if (r.iframes) {
     var iHtml = '<div class="report-section"><h4>\uD83D\uDCC2 Iframe Analysis</h4>';
-    iHtml += '<div class="finding info">' + r.iframes.total + ' iframe(s) found</div>';
-    if (r.iframes.noSandbox > 0) iHtml += '<div class="finding medium">\u26A0\uFE0F ' + r.iframes.noSandbox + ' iframe(s) without sandbox</div>';
-    if (r.iframes.noAllow > 0) iHtml += '<div class="finding low">\u26A0\uFE0F ' + r.iframes.noAllow + ' iframe(s) without allow attribute</div>';
-    if (r.iframes.noSandbox === 0 && r.iframes.noAllow === 0) iHtml += '<div class="finding good">All iframes properly configured ✓</div>';
+    if (r.iframes.total === 0) {
+      iHtml += '<div class="finding good">No iframes found ✓</div>';
+    } else {
+      iHtml += '<div class="finding info">' + r.iframes.total + ' iframe(s) found</div>';
+      if (r.iframes.noSandbox > 0) iHtml += '<div class="finding medium">\u26A0\uFE0F ' + r.iframes.noSandbox + ' iframe(s) without sandbox</div>';
+      if (r.iframes.noAllow > 0) iHtml += '<div class="finding low">\u26A0\uFE0F ' + r.iframes.noAllow + ' iframe(s) without allow attribute</div>';
+      if (r.iframes.noSandbox === 0 && r.iframes.noAllow === 0) iHtml += '<div class="finding good">All iframes properly configured ✓</div>';
+    }
     iHtml += '</div>';
     container.innerHTML += iHtml;
   }
 
   // ── Base Tag ──
-  if (r.baseTag) {
-    container.innerHTML += '<div class="report-section"><h4>\uD83D\uDCCC Base Tag</h4><div class="finding medium">Base tag found: href=' + esc(r.baseTag.href) + ' — potential injection vector</div></div>';
+  if (r.baseTag !== undefined) {
+    var baseHtml = '<div class="report-section"><h4>\uD83D\uDCCC Base Tag</h4>';
+    if (r.baseTag) {
+      baseHtml += '<div class="finding medium">Base tag found: href=' + esc(r.baseTag.href) + ' — potential injection vector</div>';
+    } else {
+      baseHtml += '<div class="finding good">No base tag found ✓</div>';
+    }
+    baseHtml += '</div>';
+    container.innerHTML += baseHtml;
   }
 
   // ── Meta Tags (from HTML) ──
