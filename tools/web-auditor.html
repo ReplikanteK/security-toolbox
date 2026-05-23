@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Web Auditor — SecuriTool</title>
-<meta name="description" content="Free web security auditor: DNS, email security (SPF/DKIM/DMARC), tech stack, CSP meta analysis. Generates prioritized PDF-ready report. Header checks need curl.">
+<meta name="description" content="Free web security auditor: DNS, email security, SRI, mixed content, forms, iframes, base tag, tech stack, CSP analysis. Generates prioritized PDF-ready report.">
 <link rel="stylesheet" href="../css/style.css">
 <style>
 .progress-track { flex:1; height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
@@ -139,7 +139,7 @@
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/web-auditor.html">
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What does a web security audit check?","acceptedAnswer":{"@type":"Answer","text":"A web security audit checks DNS records (A, AAAA, MX, NS, TXT, CNAME), email security configuration (SPF, DKIM, DMARC, BIMI), Content-Security-Policy meta tags, technology stack, and page metadata (title, OG tags)."}},{"@type":"Question","name":"How does the Web Auditor work?","acceptedAnswer":{"@type":"Answer","text":"Enter any URL and click Run Audit. The tool uses DNS-over-HTTPS for DNS and email security records, and fetches the page HTML via a privacy proxy for CSP meta tags, tech stack detection, and page metadata. Results are displayed in a prioritized report with a security score from A+ to F."}},{"@type":"Question","name":"Is the Web Auditor safe to use?","acceptedAnswer":{"@type":"Answer","text":"Yes. The Web Auditor runs entirely in your browser. DNS queries use Cloudflare DNS-over-HTTPS (encrypted). The HTML fetch goes through a privacy proxy that only retrieves the page body. No data is stored on any server. Note: header-based checks (SSL, WAF, redirects) require running curl directly on your machine."}}]}
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What does a web security audit check?","acceptedAnswer":{"@type":"Answer","text":"A web security audit checks DNS records (A, AAAA, MX, NS, TXT, CNAME), email security (SPF, DKIM, DMARC, BIMI), Subresource Integrity (SRI) on scripts/styles, mixed content warnings, form security (action TLS, password autocomplete, CSRF tokens), iframe sandbox/allow attributes, base tag injection, Content-Security-Policy meta tags, technology stack detection, and page metadata (title, OG tags)."}},{"@type":"Question","name":"How does the Web Auditor work?","acceptedAnswer":{"@type":"Answer","text":"Enter any URL and click Run Audit. The tool uses DNS-over-HTTPS for DNS and email security records, and fetches the page HTML via a privacy proxy for body-based security checks. Results are displayed in a prioritized report with a security score from A+ to F."}},{"@type":"Question","name":"Is the Web Auditor safe to use?","acceptedAnswer":{"@type":"Answer","text":"Yes. The Web Auditor runs entirely in your browser. DNS queries use Cloudflare DNS-over-HTTPS (encrypted). The HTML fetch goes through a privacy proxy that only retrieves the page body. No data is stored on any server. Note: header-based checks (SSL, WAF, redirects) require running curl directly on your machine."}}]}
   </script>
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
@@ -163,7 +163,7 @@
 <div class="tool-page">
   <a href="../index.html" class="back">← Back to tools</a>
   <h2>Web Auditor</h2>
-  <p class="desc">Security audit for any URL. Checks DNS, email security (SPF/DKIM/DMARC), tech stack, CSP meta tags, and page meta. Generates a PDF-ready report with prioritized recommendations. Note: header-based checks (SSL, WAF, redirects) require running curl directly.</p>
+  <p class="desc">Security audit for any URL. Checks DNS, email security (SPF/DKIM/DMARC), Subresource Integrity, mixed content, form security, iframe analysis, base tag, tech stack, CSP, and page meta. Generates a PDF-ready report with prioritized recommendations. Note: header-based checks (SSL, WAF, redirects) require running curl directly.</p>
 
   <label for="audit-url">Target URL</label>
   <input type="text" id="audit-url" placeholder="https://example.com" value="https://example.com" onkeydown="if(event.key==='Enter')runAudit()">
@@ -174,7 +174,7 @@
 
   <div id="audit-progress" class="progress-bar" style="display:none"></div>
   <div id="audit-report"></div>
-  <div id="audit-status" class="output" style="margin-top:1.5rem">Enter a URL and click Run Audit. The audit checks DNS records, email security (SPF/DKIM/DMARC), tech stack, CSP meta tags, and page metadata. Results include a full report with prioritized recommendations. Use the Print button to export as PDF.</div>
+  <div id="audit-status" class="output" style="margin-top:1.5rem">Enter a URL and click Run Audit. The audit checks DNS, email security, SRI, mixed content, form security, iframes, base tag, tech stack, CSP, and page metadata. Results include a full report with prioritized recommendations. Use the Print button to export as PDF.</div>
 </div>
 
 <footer>
@@ -199,6 +199,11 @@ TODO: Carbon Ads monetization
 const CHECKS = [
   { id: 'dns', label: 'DNS Records', icon: '🌐' },
   { id: 'emailsec', label: 'Email Security', icon: '📧' },
+  { id: 'sri', label: 'Subresource Integrity', icon: '🔗' },
+  { id: 'mixcontent', label: 'Mixed Content', icon: '⚠️' },
+  { id: 'formsec', label: 'Form Security', icon: '📝' },
+  { id: 'iframe', label: 'Iframe Analysis', icon: '🗂️' },
+  { id: 'base', label: 'Base Tag', icon: '📌' },
   { id: 'csp', label: 'CSP Analysis', icon: '📋' },
   { id: 'tech', label: 'Tech Stack', icon: '⚙️' },
 ];
@@ -491,9 +496,87 @@ async function runAudit() {
     markProgress('tech', 'done');
   } catch { markProgress('tech', 'error'); }
 
+  // ── SRI (Subresource Integrity) ──
+  markProgress('sri', 'running');
+  try {
+    report.sri = { total: 0, protected: 0, unprotected: 0, resources: [] };
+    var scriptTags = body.match(/<script[^>]+src=["'][^"']+["'][^>]*>/gi) || [];
+    var linkStyleTags = body.match(/<link[^>]+rel=["']stylesheet["'][^>]+href=["'][^"']+["'][^>]*>/gi) || [];
+    var allRes = scriptTags.concat(linkStyleTags);
+    report.sri.total = allRes.length;
+    allRes.forEach(function(tag) {
+      var src = tag.match(/(?:src|href)=["']([^"']+)["']/i);
+      var url2 = src ? src[1] : 'unknown';
+      if (/integrity\s*=\s*["']/i.test(tag)) {
+        report.sri.protected++;
+      } else {
+        report.sri.unprotected++;
+        report.sri.resources.push(url2);
+      }
+    });
+    markProgress('sri', 'done');
+  } catch { markProgress('sri', 'error'); }
 
+  // ── Mixed Content ──
+  markProgress('mixcontent', 'running');
+  try {
+    report.mixedContent = [];
+    if (url.startsWith('https://')) {
+      var httpTags = body.match(/<(?:img|script|link|iframe|video|audio|source|embed)[^>]+src=["']http:\/\/[^"']+["'][^>]*>/gi) || [];
+      httpTags.forEach(function(tag) {
+        var m = tag.match(/src=["']([^"']+)["']/i);
+        if (m) report.mixedContent.push(m[1]);
+      });
+    }
+    markProgress('mixcontent', 'done');
+  } catch { markProgress('mixcontent', 'error'); }
 
+  // ── Form Security ──
+  markProgress('formsec', 'running');
+  try {
+    report.formSec = { forms: 0, httpAction: 0, pwNoAutocomplete: 0, hasCsrf: false, details: [] };
+    var forms = body.match(/<form[^>]*>/gi) || [];
+    report.formSec.forms = forms.length;
+    forms.forEach(function(tag) {
+      var actionMatch = tag.match(/action=["']([^"']+)["']/i);
+      if (actionMatch && actionMatch[1].startsWith('http://')) {
+        report.formSec.httpAction++;
+        report.formSec.details.push('HTTP action: ' + actionMatch[1]);
+      }
+    });
+    var pwInputs = body.match(/<input[^>]+type=["']password["'][^>]*>/gi) || [];
+    pwInputs.forEach(function(tag) {
+      if (!/autocomplete\s*=\s*["']off["']/i.test(tag)) report.formSec.pwNoAutocomplete++;
+    });
+    report.formSec.hasCsrf = /<input[^>]+name=["'][^"']*(?:csrf|token|authenticity|nonce|_token)[^"']*["'][^>]*>/i.test(body);
+    markProgress('formsec', 'done');
+  } catch { markProgress('formsec', 'error'); }
 
+  // ── Iframe Analysis ──
+  markProgress('iframe', 'running');
+  try {
+    report.iframes = { total: 0, noSandbox: 0, noAllow: 0, details: [] };
+    var iframes = body.match(/<iframe[^>]*>/gi) || [];
+    report.iframes.total = iframes.length;
+    iframes.forEach(function(tag) {
+      var src = tag.match(/src=["']([^"']+)["']/i);
+      var srcUrl = src ? src[1] : 'unknown';
+      if (!/\bsandbox\s*=/i.test(tag)) { report.iframes.noSandbox++; }
+      if (!/\ballow\s*=/i.test(tag)) { report.iframes.noAllow++; }
+      if (!/\bsandbox\s*=/i.test(tag) || !/\ballow\s*=/i.test(tag)) {
+        report.iframes.details.push(srcUrl + (!/\bsandbox\s*=/i.test(tag) ? ' (no sandbox)' : '') + (!/\ballow\s*=/i.test(tag) ? ' (no allow)' : ''));
+      }
+    });
+    markProgress('iframe', 'done');
+  } catch { markProgress('iframe', 'error'); }
+
+  // ── Base Tag ──
+  markProgress('base', 'running');
+  try {
+    var baseMatch = body.match(/<base\s+[^>]*href=["']([^"']+)["'][^>]*>/i);
+    report.baseTag = baseMatch ? { href: baseMatch[1] } : null;
+    markProgress('base', 'done');
+  } catch { markProgress('base', 'error'); }
 
   // ── Meta tags from body ──
   try {
@@ -566,6 +649,40 @@ function renderReport(r, url) {
       var dp = e.dmarc.match(/p=(none|quarantine|reject)/i);
       if (dp && dp[1] === 'none') mediumIssues.push('DMARC policy is p=none — monitoring only, no protection');
     }
+  }
+
+  // SRI findings
+  if (r.sri && r.sri.total > 0) {
+    if (r.sri.unprotected > 0) {
+      highIssues.push(r.sri.unprotected + ' of ' + r.sri.total + ' external resources missing Subresource Integrity');
+    } else {
+      goodItems.push('All ' + r.sri.total + ' external resources have SRI ✓');
+    }
+  }
+
+  // Mixed Content findings
+  if (r.mixedContent && r.mixedContent.length > 0) {
+    criticalIssues.push(r.mixedContent.length + ' mixed content resource(s) loaded over HTTP on HTTPS page');
+  }
+
+  // Form Security findings
+  if (r.formSec && r.formSec.forms > 0) {
+    if (r.formSec.httpAction > 0) highIssues.push(r.formSec.httpAction + ' form(s) submit over HTTP (no TLS)');
+    if (r.formSec.pwNoAutocomplete > 0) mediumIssues.push(r.formSec.pwNoAutocomplete + ' password field(s) without autocomplete=off');
+    if (!r.formSec.hasCsrf) mediumIssues.push('Forms present but no CSRF token detected');
+    if (r.formSec.httpAction === 0 && r.formSec.pwNoAutocomplete === 0 && r.formSec.hasCsrf) goodItems.push('All forms secure ✓');
+  }
+
+  // Iframe findings
+  if (r.iframes && r.iframes.total > 0) {
+    if (r.iframes.noSandbox > 0) mediumIssues.push(r.iframes.noSandbox + ' iframe(s) without sandbox attribute');
+    if (r.iframes.noAllow > 0) lowIssues.push(r.iframes.noAllow + ' iframe(s) without allow attribute');
+    if (r.iframes.noSandbox === 0 && r.iframes.noAllow === 0) goodItems.push('All iframes properly configured ✓');
+  }
+
+  // Base tag findings
+  if (r.baseTag) {
+    mediumIssues.push('Base tag present (href=' + r.baseTag.href + ') — potential script injection vector if attacker controls it');
   }
 
   // Score: start from 100, deduct per finding severity
@@ -688,6 +805,57 @@ function renderReport(r, url) {
     container.innerHTML += '<div class="report-section"><h4>\uD83D\uDD25 WAF Detection</h4><div class="finding info">' + r.waf.map(function(w) { return esc(w); }).join(', ') + '</div></div>';
   } else {
     container.innerHTML += '<div class="report-section"><h4>\uD83D\uDD25 WAF Detection</h4><div class="finding info">None detected</div></div>';
+  }
+
+  // ── SRI ──
+  if (r.sri && r.sri.total > 0) {
+    var sriHtml = '<div class="report-section"><h4>\uD83D\uDD17 Subresource Integrity</h4>';
+    sriHtml += '<div class="finding ' + (r.sri.unprotected === 0 ? 'good' : 'high') + '">' + r.sri.protected + '/' + r.sri.total + ' resources have integrity attribute</div>';
+    if (r.sri.unprotected > 0) {
+      r.sri.resources.forEach(function(u) { sriHtml += '<div class="finding high">\u274C ' + esc(u) + '</div>'; });
+    }
+    sriHtml += '</div>';
+    container.innerHTML += sriHtml;
+  }
+
+  // ── Mixed Content ──
+  if (r.mixedContent) {
+    var mcHtml = '<div class="report-section"><h4>\u26A0\uFE0F Mixed Content</h4>';
+    if (r.mixedContent.length > 0) {
+      mcHtml += '<div class="finding critical">' + r.mixedContent.length + ' HTTP resource(s) on HTTPS page</div>';
+      r.mixedContent.forEach(function(m) { mcHtml += '<div class="finding high">\u274C ' + esc(m) + '</div>'; });
+    } else {
+      mcHtml += '<div class="finding good">No mixed content detected ✓</div>';
+    }
+    mcHtml += '</div>';
+    container.innerHTML += mcHtml;
+  }
+
+  // ── Form Security ──
+  if (r.formSec && r.formSec.forms > 0) {
+    var fHtml = '<div class="report-section"><h4>\uD83D\uDCDD Form Security</h4>';
+    fHtml += '<div class="finding info">' + r.formSec.forms + ' form(s) found</div>';
+    if (r.formSec.httpAction > 0) fHtml += '<div class="finding high">\u26A0\uFE0F ' + r.formSec.httpAction + ' form(s) with HTTP action (no TLS)</div>';
+    if (r.formSec.pwNoAutocomplete > 0) fHtml += '<div class="finding medium">\u26A0\uFE0F ' + r.formSec.pwNoAutocomplete + ' password field(s) without autocomplete=off</div>';
+    fHtml += '<div class="finding ' + (r.formSec.hasCsrf ? 'good' : 'medium') + '">CSRF token: ' + (r.formSec.hasCsrf ? 'Present ✓' : 'Not detected') + '</div>';
+    fHtml += '</div>';
+    container.innerHTML += fHtml;
+  }
+
+  // ── Iframe Analysis ──
+  if (r.iframes && r.iframes.total > 0) {
+    var iHtml = '<div class="report-section"><h4>\uD83D\uDCC2 Iframe Analysis</h4>';
+    iHtml += '<div class="finding info">' + r.iframes.total + ' iframe(s) found</div>';
+    if (r.iframes.noSandbox > 0) iHtml += '<div class="finding medium">\u26A0\uFE0F ' + r.iframes.noSandbox + ' iframe(s) without sandbox</div>';
+    if (r.iframes.noAllow > 0) iHtml += '<div class="finding low">\u26A0\uFE0F ' + r.iframes.noAllow + ' iframe(s) without allow attribute</div>';
+    if (r.iframes.noSandbox === 0 && r.iframes.noAllow === 0) iHtml += '<div class="finding good">All iframes properly configured ✓</div>';
+    iHtml += '</div>';
+    container.innerHTML += iHtml;
+  }
+
+  // ── Base Tag ──
+  if (r.baseTag) {
+    container.innerHTML += '<div class="report-section"><h4>\uD83D\uDCCC Base Tag</h4><div class="finding medium">Base tag found: href=' + esc(r.baseTag.href) + ' — potential injection vector</div></div>';
   }
 
   // ── Meta Tags (from HTML) ──
