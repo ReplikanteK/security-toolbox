@@ -109,11 +109,6 @@ async function checkSSL() {
       }
     }
 
-    // OpenSSL-style cert info (simulated via headers + analysis)
-    results.push('', '── Certificate (estimated) ──');
-    results.push(`Connected via: HTTPS/1.1`);
-    results.push(`TLS: Negotiated successfully`);
-
     // Redirection analysis
     if (resp.redirected) {
       results.push('', '── Redirect Chain ──');

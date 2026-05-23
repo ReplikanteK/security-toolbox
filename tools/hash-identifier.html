@@ -37,7 +37,7 @@
   <textarea id="hash-input" rows="3" placeholder="Paste a hash here... e.g. $2y$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"></textarea>
   <div class="actions">
     <button onclick="identify()">Identify</button>
-    <button class="secondary" onclick="document.getElementById('hash-input').value=''">Clear</button>
+    <button class="secondary" onclick="document.getElementById('hash-input').value='';document.getElementById('results').className='output';document.getElementById('results').textContent='Paste a hash and click Identify'">Clear</button>
   </div>
 
   <h3 style="margin-top:1.5rem;font-size:.85rem;color:var(--text2)">Matches</h3>

@@ -31,7 +31,7 @@
 <div class="tool-page">
   <a href="../index.html" class="back">← Back to tools</a>
   <h2>Redirect Chain Analyzer</h2>
-  <p class="desc">Follow a URL through all HTTP redirects (max 10 hops). See each redirect type, Location header, and detect risky behaviors like open redirects, protocol downgrades, and cross-domain redirects. Uses a CORS proxy.</p>
+  <p class="desc">Follow a URL through HTTP redirects (max 10 hops). Detects open redirects, protocol downgrades, and cross-domain redirects. Uses a CORS proxy — the proxy may collapse chains. Verify with curl for accurate results.</p>
 
   <label for="redirect-url">Start URL</label>
   <input type="text" id="redirect-url" placeholder="https://example.com/redirect?url=https://evil.com" value="https://httpbin.org/redirect-to?url=https://example.com">

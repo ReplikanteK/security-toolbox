@@ -137,7 +137,7 @@ function extractURLs() {
   const withHash = filtered.filter(u => u.hash).length;
 
   const lines = [
-    `Found ${filtered.length} URL(s) (${urls.length} total, ${filtered.length - urls.length} filtered out):`,
+    `Found ${filtered.length} URL(s) (${urls.length} total, ${urls.length - filtered.length} filtered out):`,
     `Unique domains: ${domains.length}`,
     `URLs with params: ${withQuery}`,
     `URLs with hash: ${withHash}`,

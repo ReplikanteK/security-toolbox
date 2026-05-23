@@ -31,7 +31,7 @@
 <div class="tool-page">
   <a href="../index.html" class="back">← Back to tools</a>
   <h2>Subdomain Scanner</h2>
-  <p class="desc">Quick subdomain discovery via common wordlist + DNS-over-HTTPS. Results are rate-limited by Cloudflare DNS (~10 req/min). For full scans, use tools like subfinder or amass locally.</p>
+  <p class="desc">Quick subdomain discovery via common wordlist + DNS-over-HTTPS. Rate-limited to ~250 req/min by Cloudflare DNS. For full scans, use tools like subfinder or amass locally.</p>
 
   <div class="row">
     <div>
@@ -81,7 +81,7 @@ const WORDLIST_QUICK = [
   'app', 'web', 'm', 'mobile', 'shop', 'cdn', 'static', 'media', 'img',
   'assets', 'download', 'support', 'help', 'docs', 'wiki', 'status',
   'portal', 'login', 'auth', 'sso', 'vpn', 'remote', 'git', 'jenkins',
-  'ci', 'jenkins', 'jira', 'confluence', 'grafana', 'prometheus', 'monitor',
+  'ci', 'jira', 'confluence', 'grafana', 'prometheus', 'monitor',
   'monitoring', 'logs', 'kibana', 'elastic', 'db', 'database', 'mysql',
   'backup', 'proxy', 'ns1', 'ns2', 'mx', 'smtp', 'imap', 'pop3',
 ];

@@ -319,7 +319,55 @@ async function detectWAF() {
     output.innerHTML = '';
     appendLine(output, `❌ Error: ${e.message}`, '#e06060');
     appendLine(output, '');
-    appendLine(output, 'Tip: The CORS proxy may be rate-limited. Try again later.');
+    appendLine(output, 'Trying DNS-based detection as fallback...');
+  }
+
+  // DNS-based detection as fallback (works even when proxy strips headers)
+  try {
+    const domain = parsed.hostname;
+    const nsResp = await fetch(`https://cloudflare-dns.com/dns-query?name=${domain}&type=NS`, {
+      headers: { 'Accept': 'application/dns-json' }
+    });
+    const nsData = await nsResp.json();
+    const nsRecords = (nsData.Answer || []).map(r => r.data.toLowerCase());
+
+    const DNS_SIGNATURES = [
+      { name: 'Cloudflare', patterns: ['cloudflare'] },
+      { name: 'AWS / CloudFront', patterns: ['awsdns', 'cloudfront'] },
+      { name: 'Akamai', patterns: ['akamai'] },
+      { name: 'Fastly', patterns: ['fastly'] },
+      { name: 'Azure DNS', patterns: ['azure'] },
+      { name: 'Google Cloud DNS', patterns: ['googledomains', 'gcp'] },
+      { name: 'OVH', patterns: ['ovh'] },
+      { name: 'NS1', patterns: ['ns1'] },
+      { name: 'DDoS-Guard', patterns: ['ddos-guard'] },
+    ];
+
+    const dnsMatches = [];
+    for (const sig of DNS_SIGNATURES) {
+      if (nsRecords.some(ns => sig.patterns.some(p => ns.includes(p)))) {
+        dnsMatches.push(sig.name);
+      }
+    }
+
+    if (dnsMatches.length > 0) {
+      appendLine(output, '');
+      appendSection(output, '🌐 DNS-Based Detection');
+      dnsMatches.forEach(name => {
+        appendLine(output, `✅ ${name} — detected via NS records`, '#40c060');
+      });
+      const nsList = nsRecords.join(', ');
+      appendLine(output, `Nameservers: ${nsList}`, '#808080');
+    }
+
+    if (dnsMatches.length === 0 && nsRecords.length > 0) {
+      appendLine(output, '');
+      appendLine(output, `Nameservers: ${nsRecords.join(', ')}`, '#808080');
+    }
+  } catch {}
+
+  if (output.children.length === 0) {
+    appendLine(output, 'Could not reach the target via HTTP or DNS.');
   }
 }
 

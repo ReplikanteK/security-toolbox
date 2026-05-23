@@ -133,8 +133,10 @@ function estimateTokens(text) {
     // Aproximate token boundaries
     if (/[a-zA-Z0-9]/.test(text[i])) {
       // Word: consume alphanumeric + apostrophe
+      const wordStart = i;
       while (i < text.length && /[a-zA-Z0-9'']/.test(text[i])) i++;
-      tokens += Math.floor((i - 1) / 4); // ~4 chars per token
+      const wordLen = i - wordStart;
+      tokens += Math.floor(wordLen / 4); // ~4 chars per token
     } else if (/[,.!?;:]/.test(text[i])) {
       i++; // Single char token
     } else if (/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]/.test(text[i])) {
