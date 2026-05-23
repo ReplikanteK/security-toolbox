@@ -9,6 +9,9 @@
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/jwt-attacker.html">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What JWT attacks can I test?","acceptedAnswer":{"@type":"Answer","text":"The JWT Attacker supports 5 attack classes: alg:none (algorithm none bypass), kid injection (SQL injection/OS command in key ID header), secret cracking (brute-force common JWT secrets), algorithm confusion (RS256 to HS256 key misuse), and weak secret detection."}},{"@type":"Question","name":"How does the JWT algorithm confusion attack work?","acceptedAnswer":{"@type":"Answer","text":"Algorithm confusion exploits servers that trust the JWT header's alg field. If the server uses RS256 (asymmetric) but accepts HS256 (symmetric), an attacker can forge tokens using the public RSA key as an HMAC secret, since the public key is often discoverable."}}]}
+  </script>
 </head>
 <body>
 
@@ -52,7 +55,7 @@
     <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
     <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
   </div>
-  <p>Open source Open source · All processing client-side · Privacy-firstmiddot; All processing client-side Open source · All processing client-side · Privacy-firstmiddot; Privacy-first</p>
+  <p>Open source &middot; All processing client-side &middot; Privacy-first</p>
   <p style="font-size:0.75rem;opacity:.6;margin:0">&copy; 2026 ReplikanteK &middot; MIT License</p>
 </footer>
 

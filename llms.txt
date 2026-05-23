@@ -1,0 +1,28 @@
+# SecuriTool — Free Web Security Tools
+
+## About
+SecuriTool provides 29 free, client-side security tools for web researchers and developers. All tools run in the browser — no data sent to servers.
+
+## Key tools
+- **Web Auditor**: https://securitool.js.org/tools/web-auditor.html — Full security audit: DNS, SSL, email security, CSP, WAF, tech stack, performance, redirect chain
+- **CSP Evaluator**: https://securitool.js.org/tools/csp-evaluator.html — Content-Security-Policy analysis with vulnerability detection
+- **JWT Attacker**: https://securitool.js.org/tools/jwt-attacker.html — 5 JWT attack classes: alg:none, kid injection, secret cracking, algorithm confusion
+- **Email Security Checker**: https://securitool.js.org/tools/email-security.html — SPF, DKIM, DMARC, BIMI analysis with A+ to F grading
+- **CVE Search**: https://securitool.js.org/tools/cve-search.html — CVE database search via CIRCL API
+- **Subdomain Scanner**: https://securitool.js.org/tools/subdomain-scanner.html — Wordlist-based subdomain discovery
+- **Takeover Checker**: https://securitool.js.org/tools/takeover-checker.html — Detect unclaimed cloud services (AWS, GitHub, Heroku, 20+)
+- **GraphQL Introspection**: https://securitool.js.org/tools/graphql-introspect.html — GraphQL schema discovery
+- **CORS Checker**: https://securitool.js.org/tools/cors-checker.html — CORS misconfiguration detection
+- **Security Headers Grader**: https://securitool.js.org/tools/security-headers.html — A+ to F security header grading
+
+## Features
+- 100% client-side processing (privacy-first)
+- No cookies, no tracking (GoatCounter for anonymous page views)
+- Open source (MIT License): https://github.com/ReplikanteK/security-toolbox
+- Progressive Web App — works offline for client-side tools
+- All 29 tools listed at: https://securitool.js.org/
+
+## Structured data
+- JSON-LD WebApplication schema on homepage
+- JSON-LD FAQPage schema on tool pages
+- Sitemap: https://securitool.js.org/sitemap.xml

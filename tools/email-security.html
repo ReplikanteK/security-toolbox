@@ -26,6 +26,9 @@
 </style>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/email-security.html">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is email security checking?","acceptedAnswer":{"@type":"Answer","text":"Email security checking verifies SPF (Sender Policy Framework), DKIM (DomainKeys Identified Mail), DMARC (Domain-based Message Authentication), and BIMI (Brand Indicators for Message Identification) DNS records to assess domain spoofing protection and email authentication."}},{"@type":"Question","name":"What do SPF, DKIM, DMARC, and BIMI mean?","acceptedAnswer":{"@type":"Answer","text":"SPF specifies which servers can send email from your domain. DKIM provides cryptographic email signing. DMARC tells receiving servers how to handle unauthenticated email. BIMI attaches brand logos to authenticated emails. Together, they prevent email spoofing and phishing."}},{"@type":"Question","name":"How is the email security grade calculated?","acceptedAnswer":{"@type":"Answer","text":"The grade (A+ to F) is calculated based on SPF strictness (-all vs ~all), DMARC policy enforcement (reject, quarantine, or none), DKIM selector presence, and BIMI configuration. Missing SPF or DMARC automatically results in a failing grade."}}]}
+  </script>
 </head>
 <body>
 
@@ -275,7 +278,7 @@ async function runEmailCheck() {
     <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
     <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
   </div>
-  <p>Open source Open source · All processing client-side · Privacy-firstmiddot; All processing client-side Open source · All processing client-side · Privacy-firstmiddot; Privacy-first</p>
+  <p>Open source &middot; All processing client-side &middot; Privacy-first</p>
   <p style="font-size:0.75rem;opacity:.6;margin:0">&copy; 2026 ReplikanteK &middot; MIT License</p>
 </footer>
 
