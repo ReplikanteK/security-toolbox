@@ -1,0 +1,8 @@
+# Security.txt for SecuriTool
+# https://securitool.js.org/
+
+Contact: https://github.com/ReplikanteK/security-toolbox/issues
+Encryption: https://github.com/ReplikanteK/security-toolbox/issues/new
+Preferred-Languages: en, es
+Canonical: https://securitool.js.org/.well-known/security.txt
+Policy: https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE

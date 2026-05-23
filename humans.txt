@@ -1,0 +1,22 @@
+# SecuriTool — Free Online Web Security Tools
+# https://securitool.js.org/
+#
+# Built from real bug bounty research.
+# All tools run client-side, privacy-first.
+# Open source under MIT license.
+#
+## Author
+  Name: ReplikanteK (kryin)
+  GitHub: @ReplikanteK
+  Stack: Vanilla JS · CSS · HTML — zero dependencies
+  Language: English (en) / Spanish (es)
+  Mission: Free security tools for everyone, without compromising privacy.
+## Thanks
+  Cloudflare DNS-over-HTTPS (DNS queries)
+  CIRCL CVE API (CVE search)
+  js.org (domain)
+  All bug bounty researchers who believe security should be accessible.
+## Colophon
+  Theme: Dark/light adaptive · Font: system-ui
+  Analytics: GoatCounter (cookie-free, privacy-respecting)
+  Hosting: GitHub Pages · HTTPS by default

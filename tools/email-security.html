@@ -29,6 +29,8 @@
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is email security checking?","acceptedAnswer":{"@type":"Answer","text":"Email security checking verifies SPF (Sender Policy Framework), DKIM (DomainKeys Identified Mail), DMARC (Domain-based Message Authentication), and BIMI (Brand Indicators for Message Identification) DNS records to assess domain spoofing protection and email authentication."}},{"@type":"Question","name":"What do SPF, DKIM, DMARC, and BIMI mean?","acceptedAnswer":{"@type":"Answer","text":"SPF specifies which servers can send email from your domain. DKIM provides cryptographic email signing. DMARC tells receiving servers how to handle unauthenticated email. BIMI attaches brand logos to authenticated emails. Together, they prevent email spoofing and phishing."}},{"@type":"Question","name":"How is the email security grade calculated?","acceptedAnswer":{"@type":"Answer","text":"The grade (A+ to F) is calculated based on SPF strictness (-all vs ~all), DMARC policy enforcement (reject, quarantine, or none), DKIM selector presence, and BIMI configuration. Missing SPF or DMARC automatically results in a failing grade."}}]}
   </script>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0a0e17">
 </head>
 <body>
 
@@ -299,5 +301,7 @@ kofiWidgetOverlay.draw('replikantek', {
   'floating-chat.donateButton.text-color': '#fff'
 });
 </script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
 </body>
 </html>

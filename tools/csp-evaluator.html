@@ -12,6 +12,8 @@
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is CSP analysis?","acceptedAnswer":{"@type":"Answer","text":"Content-Security-Policy (CSP) analysis examines a website's CSP headers to detect security weaknesses like unsafe-inline scripts, wildcard sources, missing nonces, and unprotected form actions. A strong CSP prevents XSS and data injection attacks."}},{"@type":"Question","name":"How does the CSP Evaluator work?","acceptedAnswer":{"@type":"Answer","text":"Paste your Content-Security-Policy header string into the input box and click Evaluate. The tool parses all directives (script-src, default-src, base-uri, form-action, etc.) and flags dangerous configurations, missing protections, and provides prioritized recommendations."}},{"@type":"Question","name":"What CSP issues does this tool detect?","acceptedAnswer":{"@type":"Answer","text":"It detects: unsafe-inline and unsafe-eval in script-src, wildcard (*) sources, missing base-uri (allowing base tag injection), missing form-action (phishing risk), missing object-src restriction, HTTP sources instead of HTTPS, data: URI usage, and missing frame-ancestors for clickjacking protection."}}]}
   </script>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0a0e17">
 </head>
 <body>
 
@@ -308,5 +310,7 @@ kofiWidgetOverlay.draw('replikantek', {
   'floating-chat.donateButton.text-color': '#fff'
 });
 </script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
 </body>
 </html>

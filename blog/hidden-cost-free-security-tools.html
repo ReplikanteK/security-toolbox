@@ -40,6 +40,8 @@
 .blog-post .warning-box { background: rgba(224,128,64,0.08); border: 1px solid #e08040; border-radius: 6px; padding: 1rem; margin: 1rem 0; }
 .blog-post .warning-box strong { color: #e08040; }
 </style>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0a0e17">
 </head>
 <body>
 
@@ -202,5 +204,7 @@
   <p class="note">Built from real security research &mdash; free forever.<br><span style="font-size:0.75rem;opacity:.6">&copy; 2026 ReplikanteK &middot; MIT License</span></p>
 </footer>
 
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
 </body>
 </html>

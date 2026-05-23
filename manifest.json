@@ -1,0 +1,17 @@
+{
+  "name": "SecuriTool",
+  "short_name": "SecuriTool",
+  "description": "Free online web security tools — all client-side, privacy-first",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0e17",
+  "theme_color": "#0a0e17",
+  "categories": ["security", "developer-tools", "utilities"],
+  "lang": "en",
+  "icons": [
+    { "src": "/icon-192.svg", "type": "image/svg+xml", "sizes": "192x192" },
+    { "src": "/icon-512.svg", "type": "image/svg+xml", "sizes": "512x512" }
+  ]
+}

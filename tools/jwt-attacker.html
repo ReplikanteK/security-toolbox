@@ -12,6 +12,8 @@
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What JWT attacks can I test?","acceptedAnswer":{"@type":"Answer","text":"The JWT Attacker supports 5 attack classes: alg:none (algorithm none bypass), kid injection (SQL injection/OS command in key ID header), secret cracking (brute-force common JWT secrets), algorithm confusion (RS256 to HS256 key misuse), and weak secret detection."}},{"@type":"Question","name":"How does the JWT algorithm confusion attack work?","acceptedAnswer":{"@type":"Answer","text":"Algorithm confusion exploits servers that trust the JWT header's alg field. If the server uses RS256 (asymmetric) but accepts HS256 (symmetric), an attacker can forge tokens using the public RSA key as an HMAC secret, since the public key is often discoverable."}}]}
   </script>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0a0e17">
 </head>
 <body>
 
@@ -305,5 +307,7 @@ kofiWidgetOverlay.draw('replikantek', {
   'floating-chat.donateButton.text-color': '#fff'
 });
 </script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
 </body>
 </html>
