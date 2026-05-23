@@ -68,6 +68,7 @@
 
 <script>
 function qs(id) { return document.getElementById(id); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 var DKIM_SELECTORS = ['default','google','protonmail','dkim','s1','s2','selector1','selector2','mandrill','mailchimp','sparkpostmail','sendgrid','zoho','zoho2','mxvault','mxs','mx1','mx2'];
 
 async function dnsQuery(host, type) {
@@ -179,14 +180,14 @@ async function runEmailCheck() {
     if (includeCount > 10) { spfDetails.push('⚠️ ' + includeCount + ' includes — may exceed 10-DNS-lookup limit'); score -= 10; }
     spfDetails.push('Includes: ' + (includeCount || 'none'));
 
-    details.push({ icon: '✅', label: 'SPF Record', status: 'pass', text: spf.substring(0, 120) + (spf.length > 120 ? '...' : ''), rec: spfDetails.join(' | ') });
+    details.push({ icon: '✅', label: 'SPF Record', status: 'pass', text: esc(spf.substring(0, 120)) + (spf.length > 120 ? '...' : ''), rec: esc(spfDetails.join(' | ')) });
   }
 
   // DKIM
   if (dkimSelectors.length === 0) {
     score -= 15;
     details.push({ icon: '⚠️', label: 'DKIM', status: 'warn', text: 'No common DKIM selectors found. Email signing may not be configured.', rec: 'Configure DKIM signing and publish the public key in your DNS.' });
-    recs.push('Set up DKIM signing for your mail provider and publish the TXT record on <selector>._domainkey.' + domain);
+    recs.push('Set up DKIM signing for your mail provider and publish the TXT record on <selector>._domainkey.' + esc(domain));
   } else {
     details.push({ icon: '✅', label: 'DKIM Selectors', status: 'pass', text: dkimSelectors.length + ' selector(s) found: ' + dkimSelectors.join(', '), rec: 'DKIM signing is configured ✓' });
   }
@@ -194,8 +195,8 @@ async function runEmailCheck() {
   // DMARC
   if (!dmarc) {
     score -= 30;
-    details.push({ icon: '❌', label: 'DMARC Record', status: 'fail', text: 'No DMARC record found. No enforcement of SPF/DKIM alignment.', rec: 'Add a DMARC TXT record on _dmarc.' + domain });
-    recs.push('Create a DMARC record: v=DMARC1; p=quarantine; rua=mailto:dmarc@' + domain);
+    details.push({ icon: '❌', label: 'DMARC Record', status: 'fail', text: 'No DMARC record found. No enforcement of SPF/DKIM alignment.', rec: 'Add a DMARC TXT record on _dmarc.' + esc(domain) });
+    recs.push('Create a DMARC record: v=DMARC1; p=quarantine; rua=mailto:dmarc@' + esc(domain));
   } else {
     var pMatch = dmarc.match(/p=(none|quarantine|reject)/i);
     var pctMatch = dmarc.match(/pct=(\d+)/i);
@@ -215,23 +216,23 @@ async function runEmailCheck() {
       if (pct < 100) { dmarcDetails.push('pct=' + pct + '% (partial deployment)'); score -= 5; }
     } else { dmarcDetails.push('pct=100% ✓'); }
 
-    if (ruaMatch) dmarcDetails.push('rua=' + ruaMatch[1] + ' ✓');
+    if (ruaMatch) dmarcDetails.push('rua=' + esc(ruaMatch[1]) + ' ✓');
     else { dmarcDetails.push('No rua (reports)'); score -= 3; }
 
-    details.push({ icon: '✅', label: 'DMARC Record', status: 'pass', text: dmarc.substring(0, 180) + (dmarc.length > 180 ? '...' : ''), rec: dmarcDetails.join(' | ') });
+    details.push({ icon: '✅', label: 'DMARC Record', status: 'pass', text: esc(dmarc.substring(0, 180)) + (dmarc.length > 180 ? '...' : ''), rec: esc(dmarcDetails.join(' | ')) });
   }
 
   // BIMI
   if (bimi) {
     var bimiUrlMatch = bimi.match(/l=([^\s;]+)/i);
-    details.push({ icon: '🌟', label: 'BIMI', status: 'pass', text: 'BIMI configured' + (bimiUrlMatch ? ' — logo: ' + bimiUrlMatch[1] : ''), rec: 'Brand Indicators for Message Identification ✓' });
+    details.push({ icon: '🌟', label: 'BIMI', status: 'pass', text: 'BIMI configured' + (bimiUrlMatch ? ' — logo: ' + esc(bimiUrlMatch[1]) : ''), rec: 'Brand Indicators for Message Identification ✓' });
   } else {
     details.push({ icon: 'ℹ️', label: 'BIMI', status: 'info', text: 'Not configured (optional — displays brand logo in supporting email clients)', rec: 'Requirements: DMARC p=quarantine or reject, SVG logo, VMC certificate' });
   }
 
   // MX
   if (mx && mx.length) {
-    details.push({ icon: 'ℹ️', label: 'MX Records (' + mx.length + ')', status: 'info', text: mx.slice(0, 5).map(function(m) { return m.data; }).join(', ') + (mx.length > 5 ? ' (+' + (mx.length-5) + ' more)' : ''), rec: 'Mail exchangers configured ✓' });
+    details.push({ icon: 'ℹ️', label: 'MX Records (' + mx.length + ')', status: 'info', text: mx.slice(0, 5).map(function(m) { return esc(m.data); }).join(', ') + (mx.length > 5 ? ' (+' + (mx.length-5) + ' more)' : ''), rec: 'Mail exchangers configured ✓' });
   } else {
     details.push({ icon: 'ℹ️', label: 'MX Records', status: 'info', text: 'No MX records — domain may not handle email', rec: 'No action needed if email is not used' });
   }
@@ -255,14 +256,14 @@ async function runEmailCheck() {
   html += '<div class="report-section"><h4>📋 Individual Checks</h4>';
   for (var i = 0; i < details.length; i++) {
     var d = details[i];
-    html += '<div class="check-detail"><div class="icon">' + d.icon + '</div><div class="body"><strong>' + d.label + '</strong><p>' + d.text + '</p><p class="hint">' + d.rec + '</p></div></div>';
+    html += '<div class="check-detail"><div class="icon">' + d.icon + '</div><div class="body"><strong>' + esc(d.label) + '</strong><p>' + esc(d.text) + '</p><p class="hint">' + esc(d.rec) + '</p></div></div>';
   }
   html += '</div>';
 
   if (recs.length) {
     html += '<div class="report-section"><h4>💡 Recommendations (' + recs.length + ')</h4>';
     for (var i = 0; i < recs.length; i++) {
-      html += '<div class="recommendation rec-medium">' + recs[i] + '</div>';
+      html += '<div class="recommendation rec-medium">' + esc(recs[i]) + '</div>';
     }
     html += '</div>';
   }
