@@ -187,7 +187,7 @@ function calc() {
     impact = 6.42 * iss;
     base = impact > 0 ? roundUp(Math.min(ess + impact, 10)) : 0;
   } else {
-    impact = 7.52 * (iss - 0.029) - 3.25 * Math.pow(iss - 0.02, 15);
+    impact = 7.52 * (iss - 0.029) - 3.25 * Math.pow(iss * 0.9731 - 0.02, 15);
     base = impact > 0 ? roundUp(Math.min(1.08 * (ess + impact), 10)) : 0;
   }
 

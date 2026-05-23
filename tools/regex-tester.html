@@ -131,7 +131,7 @@ function testRegex() {
   try {
     const re = new RegExp(pattern, flags);
     const matches = [...text.matchAll(re)];
-    const groups = re.source.includes('('') ? 1 : 0;
+    const groups = re.source.includes('(') ? 1 : 0;
 
     if (matches.length === 0) {
       output.className = 'output';

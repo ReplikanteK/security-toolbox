@@ -90,7 +90,7 @@ function parseSetCookie(str) {
         val = true;
       } else {
         key = segments[i].substring(0, eqIdx).toLowerCase();
-        val = segments[i].substring(eqIdx + 1);
+        val = segments[i].substring(eqIdx + 1).toLowerCase();
       }
       attrs[key] = val;
     }

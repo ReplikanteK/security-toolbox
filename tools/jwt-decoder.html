@@ -88,9 +88,15 @@ function decode() {
     return;
   }
 
+  function base64urlDecode(s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    return atob(s);
+  }
+
   try {
-    const header = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const header = JSON.parse(base64urlDecode(parts[0]));
+    const payload = JSON.parse(base64urlDecode(parts[1]));
 
     hdr.className = 'output';
     hdr.textContent = JSON.stringify(header, null, 2);
