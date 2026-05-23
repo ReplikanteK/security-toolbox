@@ -347,11 +347,12 @@ function markProgress(id, state) {
 }
 
 async function dnsQuery(name, type) {
+  const TYPES = { 'A': 1, 'AAAA': 28, 'MX': 15, 'NS': 2, 'TXT': 16, 'CNAME': 5 };
   try {
-    const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=${type}`, { headers: { 'Accept': 'application/dns-json' } });
+    const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=${TYPES[type] || type}`, { headers: { 'Accept': 'application/dns-json' } });
     if (!r.ok) return [];
     const d = await r.json();
-    return d.Answer || [];
+    return (d.Answer || []).filter(r => r.type === (TYPES[type] || type));
   } catch { return []; }
 }
 
@@ -405,15 +406,17 @@ async function runAudit() {
   markProgress('emailsec', 'running');
   try {
     function stripTxtQuotes(data) { return data.replace(/^"(.*)"$/, '$1').replace(/""/g, '"'); }
-    const txtRecs = await dnsQuery(hostname, 'TXT');
+    function rootDomain(h) { return h.replace(/^www\./, ''); }
+    const root = rootDomain(hostname);
+    const txtRecs = await dnsQuery(root, 'TXT');
     const spf = txtRecs.map(r => stripTxtQuotes(r.data)).filter(r => r.startsWith('v=spf1')).map(r => r.replace(/\.$/,''));
-    const dmarcRecs = await dnsQuery('_dmarc.' + hostname, 'TXT');
+    const dmarcRecs = await dnsQuery('_dmarc.' + root, 'TXT');
     const dmarc = dmarcRecs.map(r => stripTxtQuotes(r.data)).filter(r => r.startsWith('v=DMARC1')).map(r => r.replace(/\.$/,''));
-    const bimiRecs = await dnsQuery('default._bimi.' + hostname, 'TXT');
+    const bimiRecs = await dnsQuery('default._bimi.' + root, 'TXT');
     const bimi = bimiRecs.map(r => stripTxtQuotes(r.data)).filter(r => r.startsWith('v=BIMI1')).map(r => r.replace(/\.$/,''));
     const dkimSelectors = ['default', 'google', 'protonmail', 'dkim', 's1', 's2', 'selector1', 'selector2'];
     const dkimResults = await Promise.all(dkimSelectors.map(sel =>
-      dnsQuery(sel + '._domainkey.' + hostname, 'TXT').then(function(recs) {
+      dnsQuery(sel + '._domainkey.' + root, 'TXT').then(function(recs) {
         return recs.some(function(r) { return stripTxtQuotes(r.data).includes('v=DKIM1'); }) ? sel : null;
       })
     ));

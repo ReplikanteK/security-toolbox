@@ -100,10 +100,11 @@ async function runEmailCheck() {
   results.innerHTML = '';
 
   var spf, dmarc, bimi, dkimSelectors = [], mx, a, hasHttp;
+  var root = domain.replace(/^www\./, '');
 
   try {
     progress.textContent = '⏳ Checking SPF...';
-    var txtRecs = await dnsQuery(domain, 'TXT');
+    var txtRecs = await dnsQuery(root, 'TXT');
     var stripTxt = function(d) { return d.replace(/^"(.*)"$/, '$1').replace(/""/g, '"'); };
     var spfMatches = txtRecs.filter(function(r) { return stripTxt(r.data).replace(/\s/g,'').toLowerCase().startsWith('v=spf1'); });
     spf = spfMatches.length ? stripTxt(spfMatches[0].data) : null;
@@ -111,14 +112,14 @@ async function runEmailCheck() {
 
   try {
     progress.textContent = '⏳ Checking DMARC...';
-    var dmarcRecs = await dnsQuery('_dmarc.' + domain, 'TXT');
+    var dmarcRecs = await dnsQuery('_dmarc.' + root, 'TXT');
     var dmarcMatches = dmarcRecs.filter(function(r) { return stripTxt(r.data).replace(/\s/g,'').toLowerCase().startsWith('v=dmarc1'); });
     dmarc = dmarcMatches.length ? stripTxt(dmarcMatches[0].data) : null;
   } catch(e) { dmarc = null; }
 
   try {
     progress.textContent = '⏳ Checking BIMI...';
-    var bimiRecs = await dnsQuery('default._bimi.' + domain, 'TXT');
+    var bimiRecs = await dnsQuery('default._bimi.' + root, 'TXT');
     var bimiMatches = bimiRecs.filter(function(r) { return stripTxt(r.data).replace(/\s/g,'').toLowerCase().startsWith('v=bimi1'); });
     bimi = bimiMatches.length ? stripTxt(bimiMatches[0].data) : null;
   } catch(e) { bimi = null; }
@@ -128,7 +129,7 @@ async function runEmailCheck() {
     for (var i = 0; i < DKIM_SELECTORS.length; i++) {
       var sel = DKIM_SELECTORS[i];
       try {
-        var recs = await dnsQuery(sel + '._domainkey.' + domain, 'TXT');
+        var recs = await dnsQuery(sel + '._domainkey.' + root, 'TXT');
         if (recs.some(function(r) { return stripTxt(r.data).toLowerCase().includes('v=dkim1'); })) {
           dkimSelectors.push(sel);
         }
