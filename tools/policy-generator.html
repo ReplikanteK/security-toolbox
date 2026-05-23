@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Policy Generator — SecuriTool</title>
+<meta name="description" content="Generate security policy headers: Content-Security-Policy, CORS, HSTS, X-Frame-Options, and more. Interactive builder with presets for common web frameworks.">
+<link rel="stylesheet" href="../css/style.css">
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
+<style>
+.pg-panel { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+@media (max-width:700px) { .pg-panel { grid-template-columns: 1fr; } }
+.pg-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .8rem; }
+.pg-card h4 { font-size: .8rem; margin: 0 0 .4rem 0; display: flex; align-items: center; gap: .3rem; }
+.pg-card h4 .badge { font-size: .6rem; background: var(--bg3); padding: .1rem .3rem; border-radius: 2px; color: var(--text2); }
+.pg-field { margin-bottom: .4rem; }
+.pg-field label { display: block; font-size: .72rem; color: var(--text2); margin-bottom: .15rem; }
+.pg-field select, .pg-field input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: .35rem .5rem; font-family: var(--font); font-size: .78rem; color: var(--text); outline: none; box-sizing: border-box; }
+.pg-field select:focus, .pg-field input:focus { border-color: var(--accent); }
+.pg-check { display: flex; align-items: center; gap: .3rem; font-size: .75rem; margin: .15rem 0; }
+.pg-check input { width: auto; }
+#pg-output { background: #1a1a2e; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .8rem; margin-top: .6rem; overflow-x: auto; }
+#pg-output pre { margin: 0; font-size: .74rem; line-height: 1.5; color: #e0e0e0; }
+.pg-format { display: flex; gap: .5rem; align-items: center; margin-bottom: .5rem; }
+.pg-format select { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: .3rem .5rem; font-size: .75rem; color: var(--text); }
+</style>
+<script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+  <link rel="canonical" href="https://securitool.js.org/tools/policy-generator.html">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0a0e17">
+</head>
+<body>
+
+<header>
+  <a href="../" class="logo" style="text-decoration:none">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="%2300d4aa" d="M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z"/><path fill="%2300d4aa" d="M15 10l-3 5h2v5l3-5h-2z"/></svg>
+    <span>Securi</span>Tool
+  </a>
+  <span class="logo-sub">free security tools</span>
+  <nav>
+    <a href="../index.html#tools">Tools</a>
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
+    <button id="theme-toggle">☀️</button>
+  </nav>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>Policy Generator</h2>
+  <p class="desc">Build security policy headers interactively. Generate CSP, CORS, HSTS, and other headers ready for deployment on Apache, Nginx, or your application server.</p>
+
+  <div class="pg-panel">
+    <div class="pg-card">
+      <h4>🔒 Content-Security-Policy <span class="badge">CSP</span></h4>
+      <div class="pg-field">
+        <label>Preset</label>
+        <select id="csp-preset" onchange="applyCSPPreset()">
+          <option value="strict">Strict (default-src 'self')</option>
+          <option value="moderate">Moderate (+ CDN scripts)</option>
+          <option value="permissive">Permissive (analytics, widgets)</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="pg-field">
+        <label>default-src</label>
+        <input type="text" id="csp-default" value="'self'" oninput="generate()">
+      </div>
+      <div class="pg-field">
+        <label>script-src</label>
+        <input type="text" id="csp-script" value="'self'" oninput="generate()">
+      </div>
+      <div class="pg-field">
+        <label>style-src</label>
+        <input type="text" id="csp-style" value="'self' 'unsafe-inline'" oninput="generate()">
+      </div>
+      <div class="pg-field">
+        <label>img-src</label>
+        <input type="text" id="csp-img" value="'self' data:" oninput="generate()">
+      </div>
+      <div class="pg-field">
+        <label>connect-src</label>
+        <input type="text" id="csp-connect" value="'self'" oninput="generate()">
+      </div>
+      <div class="pg-field">
+        <label>font-src</label>
+        <input type="text" id="csp-font" value="'self'" oninput="generate()">
+      </div>
+      <div class="pg-field">
+        <label>frame-ancestors</label>
+        <input type="text" id="csp-frame" value="'none'" oninput="generate()">
+      </div>
+      <div class="pg-field">
+        <label>base-uri</label>
+        <input type="text" id="csp-base" value="'self'" oninput="generate()">
+      </div>
+      <div class="pg-field">
+        <label>form-action</label>
+        <input type="text" id="csp-form" value="'self'" oninput="generate()">
+      </div>
+      <div class="pg-check"><input type="checkbox" id="csp-upgrade" checked onchange="generate()"> <label for="csp-upgrade">upgrade-insecure-requests</label></div>
+      <div class="pg-check"><input type="checkbox" id="csp-block" checked onchange="generate()"> <label for="csp-block">block-all-mixed-content</label></div>
+    </div>
+
+    <div>
+      <div class="pg-card" style="margin-bottom:.8rem">
+        <h4>🌐 CORS <span class="badge">Cross-Origin</span></h4>
+        <div class="pg-field">
+          <label>Access-Control-Allow-Origin</label>
+          <input type="text" id="cors-origin" value="*" oninput="generate()">
+        </div>
+        <div class="pg-field">
+          <label>Access-Control-Allow-Methods</label>
+          <input type="text" id="cors-methods" value="GET, POST, OPTIONS" oninput="generate()">
+        </div>
+        <div class="pg-field">
+          <label>Access-Control-Allow-Headers</label>
+          <input type="text" id="cors-headers" value="Content-Type, Authorization" oninput="generate()">
+        </div>
+        <div class="pg-field">
+          <label>Access-Control-Max-Age (seconds)</label>
+          <input type="number" id="cors-maxage" value="3600" oninput="generate()">
+        </div>
+        <div class="pg-check"><input type="checkbox" id="cors-credentials" onchange="generate()"> <label for="cors-credentials">Allow credentials</label></div>
+        <div class="pg-check"><input type="checkbox" id="cors-expose" onchange="generate()"> <label for="cors-expose">Expose headers (X-Request-Id, X-Total-Count)</label></div>
+      </div>
+
+      <div class="pg-card">
+        <h4>🛡️ Other Security Headers</h4>
+        <div class="pg-field">
+          <label>Strict-Transport-Security <span class="badge">HSTS</span></label>
+          <select id="hsts" onchange="generate()">
+            <option value="max-age=31536000; includeSubDomains">Strict (1 year, all subdomains)</option>
+            <option value="max-age=31536000">Standard (1 year)</option>
+            <option value="max-age=63072000; includeSubDomains; preload">Preload (2 years, subdomains)</option>
+            <option value="">Disabled</option>
+          </select>
+        </div>
+        <div class="pg-field">
+          <label>X-Frame-Options</label>
+          <select id="xfo" onchange="generate()">
+            <option value="DENY">DENY</option>
+            <option value="SAMEORIGIN">SAMEORIGIN</option>
+            <option value="">Disabled</option>
+          </select>
+        </div>
+        <div class="pg-field">
+          <label>X-Content-Type-Options</label>
+          <select id="xcto" onchange="generate()">
+            <option value="nosniff">nosniff</option>
+            <option value="">Disabled</option>
+          </select>
+        </div>
+        <div class="pg-field">
+          <label>Referrer-Policy</label>
+          <select id="referrer" onchange="generate()">
+            <option value="strict-origin-when-cross-origin">strict-origin-when-cross-origin</option>
+            <option value="no-referrer">no-referrer</option>
+            <option value="same-origin">same-origin</option>
+            <option value="origin">origin</option>
+            <option value="no-referrer-when-downgrade">no-referrer-when-downgrade</option>
+            <option value="">Disabled</option>
+          </select>
+        </div>
+        <div class="pg-field">
+          <label>Permissions-Policy</label>
+          <select id="permissions" onchange="generate()">
+            <option value="camera=(), microphone=(), geolocation=()">Block all sensitive</option>
+            <option value="camera=(self), microphone=(self), geolocation=(self)">Self only</option>
+            <option value="">Disabled</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-format">
+    <label style="font-size:.75rem">Output format</label>
+    <select id="pg-format" onchange="generate()">
+      <option value="apache">Apache (.htaccess)</option>
+      <option value="nginx">Nginx</option>
+      <option value="express">Express.js</option>
+      <option value="cloudflare">Cloudflare Workers</option>
+    </select>
+    <button class="action-btn" onclick="copyPolicy()" style="background:var(--accent);color:#000;border:none;border-radius:4px;padding:.35rem .7rem;font-size:.75rem;cursor:pointer;font-weight:600">📋 Copy</button>
+  </div>
+  <div id="pg-output">
+    <pre># Configure the options above to generate security headers</pre>
+  </div>
+</div>
+
+<style>
+.action-btn:hover { opacity: .85; }
+</style>
+
+<footer>
+  <div class="footer-links">
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
+  </div>
+  <p>Open source &middot; All processing client-side &middot; Privacy-first</p>
+  <p style="font-size:0.75rem;opacity:.6;margin:0">&copy; 2026 ReplikanteK &middot; MIT License</p>
+</footer>
+
+<script>
+function applyCSPPreset() {
+  var v = document.getElementById('csp-preset').value;
+  if (v === 'strict') {
+    setCSP("'self'", "'self'", "'self' 'unsafe-inline'", "'self' data:", "'self'", "'self'", "'none'", "'self'", "'self'");
+  } else if (v === 'moderate') {
+    setCSP("'self'", "'self' https://cdnjs.cloudflare.com", "'self' 'unsafe-inline' https://fonts.googleapis.com", "'self' data: https:", "'self' https://api.example.com", "'self' https://fonts.gstatic.com", "'none'", "'self'", "'self'");
+  } else if (v === 'permissive') {
+    setCSP("'self' https: data:", "'self' https: 'unsafe-inline' 'unsafe-eval'", "'self' 'unsafe-inline' https:", "'self' data: https:", "'self' https:", "'self' https:", "'none'", "'self'", "'self' https:");
+  }
+  generate();
+}
+
+function setCSP(def, script, style, img, conn, font, frame, base, form) {
+  document.getElementById('csp-default').value = def;
+  document.getElementById('csp-script').value = script;
+  document.getElementById('csp-style').value = style;
+  document.getElementById('csp-img').value = img;
+  document.getElementById('csp-connect').value = conn;
+  document.getElementById('csp-font').value = font;
+  document.getElementById('csp-frame').value = frame;
+  document.getElementById('csp-base').value = base;
+  document.getElementById('csp-form').value = form;
+}
+
+function generate() {
+  var dirs = [];
+  var fields = [
+    ['default-src', 'csp-default'],
+    ['script-src', 'csp-script'],
+    ['style-src', 'csp-style'],
+    ['img-src', 'csp-img'],
+    ['connect-src', 'csp-connect'],
+    ['font-src', 'csp-font'],
+    ['frame-ancestors', 'csp-frame'],
+    ['base-uri', 'csp-base'],
+    ['form-action', 'csp-form']
+  ];
+  fields.forEach(function(f) {
+    var val = document.getElementById(f[1]).value.trim();
+    if (val) dirs.push(f[0] + ' ' + val);
+  });
+  if (document.getElementById('csp-upgrade').checked) dirs.push('upgrade-insecure-requests');
+  if (document.getElementById('csp-block').checked) dirs.push('block-all-mixed-content');
+  var csp = dirs.join('; ');
+
+  var origin = document.getElementById('cors-origin').value.trim();
+  var methods = document.getElementById('cors-methods').value.trim();
+  var headers = document.getElementById('cors-headers').value.trim();
+  var maxAge = document.getElementById('cors-maxage').value.trim();
+  var creds = document.getElementById('cors-credentials').checked;
+  var expose = document.getElementById('cors-expose').checked;
+
+  var hsts = document.getElementById('hsts').value;
+  var xfo = document.getElementById('xfo').value;
+  var xcto = document.getElementById('xcto').value;
+  var referrer = document.getElementById('referrer').value;
+  var permissions = document.getElementById('permissions').value;
+
+  var fmt = document.getElementById('pg-format').value;
+  var lines = [];
+
+  if (fmt === 'apache') {
+    if (csp) lines.push('Header always set Content-Security-Policy "' + csp + '"');
+    if (origin) {
+      if (origin === '*') lines.push('Header always set Access-Control-Allow-Origin "*"');
+      else lines.push('Header always set Access-Control-Allow-Origin "' + origin + '"');
+      if (methods) lines.push('Header always set Access-Control-Allow-Methods "' + methods + '"');
+      if (headers) lines.push('Header always set Access-Control-Allow-Headers "' + headers + '"');
+      if (maxAge) lines.push('Header always set Access-Control-Max-Age "' + maxAge + '"');
+      if (creds) lines.push('Header always set Access-Control-Allow-Credentials "true"');
+      if (expose) lines.push('Header always set Access-Control-Expose-Headers "X-Request-Id, X-Total-Count"');
+    }
+    if (hsts) lines.push('Header always set Strict-Transport-Security "' + hsts + '"');
+    if (xfo) lines.push('Header always set X-Frame-Options "' + xfo + '"');
+    if (xcto) lines.push('Header always set X-Content-Type-Options "' + xcto + '"');
+    if (referrer) lines.push('Header always set Referrer-Policy "' + referrer + '"');
+    if (permissions) lines.push('Header always set Permissions-Policy "' + permissions + '"');
+  } else if (fmt === 'nginx') {
+    if (csp) lines.push('add_header Content-Security-Policy "' + csp + '" always;');
+    if (origin) {
+      lines.push('add_header Access-Control-Allow-Origin "' + origin + '" always;');
+      if (methods) lines.push('add_header Access-Control-Allow-Methods "' + methods + '" always;');
+      if (headers) lines.push('add_header Access-Control-Allow-Headers "' + headers + '" always;');
+      if (maxAge) lines.push('add_header Access-Control-Max-Age "' + maxAge + '" always;');
+      if (creds) lines.push('add_header Access-Control-Allow-Credentials "true" always;');
+      if (expose) lines.push('add_header Access-Control-Expose-Headers "X-Request-Id, X-Total-Count" always;');
+    }
+    if (hsts) lines.push('add_header Strict-Transport-Security "' + hsts + '" always;');
+    if (xfo) lines.push('add_header X-Frame-Options "' + xfo + '" always;');
+    if (xcto) lines.push('add_header X-Content-Type-Options "' + xcto + '" always;');
+    if (referrer) lines.push('add_header Referrer-Policy "' + referrer + '" always;');
+    if (permissions) lines.push('add_header Permissions-Policy "' + permissions + '" always;');
+  } else if (fmt === 'express') {
+    lines.push('const helmet = require("helmet");');
+    lines.push('app.use(helmet({');
+    var opts = [];
+    if (csp) opts.push('  contentSecurityPolicy: { directives: { ' + dirs.map(function(d) { var p = d.indexOf(' '); return '"' + d.slice(0,p) + '": ["' + d.slice(p+1).replace(/'/g, '').split(' ').join('", "') + '"]'; }).join(', ') + ' } }');
+    if (!csp) opts.push('  contentSecurityPolicy: false');
+    if (hsts) opts.push('  hsts: { maxAge: ' + (parseInt(hsts.match(/\d+/)?.[0] || '31536000')) + ', includeSubDomains: ' + (hsts.includes('includeSubDomains') ? 'true' : 'false') + ', preload: ' + (hsts.includes('preload') ? 'true' : 'false') + ' }');
+    if (!hsts) opts.push('  hsts: false');
+    if (xfo) opts.push('  frameguard: { action: "' + xfo.toLowerCase() + '" }');
+    if (xcto) opts.push('  noSniff: true');
+    if (referrer) opts.push('  referrerPolicy: { policy: "' + referrer + '" }');
+    lines.push(opts.join(',\n'));
+    lines.push('}));');
+  } else if (fmt === 'cloudflare') {
+    lines.push('addEventListener("fetch", event => {');
+    lines.push('  event.respondWith(handleRequest(event.request))');
+    lines.push('})');
+    lines.push('');
+    lines.push('async function handleRequest(request) {');
+    lines.push('  const response = await fetch(request)');
+    lines.push('  const headers = new Headers(response.headers)');
+    if (csp) lines.push('  headers.set("Content-Security-Policy", "' + csp + '")');
+    if (origin) lines.push('  headers.set("Access-Control-Allow-Origin", "' + origin + '")');
+    if (hsts) lines.push('  headers.set("Strict-Transport-Security", "' + hsts + '")');
+    if (xfo) lines.push('  headers.set("X-Frame-Options", "' + xfo + '")');
+    if (xcto) lines.push('  headers.set("X-Content-Type-Options", "' + xcto + '")');
+    if (referrer) lines.push('  headers.set("Referrer-Policy", "' + referrer + '")');
+    if (permissions) lines.push('  headers.set("Permissions-Policy", "' + permissions + '")');
+    lines.push('  return new Response(response.body, {');
+    lines.push('    status: response.status,');
+    lines.push('    statusText: response.statusText,');
+    lines.push('    headers');
+    lines.push('  })');
+    lines.push('}');
+  }
+
+  document.getElementById('pg-output').innerHTML = '<pre>' + escapeHtmlPG(lines.join('\n')) + '</pre>';
+}
+
+function escapeHtmlPG(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function copyPolicy() {
+  var text = document.getElementById('pg-output').querySelector('pre').textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = document.querySelector('.pg-format .action-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(function() { btn.textContent = '📋 Copy'; }, 2000);
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', generate);
+</script>
+<script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+<script>
+kofiWidgetOverlay.draw('replikantek', {
+  'type': 'floating-chat',
+  'floating-chat.donateButton.text': 'Support',
+  'floating-chat.donateButton.background-color': '#00d4aa',
+  'floating-chat.donateButton.text-color': '#fff'
+});
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
+</body>
+</html>

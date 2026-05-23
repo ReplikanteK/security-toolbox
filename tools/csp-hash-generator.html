@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSP Hash Generator — SecuriTool</title>
+<meta name="description" content="Generate SHA-256/384/512 hashes for inline scripts and styles to use in Content-Security-Policy hash-source directives. Supports strict-dynamic policies.">
+<link rel="stylesheet" href="../css/style.css">
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.dispatcherEvent('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
+<style>
+.chg-panel { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+@media (max-width:700px) { .chg-panel { grid-template-columns: 1fr; } }
+.chg-input { width: 100%; min-height: 8rem; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .6rem; font-family: 'Courier New', monospace; font-size: .78rem; color: var(--text); outline: none; resize: vertical; box-sizing: border-box; }
+.chg-input:focus { border-color: var(--accent); }
+.chg-results { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .8rem; }
+.chg-hash { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: .5rem .6rem; margin-bottom: .4rem; font-size: .75rem; word-break: break-all; cursor: pointer; transition: border-color .2s; }
+.chg-hash:hover { border-color: var(--accent); }
+.chg-hash .algo { font-weight: 600; color: var(--accent2); }
+.chg-hash .val { font-family: 'Courier New', monospace; }
+.chg-hash .note { font-size: .65rem; color: var(--text2); margin-top: .15rem; }
+</style>
+<script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+  <link rel="canonical" href="https://securitool.js.org/tools/csp-hash-generator.html">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0a0e17">
+</head>
+<body>
+
+<header>
+  <a href="../" class="logo" style="text-decoration:none">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="%2300d4aa" d="M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z"/><path fill="%2300d4aa" d="M15 10l-3 5h2v5l3-5h-2z"/></svg>
+    <span>Securi</span>Tool
+  </a>
+  <span class="logo-sub">free security tools</span>
+  <nav>
+    <a href="../index.html#tools">Tools</a>
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
+    <button id="theme-toggle">☀️</button>
+  </nav>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>CSP Hash Generator</h2>
+  <p class="desc">Generate SHA-256, SHA-384, and SHA-512 hashes for inline scripts and styles. Use these hashes in your <code>script-src</code> or <code>style-src</code> CSP directives to allow specific inline code without <code>'unsafe-inline'</code>. Click any hash to copy it.</p>
+
+  <label for="chg-type" style="font-size:.78rem;color:var(--text2)">Hash type</label>
+  <select id="chg-type" onchange="generateHashes()" style="margin-bottom:.6rem">
+    <option value="all">All (SHA-256 + SHA-384 + SHA-512)</option>
+    <option value="sha256">SHA-256 only</option>
+    <option value="sha384">SHA-384 only</option>
+    <option value="sha512">SHA-512 only</option>
+  </select>
+
+  <div class="chg-panel">
+    <div>
+      <label for="chg-script" style="font-size:.78rem;color:var(--text2);display:block;margin-bottom:.2rem">Inline Script</label>
+      <textarea id="chg-script" class="chg-input" placeholder="Paste your inline &lt;script&gt; content here..." oninput="generateHashes()">&lt;script&gt;
+  console.log('hello world');
+&lt;/script&gt;</textarea>
+    </div>
+    <div>
+      <label for="chg-style" style="font-size:.78rem;color:var(--text2);display:block;margin-bottom:.2rem">Inline Style</label>
+      <textarea id="chg-style" class="chg-input" placeholder="Paste your inline &lt;style&gt; content here..." oninput="generateHashes()">body {
+  background: #000;
+  color: #fff;
+}</textarea>
+    </div>
+  </div>
+
+  <h3 style="font-size:.85rem;color:var(--text2);margin:.6rem 0 .3rem">Generated Hashes</h3>
+  <div class="chg-results" id="chg-results">
+    <div style="color:var(--text2);font-size:.78rem">Paste content above to generate hashes</div>
+  </div>
+
+  <div style="margin-top:.8rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.6rem;font-size:.75rem;line-height:1.6">
+    <strong style="color:var(--accent2)">Usage example in CSP:</strong><br>
+    <code style="font-size:.72rem;word-break:break-all">Content-Security-Policy: script-src 'sha256-abc123...' 'strict-dynamic'; style-src 'sha256-def456...'</code>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
+  </div>
+  <p>Open source &middot; All processing client-side &middot; Privacy-first</p>
+  <p style="font-size:0.75rem;opacity:.6;margin:0">&copy; 2026 ReplikanteK &middot; MIT License</p>
+</footer>
+
+<script>
+async function generateHashes() {
+  var scriptText = document.getElementById('chg-script').value.trim();
+  var styleText = document.getElementById('chg-style').value.trim();
+  var hashType = document.getElementById('chg-type').value;
+  var container = document.getElementById('chg-results');
+
+  var algos = hashType === 'all' ? ['SHA-256', 'SHA-384', 'SHA-512'] : [hashType.toUpperCase().replace('SHA', 'SHA-')];
+
+  var html = '';
+
+  if (scriptText) {
+    html += '<div style="font-weight:600;font-size:.78rem;margin-bottom:.3rem;color:var(--text2)">Script Hashes</div>';
+    for (var a of algos) {
+      var hash = await computeHash(scriptText, a);
+      var shortName = a.replace('SHA-', 'sha');
+      html += '<div class="chg-hash" onclick="copyCSPHash(this)" title="Click to copy">';
+      html += '<span class="algo">' + shortName + '-</span><span class="val">' + hash + '</span>';
+      html += '<div class="note">\'<span class="algo">' + shortName + '</span>-<span class="val">' + hash + '</span>\' → CSP directive: script-src</div>';
+      html += '</div>';
+    }
+  }
+
+  if (styleText) {
+    html += '<div style="font-weight:600;font-size:.78rem;margin:.6rem 0 .3rem;color:var(--text2)">Style Hashes</div>';
+    for (var a of algos) {
+      var hash = await computeHash(styleText, a);
+      var shortName = a.replace('SHA-', 'sha');
+      html += '<div class="chg-hash" onclick="copyCSPHash(this)" title="Click to copy">';
+      html += '<span class="algo">' + shortName + '-</span><span class="val">' + hash + '</span>';
+      html += '<div class="note">\'<span class="algo">' + shortName + '</span>-<span class="val">' + hash + '</span>\' → CSP directive: style-src</div>';
+      html += '</div>';
+    }
+  }
+
+  if (!scriptText && !styleText) {
+    html = '<div style="color:var(--text2);font-size:.78rem">Paste content above to generate hashes</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+async function computeHash(text, algo) {
+  var encoder = new TextEncoder();
+  var data = encoder.encode(text);
+  var hashBuffer = await crypto.subtle.digest(algo, data);
+  var hashArray = Array.from(new Uint8Array(hashBuffer));
+  var hashHex = hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+  return hashHex;
+}
+
+function copyCSPHash(el) {
+  var algo = el.querySelector('.algo').textContent;
+  var val = el.querySelector('.val').textContent;
+  var full = "'" + algo + "-" + val + "'";
+  navigator.clipboard.writeText(full).then(function() {
+    el.style.borderColor = '#22c55e';
+    setTimeout(function() { el.style.borderColor = ''; }, 500);
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = full;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', generateHashes);
+</script>
+<script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+<script>
+kofiWidgetOverlay.draw('replikantek', {
+  'type': 'floating-chat',
+  'floating-chat.donateButton.text': 'Support',
+  'floating-chat.donateButton.background-color': '#00d4aa',
+  'floating-chat.donateButton.text-color': '#fff'
+});
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
+</body>
+</html>

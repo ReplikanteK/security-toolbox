@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SecuriTool — Free Web Security Tools & Auditor</title>
-<meta name="description" content="Free web security tools: URL auditor (DNS, SSL, headers, CORS, WAF), JWT decoder/attacker, CVE search, CSP evaluator, subdomain scanner, email security checker, and 29 more. All client-side, no tracking.">
+<meta name="description" content="Free web security tools: URL auditor (DNS, SSL, headers, CORS, WAF), JWT decoder/attacker/playground, CVE search, CSP evaluator/generator, CSRF PoC generator, subdomain scanner, email security checker, and 33+ tools. All client-side, no tracking.">
 <meta property="og:title" content="SecuriTool — Free Web Security Tools">
 <meta property="og:description" content="29 free security tools: full web auditor, JWT analysis, CVE search, email security. Privacy-first (no cookies), all client-side.">
 <meta property="og:type" content="website">
@@ -20,7 +20,7 @@
   {"@context":"https://schema.org","@type":"WebApplication","name":"SecuriTool","url":"https://securitool.js.org/","description":"29 free client-side web security tools: web auditor, JWT analyzer, CVE search, email security checker, CSP evaluator, subdomain scanner, and more. All client-side, zero tracking.","applicationCategory":"SecurityApplication","operatingSystem":"Any","browserRequirements":"JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"ReplikanteK","url":"https://github.com/ReplikanteK"}}
   </script>
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is SecuriTool?","acceptedAnswer":{"@type":"Answer","text":"SecuriTool is a free collection of 29 client-side web security tools for researchers and developers. It includes a full web auditor, JWT decoder and attacker, CVE search, email security checker (SPF/DKIM/DMARC), CSP evaluator, subdomain scanner, and more. All tools run in your browser with zero data sent to servers."}},{"@type":"Question","name":"Is SecuriTool free?","acceptedAnswer":{"@type":"Answer","text":"Yes, SecuriTool is completely free and open source under the MIT License. There are no paywalls, no signups, and no hidden limits. All 29 tools are available immediately in your browser."}},{"@type":"Question","name":"Does SecuriTool track me or collect my data?","acceptedAnswer":{"@type":"Answer","text":"No. SecuriTool uses GoatCounter for anonymous page view counting with no cookies or personal data collection. All security analysis tools run entirely client-side — your data never leaves your browser. External API calls (DNS, CVE search) are clearly indicated."}},{"@type":"Question","name":"What checks does the Web Auditor perform?","acceptedAnswer":{"@type":"Answer","text":"The Web Auditor performs 9 security checks: DNS records, email security (SPF/DKIM/DMARC/BIMI), SSL/TLS availability, Content-Security-Policy analysis, WAF detection (Cloudflare, AWS, Akamai, Fastly, and more), technology stack detection, HTTP features (redirects, HSTS, X-Content-Type-Options), performance (TTFB), and redirect chain analysis."}},{"@type":"Question","name":"Can I run SecuriTool offline?","acceptedAnswer":{"@type":"Answer","text":"Most tools work offline after the first visit. Tools that require external APIs (DNS Lookup, CVE Search, Web Auditor via proxy) need internet access. The page can be installed as a Progressive Web App for offline access to client-side tools."}},{"@type":"Question","name":"What technologies does SecuriTool detect?","acceptedAnswer":{"@type":"Answer","text":"The Web Auditor detects over 60 technologies across categories: servers (Nginx, Apache, IIS), frameworks (React, Vue, Django, Rails), CMS (WordPress, Drupal, Joomla), CDNs (Cloudflare, Fastly, Cloudfront), hosting (Netlify, Vercel, GitHub Pages), analytics (Google Analytics, Hotjar), and more via header and HTML pattern matching."}}]}
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is SecuriTool?","acceptedAnswer":{"@type":"Answer","text":"SecuriTool is a free collection of 33+ client-side web security tools for researchers and developers. It includes a full web auditor, JWT decoder, attacker, and playground, CVE search, email security checker (SPF/DKIM/DMARC), CSP evaluator and hash generator, CSRF PoC generator, policy generator, subdomain scanner, and more. All tools run in your browser with zero data sent to servers."}},{"@type":"Question","name":"Is SecuriTool free?","acceptedAnswer":{"@type":"Answer","text":"Yes, SecuriTool is completely free and open source under the MIT License. There are no paywalls, no signups, and no hidden limits. All 33+ tools are available immediately in your browser."}},{"@type":"Question","name":"Does SecuriTool track me or collect my data?","acceptedAnswer":{"@type":"Answer","text":"No. SecuriTool uses GoatCounter for anonymous page view counting with no cookies or personal data collection. All security analysis tools run entirely client-side — your data never leaves your browser. External API calls (DNS, CVE search) are clearly indicated."}},{"@type":"Question","name":"What checks does the Web Auditor perform?","acceptedAnswer":{"@type":"Answer","text":"The Web Auditor performs 9 security checks: DNS records, email security (SPF/DKIM/DMARC/BIMI), SSL/TLS availability, Content-Security-Policy analysis, WAF detection (Cloudflare, AWS, Akamai, Fastly, and more), technology stack detection, HTTP features (redirects, HSTS, X-Content-Type-Options), performance (TTFB), and redirect chain analysis."}},{"@type":"Question","name":"Can I run SecuriTool offline?","acceptedAnswer":{"@type":"Answer","text":"Most tools work offline after the first visit. Tools that require external APIs (DNS Lookup, CVE Search, Web Auditor via proxy) need internet access. The page can be installed as a Progressive Web App for offline access to client-side tools."}},{"@type":"Question","name":"What technologies does SecuriTool detect?","acceptedAnswer":{"@type":"Answer","text":"The Web Auditor detects over 60 technologies across categories: servers (Nginx, Apache, IIS), frameworks (React, Vue, Django, Rails), CMS (WordPress, Drupal, Joomla), CDNs (Cloudflare, Fastly, Cloudfront), hosting (Netlify, Vercel, GitHub Pages), analytics (Google Analytics, Hotjar), and more via header and HTML pattern matching."}}]}
   </script>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0a0e17">
@@ -58,7 +58,7 @@
 </section>
 
 <div class="stats">
-  <div class="stat"><div class="num">29</div><div class="label">Tools</div></div>
+  <div class="stat"><div class="num">33</div><div class="label">Tools</div></div>
   <div class="stat"><div class="num">100%</div><div class="label">Client-side</div></div>
   <div class="stat"><div class="num">0</div><div class="label">Trackers</div></div>
   <div class="stat"><div class="num">Free</div><div class="label">Forever</div></div>
@@ -240,13 +240,23 @@
       <h4>CSP Evaluator</h4>
       <p>Deep CSP directive analysis and recommendations.</p>
     </a>
+    <a href="tools/csp-hash-generator.html" class="tool-card" data-tags="csp hash sha256 sha384 sha512 generator">
+      <div class="icon">🔏</div>
+      <h4>CSP Hash Generator</h4>
+      <p>Generate SHA hashes for CSP strict-dynamic policies.</p>
+    </a>
+    <a href="tools/jwt-playground.html" class="tool-card" data-tags="jwt token decode edit forge sign hs256 playground">
+      <div class="icon">🔐</div>
+      <h4>JWT Playground</h4>
+      <p>Decode, edit, and forge JWTs interactively.</p>
+    </a>
   </div>
 </div>
 
 <div class="category" data-cat="developer">
   <div class="category-header">
     <h3>⚙️ Developer Tools</h3>
-    <span class="count">5 tools</span>
+    <span class="count">6 tools</span>
   </div>
   <div class="tool-grid">
     <a href="tools/regex-tester.html" class="tool-card" data-tags="regex regular expression test match">
@@ -274,6 +284,11 @@
       <h4>URL Extractor</h4>
       <p>Extract and filter URLs by domain and scheme.</p>
     </a>
+    <a href="tools/policy-generator.html" class="tool-card" data-tags="policy generator csp cors hsts xframe headers security">
+      <div class="icon">🛡️</div>
+      <h4>Policy Generator</h4>
+      <p>Generate CSP, CORS, HSTS headers for Apache/Nginx/Express.</p>
+    </a>
   </div>
 </div>
 
@@ -299,13 +314,18 @@
 <div class="category" data-cat="testing">
   <div class="category-header">
     <h3>🧪 Payloads &amp; Testing</h3>
-    <span class="count">1 tool</span>
+    <span class="count">2 tools</span>
   </div>
   <div class="tool-grid">
     <a href="tools/payload-builder.html" class="tool-card" data-tags="payload xss sqli ssti ssrf cmd">
       <div class="icon">💉</div>
       <h4>Payload Builder</h4>
       <p>XSS, SQLi, SSTI, SSRF, path traversal, CMD injection.</p>
+    </a>
+    <a href="tools/csrf-generator.html" class="tool-card" data-tags="csrf generator poc form html cross-site request forgery">
+      <div class="icon">🌐</div>
+      <h4>CSRF PoC Generator</h4>
+      <p>Generate CSRF proof-of-concept HTML forms for testing.</p>
     </a>
   </div>
 </div>

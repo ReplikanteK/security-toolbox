@@ -33,6 +33,10 @@
   <url><loc>https://securitool.js.org/tools/hex-converter.html</loc><priority>0.5</priority></url>
   <url><loc>https://securitool.js.org/tools/regex-tester.html</loc><priority>0.5</priority></url>
   <url><loc>https://securitool.js.org/tools/token-counter.html</loc><priority>0.5</priority></url>
+  <url><loc>https://securitool.js.org/tools/csrf-generator.html</loc><priority>0.7</priority></url>
+  <url><loc>https://securitool.js.org/tools/jwt-playground.html</loc><priority>0.7</priority></url>
+  <url><loc>https://securitool.js.org/tools/policy-generator.html</loc><priority>0.7</priority></url>
+  <url><loc>https://securitool.js.org/tools/csp-hash-generator.html</loc><priority>0.6</priority></url>
   <url><loc>https://securitool.js.org/blog/</loc><priority>0.7</priority></url>
   <url><loc>https://securitool.js.org/blog/when-ai-finds-what-humans-missed.html</loc><priority>0.7</priority></url>
   <url><loc>https://securitool.js.org/blog/hidden-cost-free-security-tools.html</loc><priority>0.7</priority></url>

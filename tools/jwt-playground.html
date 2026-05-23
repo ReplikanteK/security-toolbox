@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JWT Playground — SecuriTool</title>
+<meta name="description" content="Interactive JWT debugger: decode, edit, forge, and analyze JSON Web Tokens. Supports HS256/HS384/HS512 signing, payload editing, and claim inspection.">
+<link rel="stylesheet" href="../css/style.css">
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
+<style>
+.jwt-input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .6rem .8rem; font-family: 'Courier New', monospace; font-size: .78rem; color: var(--text); outline: none; box-sizing: border-box; margin-bottom: .6rem; }
+.jwt-input:focus { border-color: var(--accent); }
+.jwt-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .6rem; margin-bottom: 1rem; }
+@media (max-width:700px) { .jwt-panel { grid-template-columns: 1fr; } }
+.jwt-section { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .6rem; }
+.jwt-section h4 { font-size: .75rem; color: var(--text2); margin: 0 0 .3rem 0; text-transform: uppercase; letter-spacing: .05em; }
+.jwt-section textarea { width: 100%; min-height: 6rem; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: .4rem; font-family: 'Courier New', monospace; font-size: .72rem; color: var(--text); outline: none; resize: vertical; box-sizing: border-box; }
+.jwt-section textarea:focus { border-color: var(--accent); }
+.jwt-section .claim { display: flex; gap: .3rem; align-items: baseline; font-size: .72rem; padding: .15rem 0; }
+.jwt-section .claim .k { color: var(--accent2); font-weight: 600; }
+.jwt-section .claim .v { color: var(--text); word-break: break-all; }
+.forge-section { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .6rem; margin-bottom: 1rem; }
+.forge-section label { font-size: .75rem; color: var(--text2); display: block; margin-bottom: .2rem; }
+.forge-section input, .forge-section select { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: .4rem .5rem; font-family: var(--font); font-size: .78rem; color: var(--text); outline: none; }
+.forge-section input:focus, .forge-section select:focus { border-color: var(--accent); }
+.forge-row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: .4rem; }
+#jwt-forged { font-family: 'Courier New', monospace; font-size: .75rem; word-break: break-all; background: var(--bg); padding: .6rem; border-radius: 4px; border: 1px solid var(--border); }
+.action-btn { background: var(--accent); color: #000; border: none; border-radius: 4px; padding: .4rem .8rem; font-size: .78rem; cursor: pointer; font-weight: 600; }
+.action-btn:hover { opacity: .85; }
+.jwt-status { font-size: .75rem; padding: .4rem .6rem; border-radius: 4px; margin-bottom: .6rem; }
+.jwt-status.valid { background: rgba(34,197,94,.15); color: #22c55e; border: 1px solid rgba(34,197,94,.3); }
+.jwt-status.invalid { background: rgba(239,68,68,.15); color: #ef4444; border: 1px solid rgba(239,68,68,.3); }
+.jwt-status.info { background: rgba(59,130,246,.15); color: #3b82f6; border: 1px solid rgba(59,130,246,.3); }
+</style>
+<script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+  <link rel="canonical" href="https://securitool.js.org/tools/jwt-playground.html">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0a0e17">
+</head>
+<body>
+
+<header>
+  <a href="../" class="logo" style="text-decoration:none">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="%2300d4aa" d="M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z"/><path fill="%2300d4aa" d="M15 10l-3 5h2v5l3-5h-2z"/></svg>
+    <span>Securi</span>Tool
+  </a>
+  <span class="logo-sub">free security tools</span>
+  <nav>
+    <a href="../index.html#tools">Tools</a>
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
+    <button id="theme-toggle">☀️</button>
+  </nav>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>JWT Playground</h2>
+  <p class="desc">Interactive JSON Web Token debugger. Paste a token to inspect header, payload, and signature. Edit claims visually, change algorithms, and forge new tokens with a custom secret.</p>
+
+  <label for="jwt-token-input" style="font-size:.78rem;color:var(--text2)">Paste JWT Token</label>
+  <input type="text" id="jwt-token-input" class="jwt-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c" oninput="decodeJWT()">
+  <div id="jwt-status"></div>
+
+  <div class="jwt-panel">
+    <div class="jwt-section">
+      <h4>Header</h4>
+      <textarea id="jwt-header" oninput="onEdit()"></textarea>
+    </div>
+    <div class="jwt-section">
+      <h4>Payload</h4>
+      <textarea id="jwt-payload" oninput="onEdit()"></textarea>
+    </div>
+    <div class="jwt-section">
+      <h4>Claims</h4>
+      <div id="jwt-claims">Paste a token to see parsed claims</div>
+    </div>
+  </div>
+
+  <div class="forge-section">
+    <h4 style="margin:0 0 .4rem 0;font-size:.8rem">🔏 Forge Token</h4>
+    <div class="forge-row">
+      <label>Algorithm</label>
+      <select id="forge-alg">
+        <option value="HS256">HS256</option>
+        <option value="HS384">HS384</option>
+        <option value="HS512">HS512</option>
+        <option value="none">none</option>
+      </select>
+      <label>Secret</label>
+      <input type="text" id="forge-secret" value="secret" placeholder="your-256-bit-secret" style="flex:1;min-width:120px">
+      <button class="action-btn" onclick="forgeJWT()">Sign &amp; Forge</button>
+    </div>
+    <div id="jwt-forged">Click "Sign & Forge" to generate a new token</div>
+    <button class="action-btn" style="margin-top:.4rem" onclick="copyForged()">📋 Copy forged token</button>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
+  </div>
+  <p>Open source &middot; All processing client-side &middot; Privacy-first</p>
+  <p style="font-size:0.75rem;opacity:.6;margin:0">&copy; 2026 ReplikanteK &middot; MIT License</p>
+</footer>
+
+<script>
+function b64url(str) {
+  return btoa(str).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+function b64urlDecode(str) {
+  try {
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (str.length % 4) str += '=';
+    return atob(str);
+  } catch(e) { return ''; }
+}
+
+function decodeJWT() {
+  var token = document.getElementById('jwt-token-input').value.trim();
+  var status = document.getElementById('jwt-status');
+  var parts = token.split('.');
+
+  if (parts.length !== 3) {
+    status.className = 'jwt-status invalid';
+    status.textContent = 'Invalid JWT format — expected 3 dot-separated segments';
+    document.getElementById('jwt-header').value = '';
+    document.getElementById('jwt-payload').value = '';
+    document.getElementById('jwt-claims').innerHTML = '';
+    document.getElementById('jwt-forged').textContent = 'Paste a valid token first';
+    return;
+  }
+
+  var headerRaw = b64urlDecode(parts[0]);
+  var payloadRaw = b64urlDecode(parts[1]);
+
+  try {
+    var header = JSON.parse(headerRaw);
+    var payload = JSON.parse(payloadRaw);
+    document.getElementById('jwt-header').value = JSON.stringify(header, null, 2);
+    document.getElementById('jwt-payload').value = JSON.stringify(payload, null, 2);
+
+    var claimsHtml = '';
+    Object.keys(payload).forEach(function(k) {
+      var v = typeof payload[k] === 'object' ? JSON.stringify(payload[k]) : payload[k];
+      claimsHtml += '<div class="claim"><span class="k">' + escapeHtmlJWT(k) + ':</span> <span class="v">' + escapeHtmlJWT(String(v)) + '</span></div>';
+    });
+    document.getElementById('jwt-claims').innerHTML = claimsHtml;
+
+    var alg = header.alg || 'unknown';
+    if (alg === 'none') {
+      status.className = 'jwt-status invalid';
+      status.textContent = '⚠️ Algorithm: none — vulnerable token (no signature verification)';
+    } else if (alg.startsWith('HS') || alg.startsWith('RS') || alg.startsWith('ES')) {
+      status.className = 'jwt-status valid';
+      status.textContent = 'Algorithm: ' + alg + ' — token parses successfully';
+    } else {
+      status.className = 'jwt-status info';
+      status.textContent = 'Algorithm: ' + alg + ' — unknown algorithm';
+    }
+  } catch(e) {
+    status.className = 'jwt-status invalid';
+    status.textContent = 'Cannot parse — invalid JSON in header or payload';
+  }
+}
+
+function onEdit() {
+  var h = document.getElementById('jwt-header').value.trim();
+  var p = document.getElementById('jwt-payload').value.trim();
+  try {
+    var header = JSON.parse(h);
+    var payload = JSON.parse(p);
+    var claimsHtml = '';
+    Object.keys(payload).forEach(function(k) {
+      var v = typeof payload[k] === 'object' ? JSON.stringify(payload[k]) : payload[k];
+      claimsHtml += '<div class="claim"><span class="k">' + escapeHtmlJWT(k) + ':</span> <span class="v">' + escapeHtmlJWT(String(v)) + '</span></div>';
+    });
+    document.getElementById('jwt-claims').innerHTML = claimsHtml;
+  } catch(e) {}
+}
+
+function escapeHtmlJWT(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function str2ab(str) {
+  return new TextEncoder().encode(str);
+}
+
+function ab2b64url(buf) {
+  var bytes = String.fromCharCode.apply(null, new Uint8Array(buf));
+  return btoa(bytes).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+async function forgeJWT() {
+  var headerText = document.getElementById('jwt-header').value.trim();
+  var payloadText = document.getElementById('jwt-payload').value.trim();
+  var alg = document.getElementById('forge-alg').value;
+  var secret = document.getElementById('forge-secret').value;
+
+  try {
+    var header = JSON.parse(headerText);
+    var payload = JSON.parse(payloadText);
+  } catch(e) {
+    document.getElementById('jwt-forged').textContent = 'Error: invalid JSON in header or payload';
+    return;
+  }
+
+  header.alg = alg;
+  if (alg === 'none') {
+    delete header.kid;
+  }
+
+  var headerB64 = b64url(JSON.stringify(header));
+  var payloadB64 = b64url(JSON.stringify(payload));
+  var message = headerB64 + '.' + payloadB64;
+
+  var signature = '';
+  if (alg !== 'none') {
+    var keyData = str2ab(secret);
+    var msgData = str2ab(message);
+    var hashAlg = { 'HS256': 'SHA-256', 'HS384': 'SHA-384', 'HS512': 'SHA-512' }[alg] || 'SHA-256';
+
+    try {
+      var key = await crypto.subtle.importKey(
+        'raw', keyData, { name: 'HMAC', hash: hashAlg },
+        false, ['sign']
+      );
+      var sig = await crypto.subtle.sign('HMAC', key, msgData);
+      signature = ab2b64url(sig);
+    } catch(e) {
+      document.getElementById('jwt-forged').textContent = 'Signing error: ' + e.message;
+      return;
+    }
+  }
+
+  var forged = message + '.' + signature;
+  document.getElementById('jwt-forged').textContent = forged;
+}
+
+function copyForged() {
+  var text = document.getElementById('jwt-forged').textContent;
+  if (!text || text.startsWith('Click') || text.startsWith('Paste') || text.startsWith('Error') || text.startsWith('Signing')) return;
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = document.querySelector('.forge-section .action-btn:last-child');
+    btn.textContent = '✓ Copied!';
+    setTimeout(function() { btn.textContent = '📋 Copy forged token'; }, 2000);
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var urlParams = new URLSearchParams(window.location.search);
+  var tokenParam = urlParams.get('token');
+  if (tokenParam) {
+    document.getElementById('jwt-token-input').value = tokenParam;
+    decodeJWT();
+  } else {
+    decodeJWT();
+  }
+});
+</script>
+<script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+<script>
+kofiWidgetOverlay.draw('replikantek', {
+  'type': 'floating-chat',
+  'floating-chat.donateButton.text': 'Support',
+  'floating-chat.donateButton.background-color': '#00d4aa',
+  'floating-chat.donateButton.text-color': '#fff'
+});
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSRF PoC Generator — SecuriTool</title>
+<meta name="description" content="Generate Cross-Site Request Forgery (CSRF) proof-of-concept HTML forms for security testing. Supports GET/POST, JSON, multipart, custom headers, and auto-submit.">
+<link rel="stylesheet" href="../css/style.css">
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&window.matchMedia('(prefers-color-scheme:light)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
+<style>
+.csrf-form { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1rem; }
+.csrf-form label { display: block; font-size: .78rem; color: var(--text2); margin-top: .6rem; margin-bottom: .2rem; }
+.csrf-form input, .csrf-form select, .csrf-form textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: .5rem .6rem; font-family: var(--font); font-size: .82rem; color: var(--text); outline: none; box-sizing: border-box; }
+.csrf-form input:focus, .csrf-form select:focus, .csrf-form textarea:focus { border-color: var(--accent); }
+.csrf-form textarea { min-height: 4rem; resize: vertical; font-family: 'Courier New', monospace; font-size: .78rem; }
+.csrf-row { display: flex; gap: .5rem; align-items: center; margin-bottom: .3rem; }
+.csrf-row input { flex: 1; }
+.csrf-row button { flex-shrink: 0; }
+.param-list { margin: .5rem 0; }
+.param-item { display: flex; gap: .4rem; align-items: center; margin-bottom: .3rem; font-size: .78rem; }
+.param-item input { flex: 1; padding: .3rem .5rem; font-size: .78rem; }
+.param-item .rm { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1rem; padding: 0 .2rem; }
+#poc-output { background: #1a1a2e; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; margin-top: .6rem; overflow-x: auto; }
+#poc-output pre { margin: 0; font-size: .78rem; line-height: 1.5; color: #e0e0e0; }
+.copy-btn { background: var(--accent); color: #000; border: none; border-radius: 4px; padding: .4rem .8rem; font-size: .78rem; cursor: pointer; margin-top: .5rem; font-weight: 600; }
+.copy-btn:hover { opacity: .85; }
+</style>
+<script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+  <link rel="canonical" href="https://securitool.js.org/tools/csrf-generator.html">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0a0e17">
+</head>
+<body>
+
+<header>
+  <a href="../" class="logo" style="text-decoration:none">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="%2300d4aa" d="M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z"/><path fill="%2300d4aa" d="M15 10l-3 5h2v5l3-5h-2z"/></svg>
+    <span>Securi</span>Tool
+  </a>
+  <span class="logo-sub">free security tools</span>
+  <nav>
+    <a href="../index.html#tools">Tools</a>
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
+    <button id="theme-toggle">☀️</button>
+  </nav>
+</header>
+
+<div class="tool-page">
+  <a href="../index.html" class="back">← Back to tools</a>
+  <h2>CSRF PoC Generator</h2>
+  <p class="desc">Generate cross-site request forgery proof-of-concept HTML forms. Configure the target endpoint, method, parameters, and encoding. Click <strong>Generate</strong> to produce the HTML, then copy and save it as <code>poc.html</code>. Use only on authorized targets.</p>
+
+  <div class="csrf-form">
+    <label for="csrf-url">Target URL</label>
+    <input type="url" id="csrf-url" placeholder="https://example.com/api/action" value="https://example.com/api/action">
+
+    <label for="csrf-method">HTTP Method</label>
+    <select id="csrf-method" onchange="toggleMethod()">
+      <option value="POST">POST</option>
+      <option value="GET">GET</option>
+      <option value="PUT">PUT</option>
+      <option value="DELETE">DELETE</option>
+      <option value="PATCH">PATCH</option>
+    </select>
+
+    <label for="csrf-encoding">Encoding</label>
+    <select id="csrf-encoding" onchange="toggleEncoding()">
+      <option value="urlencoded">application/x-www-form-urlencoded</option>
+      <option value="multipart">multipart/form-data</option>
+      <option value="json">application/json</option>
+      <option value="plain">text/plain</option>
+    </select>
+
+    <label>Parameters <span style="font-size:.7rem;color:var(--text2)">(key=value, one per line or use the table)</span></label>
+    <div class="param-list" id="param-list">
+      <div class="param-item">
+        <input class="param-key" placeholder="key" value="action">
+        <input class="param-val" placeholder="value" value="delete_user">
+        <button class="rm" onclick="removeParam(this)" title="Remove">&times;</button>
+      </div>
+      <div class="param-item">
+        <input class="param-key" placeholder="key" value="user_id">
+        <input class="param-val" placeholder="value" value="admin">
+        <button class="rm" onclick="removeParam(this)" title="Remove">&times;</button>
+      </div>
+    </div>
+    <button onclick="addParam()" style="background:none;border:1px dashed var(--border);border-radius:4px;color:var(--text2);cursor:pointer;padding:.3rem .6rem;font-size:.78rem;margin-bottom:.6rem">+ Add parameter</button>
+
+    <label>
+      <input type="checkbox" id="csrf-autosubmit" checked>
+      Auto-submit form on page load
+    </label>
+
+    <label for="csrf-custom-headers">Custom Headers <span style="font-size:.7rem;color:var(--text2)">(optional, one per line, Header: Value)</span></label>
+    <textarea id="csrf-custom-headers" placeholder="X-CSRF-Token: disabled&#10;Origin: https://attacker.com"></textarea>
+
+    <button onclick="generatePoC()" style="background:var(--accent);color:#000;border:none;border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:.82rem;cursor:pointer;font-weight:600;margin-top:.6rem">Generate PoC</button>
+  </div>
+
+  <h3 style="font-size:.85rem;color:var(--text2);margin-bottom:.3rem">Generated HTML</h3>
+  <div id="poc-output">
+    <pre>&lt;!-- Configure the form above and click Generate --&gt;</pre>
+  </div>
+  <button class="copy-btn" onclick="copyPoC()">📋 Copy to clipboard</button>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
+  </div>
+  <p>Open source &middot; All processing client-side &middot; Privacy-first</p>
+  <p style="font-size:0.75rem;opacity:.6;margin:0">&copy; 2026 ReplikanteK &middot; MIT License</p>
+</footer>
+
+<script>
+function toggleEncoding() {
+  var e = document.getElementById('csrf-encoding').value;
+  document.getElementById('csrf-custom-headers').disabled = (e === 'json');
+}
+
+function toggleMethod() {}
+
+function addParam() {
+  var list = document.getElementById('param-list');
+  var div = document.createElement('div');
+  div.className = 'param-item';
+  div.innerHTML = '<input class="param-key" placeholder="key"><input class="param-val" placeholder="value"><button class="rm" onclick="removeParam(this)" title="Remove">&times;</button>';
+  list.appendChild(div);
+}
+
+function removeParam(el) {
+  var list = document.getElementById('param-list');
+  if (list.children.length > 1) el.parentElement.remove();
+}
+
+function escapeHtmlPoC(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function generatePoC() {
+  var url = document.getElementById('csrf-url').value.trim();
+  var method = document.getElementById('csrf-method').value;
+  var encoding = document.getElementById('csrf-encoding').value;
+  var autosubmit = document.getElementById('csrf-autosubmit').checked;
+  var headersRaw = document.getElementById('csrf-custom-headers').value.trim();
+
+  var keys = document.querySelectorAll('.param-key');
+  var vals = document.querySelectorAll('.param-val');
+  var params = [];
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i].value.trim();
+    var v = vals[i].value.trim();
+    if (k) params.push({ key: k, value: v });
+  }
+
+  var lines = [];
+  lines.push('<!DOCTYPE html>');
+  lines.push('<html>');
+  lines.push('<head><title>CSRF PoC</title></head>');
+  lines.push('<body>');
+
+  if (method === 'GET') {
+    var query = params.map(function(p) { return encodeURIComponent(p.key) + '=' + encodeURIComponent(p.value); }).join('&');
+    var fullUrl = url + (query ? (url.includes('?') ? '&' : '?') + query : '');
+    lines.push('  <a href="' + escapeHtmlPoC(fullUrl) + '" id="poc-link">Click to trigger CSRF</a>');
+    if (autosubmit) {
+      lines.push('  <script>document.getElementById(\'poc-link\').click();<' + '/script>');
+    }
+  } else {
+    lines.push('  <form action="' + escapeHtmlPoC(url) + '" method="' + method + '"');
+
+    if (encoding === 'multipart') {
+      lines.push('        enctype="multipart/form-data"');
+    }
+
+    var ct = '';
+    if (encoding === 'json') ct = 'application/json';
+    else if (encoding === 'plain') ct = 'text/plain';
+    if (ct) {
+      lines.push(lines.pop() + '>');
+    } else {
+      lines.push(lines.pop() + '>');
+    }
+
+    if (encoding === 'json') {
+      var jsonObj = {};
+      params.forEach(function(p) { jsonObj[p.key] = p.value; });
+      lines.push('    <input type="hidden" name="data" value=\'' + escapeHtmlPoC(JSON.stringify(jsonObj)) + '\'>');
+    } else {
+      params.forEach(function(p) {
+        lines.push('    <input type="hidden" name="' + escapeHtmlPoC(p.key) + '" value="' + escapeHtmlPoC(p.value) + '">');
+      });
+    }
+
+    if (autosubmit) {
+      lines.push('    <script>document.forms[0].submit();<' + '/script>');
+    } else {
+      lines.push('    <input type="submit" value="Submit">');
+    }
+    lines.push('  </form>');
+  }
+
+  // Custom headers note (cannot be set via HTML form, but useful for awareness)
+  if (headersRaw) {
+    lines.push('  <!--');
+    lines.push('  Note: Custom headers cannot be set via HTML form submission.');
+    lines.push('  These headers are documented for manual use with a proxy like Burp Suite:');
+    lines.push('  ' + headersRaw.split('\n').join('\n  // '));
+    lines.push('  -->');
+  }
+
+  lines.push('</body>');
+  lines.push('</html>');
+
+  var html = lines.join('\n');
+  document.getElementById('poc-output').innerHTML = '<pre>' + escapeHtmlPoC(html) + '</pre>';
+}
+
+function copyPoC() {
+  var text = document.getElementById('poc-output').querySelector('pre').textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = document.querySelector('.copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(function() { btn.textContent = '📋 Copy to clipboard'; }, 2000);
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+</script>
+<script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+<script>
+kofiWidgetOverlay.draw('replikantek', {
+  'type': 'floating-chat',
+  'floating-chat.donateButton.text': 'Support',
+  'floating-chat.donateButton.background-color': '#00d4aa',
+  'floating-chat.donateButton.text-color': '#fff'
+});
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
+</body>
+</html>
