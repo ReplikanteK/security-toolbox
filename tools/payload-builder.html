@@ -82,8 +82,8 @@ TODO: Carbon Ads monetization
 <script>
 const PAYLOADS = [
   // XSS
-  { text: '<script>alert(1)</script>', cat: 'XSS', tags: ['xss', 'basic'] },
-  { text: '"><script>alert(1)</script>', cat: 'XSS', tags: ['xss', 'attr-breakout'] },
+  { text: '<scr' + 'ipt>alert(1)<' + '/script>', cat: 'XSS', tags: ['xss', 'basic'] },
+  { text: '"><scr' + 'ipt>alert(1)<' + '/script>', cat: 'XSS', tags: ['xss', 'attr-breakout'] },
   { text: '<img src=x onerror=alert(1)>', cat: 'XSS', tags: ['xss', 'img'] },
   { text: 'javascript:alert(1)//', cat: 'XSS', tags: ['xss', 'href'] },
   { text: '\'"><img src=x onerror=alert(1)>', cat: 'XSS', tags: ['xss', 'universal'] },
