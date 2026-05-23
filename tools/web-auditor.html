@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Web Auditor — SecuriTool</title>
-<meta name="description" content="Free web security auditor: subdomain discovery, DNS, email security, SRI, mixed content, forms, iframes, HTML comments scan, tech stack, CSP. PDF-ready report.">
+<meta name="description" content="Free web security auditor: DNS, email security, SRI, mixed content, forms, iframes, HTML comments scan, tech stack, CSP. PDF-ready report.">
 <link rel="stylesheet" href="../css/style.css">
 <style>
 .progress-track { flex:1; height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
@@ -139,7 +139,7 @@
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/web-auditor.html">
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What does a web security audit check?","acceptedAnswer":{"@type":"Answer","text":"A web security audit checks subdomain discovery via Certificate Transparency (crt.sh), DNS records (A, AAAA, MX, NS, TXT, CNAME), email security (SPF, DKIM, DMARC, BIMI), Subresource Integrity (SRI), mixed content warnings, form security (action TLS, password autocomplete, CSRF tokens), iframe sandbox/allow attributes, base tag injection, HTML comments for sensitive data leaks, Content-Security-Policy meta tags, technology stack detection, and page metadata (title, OG tags)."}},{"@type":"Question","name":"How does the Web Auditor work?","acceptedAnswer":{"@type":"Answer","text":"Enter any URL and click Run Audit. The tool queries Certificate Transparency logs (crt.sh) and DNS-over-HTTPS for network-level data, then fetches the page HTML via a privacy proxy for body-based security checks. Results are displayed in a prioritized report with a security score from A+ to F."}},{"@type":"Question","name":"Is the Web Auditor safe to use?","acceptedAnswer":{"@type":"Answer","text":"Yes. The Web Auditor runs entirely in your browser. crt.sh queries use their public API with open CORS. DNS queries use Cloudflare DNS-over-HTTPS (encrypted). The HTML fetch goes through a privacy proxy that only retrieves the page body. No data is stored on any server."}}]}
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What does a web security audit check?","acceptedAnswer":{"@type":"Answer","text":"A web security audit checks DNS records (A, AAAA, MX, NS, TXT, CNAME), email security (SPF, DKIM, DMARC, BIMI), Subresource Integrity (SRI), mixed content warnings, form security (action TLS, password autocomplete, CSRF tokens), iframe sandbox/allow attributes, base tag injection, HTML comments for sensitive data leaks, Content-Security-Policy meta tags, technology stack detection, and page metadata (title, OG tags)."}},{"@type":"Question","name":"How does the Web Auditor work?","acceptedAnswer":{"@type":"Answer","text":"Enter any URL and click Run Audit. The tool queries DNS-over-HTTPS for network-level data, then fetches the page HTML via a privacy proxy for body-based security checks. Results are displayed in a prioritized report with a security score from A+ to F."}},{"@type":"Question","name":"Is the Web Auditor safe to use?","acceptedAnswer":{"@type":"Answer","text":"Yes. The Web Auditor runs entirely in your browser. DNS queries use Cloudflare DNS-over-HTTPS (encrypted). The HTML fetch goes through a privacy proxy that only retrieves the page body. No data is stored on any server."}}]}
   </script>
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
@@ -163,7 +163,7 @@
 <div class="tool-page">
   <a href="../index.html" class="back">← Back to tools</a>
   <h2>Web Auditor</h2>
-  <p class="desc">Security audit for any URL. Checks subdomain discovery (crt.sh), DNS, email security (SPF/DKIM/DMARC), SRI, mixed content, form security, iframe analysis, base tag, HTML comments, tech stack, CSP, and page meta. Generates a PDF-ready report with prioritized recommendations. Note: header-based checks (SSL, WAF, redirects) require running curl directly.</p>
+  <p class="desc">Security audit for any URL. Checks DNS, email security (SPF/DKIM/DMARC), SRI, mixed content, form security, iframe analysis, base tag, HTML comments, tech stack, CSP, and page meta. Generates a PDF-ready report with prioritized recommendations. Note: header-based checks (SSL, WAF, redirects) require running curl directly.</p>
 
   <label for="audit-url">Target URL</label>
   <input type="text" id="audit-url" placeholder="https://example.com" value="https://example.com" onkeydown="if(event.key==='Enter')runAudit()">
@@ -174,7 +174,7 @@
 
   <div id="audit-progress" class="progress-bar" style="display:none"></div>
   <div id="audit-report"></div>
-  <div id="audit-status" class="output" style="margin-top:1.5rem">Enter a URL and click Run Audit. The audit checks subdomain discovery (crt.sh), DNS, email security, SRI, mixed content, form security, iframes, base tag, HTML comments, tech stack, CSP, and page meta. Results include a full report with prioritized recommendations. Use the Print button to export as PDF.</div>
+  <div id="audit-status" class="output" style="margin-top:1.5rem">Enter a URL and click Run Audit. The audit checks DNS, email security, SRI, mixed content, form security, iframes, base tag, HTML comments, tech stack, CSP, and page meta. Results include a full report with prioritized recommendations. Use the Print button to export as PDF.</div>
 </div>
 
 <footer>
@@ -197,7 +197,6 @@ TODO: Carbon Ads monetization
 
 <script>
 const CHECKS = [
-  { id: 'crt', label: 'Subdomain Discovery', icon: '📡' },
   { id: 'dns', label: 'DNS Records', icon: '🌐' },
   { id: 'emailsec', label: 'Email Security', icon: '📧' },
   { id: 'sri', label: 'Subresource Integrity', icon: '🔗' },
@@ -434,34 +433,6 @@ async function runAudit() {
     report.emailSecurity = { spf: spf[0] || null, dmarc: dmarc[0] || null, bimi: bimi[0] || null, dkimSelectors: dkimFound };
     markProgress('emailsec', 'done');
   } catch { markProgress('emailsec', 'error'); }
-
-  // ── crt.sh Subdomain Discovery ──
-  markProgress('crt', 'running');
-  report.crtLink = 'https://crt.sh/?q=' + encodeURIComponent('%25.' + hostname);
-  try {
-    var crtCtrl = new AbortController();
-    setTimeout(function() { crtCtrl.abort(); }, 8000);
-    var crtResp = await fetch('https://crt.sh/?q=%25.' + encodeURIComponent(hostname) + '&output=json', { signal: crtCtrl.signal });
-    if (crtResp.ok) {
-      var ct = (crtResp.headers.get('content-type') || '').includes('json');
-      if (!ct) { report.crtSubdomains = []; } else {
-      var crtData = await crtResp.json();
-      var unique = {};
-      for (var i = 0; i < crtData.length; i++) {
-        var names = (crtData[i].name_value || '').split('\n');
-        for (var j = 0; j < names.length; j++) {
-          var n = names[j].trim().toLowerCase();
-          if (n && n !== hostname && n.indexOf('*') === -1) unique[n] = true;
-        }
-      }
-      report.crtSubdomains = Object.keys(unique).sort();
-    } }
-    markProgress('crt', 'done');
-  } catch {
-    report.crtSubdomains = [];
-    report.crtDown = true;
-    markProgress('crt', 'error');
-  }
 
   // ── Body fetch (via proxy) ──
   try {
@@ -744,11 +715,6 @@ function renderReport(r, url) {
     mediumIssues.push('Base tag present (href=' + esc(r.baseTag.href) + ') — potential script injection vector if attacker controls it');
   }
 
-  // crt.sh findings
-  if (r.crtSubdomains && r.crtSubdomains.length > 0) {
-    lowIssues.push(r.crtSubdomains.length + ' subdomain(s) discovered via Certificate Transparency');
-  }
-
   // HTML Comments findings
   if (r.comments && r.comments.sensitive.length > 0) {
     highIssues.push(r.comments.sensitive.length + ' HTML comment(s) contain sensitive patterns (TODO, password, API key, IP, etc.)');
@@ -945,21 +911,6 @@ function renderReport(r, url) {
     baseHtml += '</div>';
     container.innerHTML += baseHtml;
   }
-
-  // ── subdomain discovery ──
-   if (r.crtSubdomains) {
-     var crtHtml = '<div class="report-section"><h4>\uD83D\uDCE1 Subdomain Discovery (crt.sh)</h4>';
-     if (r.crtDown) {
-       crtHtml += '<div class="finding warn">crt.sh service temporarily unavailable. <a href="' + esc(r.crtLink) + '" target="_blank" rel="noopener">Check manually on crt.sh \u2197</a></div>';
-     } else if (r.crtSubdomains.length === 0) {
-       crtHtml += '<div class="finding good">No additional subdomains found via Certificate Transparency ✓</div>';
-     } else {
-       crtHtml += '<div class="finding info">' + r.crtSubdomains.length + ' subdomain(s) discovered</div>';
-       r.crtSubdomains.forEach(function(s) { crtHtml += '<div class="finding low">' + esc(s) + '</div>'; });
-     }
-     crtHtml += '</div>';
-     container.innerHTML += crtHtml;
-   }
 
   // ── HTML Comments ──
   if (r.comments && r.comments.total > 0) {
