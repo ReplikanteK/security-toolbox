@@ -51,11 +51,11 @@
     <h3 style="font-size:.9rem;color:var(--accent);margin-bottom:.4rem">2. Third-Party Services</h3>
     <p style="font-size:.82rem;color:var(--text2);line-height:1.7">Some tools make HTTP requests to external services to provide functionality:</p>
     <ul style="font-size:.82rem;color:var(--text2);line-height:1.8;padding-left:1.2rem">
-      <li><strong style="color:var(--text)">DNS Lookup</strong> &mdash; queries Cloudflare DNS-over-HTTPS (dns.cloudflare.com)</li>
+      <li><strong style="color:var(--text)">DNS Lookup, Email Security, Web Auditor (DNS/email checks)</strong> &mdash; query Cloudflare DNS-over-HTTPS (dns.cloudflare.com)</li>
       <li><strong style="color:var(--text)">CVE Search</strong> &mdash; queries CIRCL CVE API (cve.circl.lu)</li>
-      <li><strong style="color:var(--text)">Subdomain Scanner, Port Scanner</strong> &mdash; use allorigins.win as a CORS proxy</li>
+      <li><strong style="color:var(--text)">Web Auditor (body-based checks)</strong> &mdash; fetches page HTML via allorigins.win proxy (SRI, mixed content, forms, iframes, base tag, HTML comments, tech stack)</li>
       <li><strong style="color:var(--text)">GraphQL Introspection</strong> &mdash; sends requests directly to the URL you provide</li>
-      <li><strong style="color:var(--text)">Email Security</strong> &mdash; queries Cloudflare DNS-over-HTTPS for TXT records</li>
+      <li><strong style="color:var(--text)">Port Scanner</strong> &mdash; makes direct HTTP/HTTPS connections from your browser to the target host</li>
     </ul>
     <p style="font-size:.82rem;color:var(--text2);line-height:1.7;margin-top:.5rem">The URLs you enter are sent to these services and may be logged by them. We have no control over their data practices. For details, refer to each service's privacy policy.</p>
   </section>
