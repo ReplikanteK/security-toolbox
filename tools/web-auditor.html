@@ -430,24 +430,24 @@ async function runAudit() {
 
   // ── WAF signatures ──
 const WAF_SIGNATURES = [
-  { name: 'Cloudflare', nsPattern: /cloudflare\.com$/i, cnamePattern: /cloudflare\.com$/i, body: ['__cfduid', '__cf_bm', 'cf-ray', 'cf-request-id'] },
-  { name: 'AWS WAF / CloudFront', cnamePattern: /cloudfront\.net$/i, nsPattern: /awsdns-/i, body: ['x-amz-cf-id', 'x-amz-cf-pop', 'awswaf'] },
+  { name: 'Cloudflare', nsPattern: /cloudflare\.com$/i, cnamePattern: /cloudflare\.(com|net)$/i, body: ['__cfduid', '__cf_bm', 'cf-ray', 'cf-request-id'] },
+  { name: 'AWS WAF / CloudFront', cnamePattern: /cloudfront\.net$/i, body: ['x-amz-cf-id', 'x-amz-cf-pop', 'awswaf'] },
   { name: 'Akamai', nsPattern: /akam(ai)?\.net$/i, cnamePattern: /(akam(ai)?\.net|edgesuite\.net|akamaiedge\.net)$/i, body: ['akamai', 'x-akamai-'] },
   { name: 'Fastly', nsPattern: /fastly\.net$/i, cnamePattern: /fastly\.net$/i, body: ['x-fastly-', 'fastly-origin'] },
-  { name: 'Sucuri / CloudProxy', nsPattern: /sucuri\.net$/i, body: ['sucuri', 'x-sucuri-'] },
+  { name: 'Sucuri / CloudProxy', nsPattern: /sucuri\.net$/i, cnamePattern: /sucuri\.net$/i, body: ['sucuri', 'x-sucuri-'] },
   { name: 'ModSecurity', body: ['Mod_Security', 'mod_security', 'ModSecurity'] },
   { name: 'Wordfence', body: ['wordfence', 'wfwaf'] },
   { name: 'Barracuda', nsPattern: /barracuda\.com$/i, body: ['barracuda'] },
-  { name: 'Imperva / Incapsula', nsPattern: /incap(dns|t)?\.(net|com)$/i, body: ['incap_ses', 'visid_incap', '_incap'] },
+  { name: 'Imperva / Incapsula', nsPattern: /incap(dns|t)?\.(net|com)$/i, cnamePattern: /(incap|imperva)dns?\.(net|com)$/i, body: ['incap_ses', 'visid_incap', '_incap'] },
   { name: 'F5 BIG-IP ASM', body: ['BigIP', 'TS65f6', 'x-wa-'] },
   { name: 'Fortinet FortiWeb', body: ['FortiWeb', 'x-fortiweb'] },
   { name: 'Radware AppWall', body: ['radware', 'appwall'] },
-  { name: 'StackPath', nsPattern: /stackpathdns\.com$/i, body: ['stackpath'] },
+  { name: 'StackPath', nsPattern: /stackpathdns\.com$/i, cnamePattern: /stackpathdns\.com$/i, body: ['stackpath'] },
   { name: 'Voxility', body: ['voxility'] },
   { name: 'Reblaze', body: ['reblaze'] },
   { name: 'Comodo CyberDefense', body: ['comodo'] },
   { name: 'SiteGround', nsPattern: /siteground\.net$/i, body: ['siteground'] },
-  { name: 'Microsoft Azure WAF', nsPattern: /azure-dns\.(com|net|org)$/i, body: ['x-azure-waf', 'azure'] },
+  { name: 'Microsoft Azure WAF', nsPattern: /azure-dns\.(com|net|org)$/i, cnamePattern: /azureedge\.net$/i, body: ['x-azure-waf', 'azure'] },
 ];
 
 // ── WAF Detection (from body + proxy headers) ──
