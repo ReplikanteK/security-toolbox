@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cómo comprobar si tu email está protegido con SPF, DKIM y DMARC — SecuriTool Blog</title>
-<meta name="description" content="Guía paso a paso para verificar la seguridad de tu dominio de correo: SPF, DKIM, DMARC y BIMI. Usa nuestro comprobador gratuito 100% client-side.">
-<meta property="og:title" content="Cómo comprobar si tu email está protegido con SPF, DKIM y DMARC">
-<meta property="og:description" content="Aprende a verificar la autenticación de tu correo electrónico: SPF, DKIM, DMARC y BIMI. Guía práctica con herramienta gratuita.">
+<title>How to Check If Your Email Is Protected with SPF, DKIM and DMARC — SecuriTool Blog</title>
+<meta name="description" content="Step-by-step guide to verify your domain email security: SPF, DKIM, DMARC and BIMI. Use our free client-side checker to test your domain in seconds.">
+<meta property="og:title" content="How to Check If Your Email Is Protected with SPF, DKIM and DMARC">
+<meta property="og:description" content="Learn how to verify your email authentication: SPF, DKIM, DMARC and BIMI. Practical guide with a free, privacy-first checking tool.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://securitool.js.org/blog/como-verificar-spf-dkim-dmarc.html">
 <link rel="stylesheet" href="../css/style.css">
@@ -14,7 +14,7 @@
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <link rel="canonical" href="https://securitool.js.org/blog/como-verificar-spf-dkim-dmarc.html">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","headline":"Cómo comprobar si tu email está protegido con SPF, DKIM y DMARC","description":"Guía paso a paso para verificar la seguridad de tu dominio de correo: SPF, DKIM, DMARC y BIMI.","datePublished":"2026-05-24","author":{"@type":"Person","name":"ReplikanteK"},"publisher":{"@type":"Organization","name":"SecuriTool"}}
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"How to Check If Your Email Is Protected with SPF, DKIM and DMARC","description":"Step-by-step guide to verify your domain email security: SPF, DKIM, DMARC and BIMI.","datePublished":"2026-05-24","author":{"@type":"Person","name":"ReplikanteK"},"publisher":{"@type":"Organization","name":"SecuriTool"}}
 </script>
 <style>
 .blog-post { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
@@ -37,7 +37,6 @@
 .blog-post table { width: 100%; font-size: 0.82rem; border-collapse: collapse; margin: 1rem 0; }
 .blog-post th, .blog-post td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
 .blog-post th { background: var(--bg3); color: var(--text); font-weight: 600; }
-.blog-post tr:hover { background: var(--bg3); }
 </style>
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
@@ -59,174 +58,174 @@
 </header>
 
 <div class="blog-post">
-<h1>Cómo comprobar si tu email está protegido con SPF, DKIM y DMARC</h1>
-<div class="meta"><span>24 mayo 2026</span><span>8 min lectura</span></div>
+<h1>How to Check If Your Email Is Protected with SPF, DKIM and DMARC</h1>
+<div class="meta"><span>May 24, 2026</span><span>8 min read</span></div>
 
-<p>Si tienes un dominio propio y usas correo electrónico, necesitas tres registros DNS para que tus mensajes no acaben en spam ni puedan ser suplantados: <strong>SPF, DKIM y DMARC</strong>. Sin ellos, cualquiera puede enviar correos falsos en nombre de tu dominio (phishing, spoofing).</p>
+<p>If you own a domain and use email, you need three DNS records to keep your messages out of spam folders and prevent impersonation: <strong>SPF, DKIM, and DMARC</strong>. Without them, anyone can send forged emails from your domain (phishing, spoofing).</p>
 
-<p>En esta guía aprenderás a comprobar si tu dominio los tiene configurados correctamente usando el <a href="../tools/email-security.html">Email Security Checker</a> de SecuriTool, y cómo interpretar cada resultado.</p>
+<p>This guide walks you through checking whether your domain has them configured correctly using the <a href="../tools/email-security.html">Email Security Checker</a> from SecuriTool, and how to interpret each result.</p>
 
 <div class="cta-box">
-<p>✅ Abre el comprobador en otra pestaña mientras lees:</p>
+<p>✅ Open the checker in another tab while you read:</p>
 <a href="../tools/email-security.html" class="cta-btn" target="_blank">Email Security Checker →</a>
 </div>
 
-<h2>Qué son SPF, DKIM y DMARC</h2>
+<h2>What Are SPF, DKIM, and DMARC?</h2>
 
-<p>Son tres mecanismos de autenticación de correo que funcionan juntos. Ninguno es suficiente por sí solo:</p>
+<p>These three email authentication mechanisms work together. None is sufficient on its own:</p>
 
 <table>
-<tr><th>Registro</th><th>Qué hace</th><th>Qué protege</th></tr>
-<tr><td><strong>SPF</strong></td><td>Lista los servidores autorizados a enviar correo por tu dominio</td><td>Evita que cualquiera envíe correos desde cualquier IP</td></tr>
-<tr><td><strong>DKIM</strong></td><td>Firma digitalmente los correos con una clave pública en tu DNS</td><td>Garantiza que el mensaje no fue alterado en tránsito</td></tr>
-<tr><td><strong>DMARC</strong></td><td>Define qué hacer si SPF o DKIM fallan (ninguno/cuarentena/rechazar)</td><td>Protege contra spoofing y phishing directo</td></tr>
+<tr><th>Record</th><th>What It Does</th><th>What It Protects Against</th></tr>
+<tr><td><strong>SPF</strong></td><td>Lists the servers authorized to send email for your domain</td><td>Anyone sending from an unauthorized IP</td></tr>
+<tr><td><strong>DKIM</strong></td><td>Digitally signs emails with a public key in your DNS</td><td>Message tampering in transit</td></tr>
+<tr><td><strong>DMARC</strong></td><td>Tells receivers what to do when SPF or DKIM fail (none/quarantine/reject)</td><td>Direct domain spoofing and phishing</td></tr>
 </table>
 
-<h2>Paso 1: Accede al Email Security Checker</h2>
+<h2>Step 1: Open the Email Security Checker</h2>
 
-<p>Abre la herramienta <a href="../tools/email-security.html">Email Security Checker</a>. Verás un campo para introducir un dominio.</p>
+<p>Navigate to the <a href="../tools/email-security.html">Email Security Checker</a>. You will see a single input field for a domain name.</p>
 
-<p><strong>Importante:</strong> El análisis se realiza completamente desde tu navegador mediante DNS-over-HTTPS. Ningún dato se envía a un servidor externo — ni tu dominio, ni los resultados.</p>
+<p><strong>Important:</strong> The entire analysis runs in your browser via DNS-over-HTTPS. No data is sent to any server — not your domain, not the results.</p>
 
-<h2>Paso 2: Introduce tu dominio</h2>
+<h2>Step 2: Enter Your Domain</h2>
 
-<p>Escribe el dominio que quieres verificar (por ejemplo, <code>example.com</code>) y pulsa "Check". La herramienta consultará los registros DNS y mostrará los resultados en segundos.</p>
+<p>Type the domain you want to check (for example, <code>example.com</code>) and click "Check". The tool queries DNS records and displays results within seconds.</p>
 
-<h2>Paso 3: Interpreta los resultados</h2>
+<h2>Step 3: Interpret the Results</h2>
 
 <h3>SPF</h3>
 
-<p>Un SPF correcto se ve así:</p>
+<p>A correct SPF record looks like this:</p>
 
 <pre>v=spf1 include:_spf.google.com ~all</pre>
 
-<p><strong>Qué buscar:</strong></p>
+<p><strong>What to look for:</strong></p>
 <ul>
-<li>✅ <strong>Pasa:</strong> Existe un registro SPF válido. Verás el listado de servidores autorizados.</li>
-<li>⚠️ <strong>SoftFail</strong> o <code>~all</code>: El SPF existe pero no es estricto — los servidores no listados son marcados como sospechosos pero no rechazados.</li>
-<li>❌ <strong>No encontrado:</strong> No tienes SPF. Tus correos pueden ser suplantados fácilmente.</li>
-<li>❌ <strong>Error:</strong> El SPF permite demasiadas inclusiones (más de 10 lookups DNS). Muchos servidores lo ignorarán.</li>
+<li>✅ <strong>Pass:</strong> A valid SPF record exists. You will see the list of authorized servers.</li>
+<li>⚠️ <strong>SoftFail</strong> or <code>~all</code>: SPF exists but is not strict — unauthorized servers are marked as suspicious but not rejected.</li>
+<li>❌ <strong>Not found:</strong> No SPF record. Your emails can be spoofed trivially.</li>
+<li>❌ <strong>Error:</strong> Too many DNS lookups (exceeds 10). Many receivers will ignore the SPF entirely.</li>
 </ul>
 
 <div class="card">
-<h3>🔧 Cómo corregir SPF</h3>
-<p>Si usas Gmail/Google Workspace, añade este registro TXT en tu DNS:</p>
+<h3>🔧 How to Fix SPF</h3>
+<p>For Google Workspace, add this TXT record to your DNS:</p>
 <pre>v=spf1 include:_spf.google.com ~all</pre>
-<p>Si usas Microsoft 365:</p>
+<p>For Microsoft 365:</p>
 <pre>v=spf1 include:spf.protection.outlook.com ~all</pre>
-<p>Una vez verificado que todo funciona, cambia <code>~all</code> por <code>-all</code> para rechazar servidores no autorizados.</p>
+<p>Once verified, change <code>~all</code> to <code>-all</code> to reject unauthorized senders.</p>
 </div>
 
 <h3>DKIM</h3>
 
-<p>DKIM requiere dos partes: una clave pública en tu DNS (creada por tu proveedor de correo) y la firma activada en el servidor de envío.</p>
+<p>DKIM requires two parts: a public key in your DNS (generated by your email provider) and signing enabled on your mail server.</p>
 
-<p><strong>Qué buscar:</strong></p>
+<p><strong>What to look for:</strong></p>
 <ul>
-<li>✅ <strong>Válido:</strong> Se encontró una clave DKIM y tiene el formato correcto. El selector y la clave aparecen en los detalles.</li>
-<li>⚠️ <strong>Débil:</strong> La clave usa RSA de 1024 bits o menos. Considera actualizar a 2048 bits.</li>
-<li>❌ <strong>No encontrado:</strong> No hay registro DKIM. Debes generarlo desde tu proveedor de correo y añadirlo a tu DNS.</li>
+<li>✅ <strong>Valid:</strong> A DKIM key was found with correct format. The selector and key details are shown.</li>
+<li>⚠️ <strong>Weak:</strong> The key uses RSA 1024-bit or less. Consider upgrading to 2048-bit.</li>
+<li>❌ <strong>Not found:</strong> No DKIM record. Generate one from your email provider and add it to DNS.</li>
 </ul>
 
 <div class="card">
-<h3>🔧 Cómo configurar DKIM</h3>
-<p>En Google Workspace: Admin → Apps → Gmail → Autenticar correo → Generar nuevo registro DKIM. Copia el registro TXT generado y pégalo en tu DNS.</p>
-<p>En Microsoft 365: Portal de administración → Exchange → Protección → DKIM → Habilitar y rotar claves.</p>
+<h3>🔧 How to Set Up DKIM</h3>
+<p>In Google Workspace: Admin → Apps → Gmail → Authenticate email → Generate new record. Copy the TXT record to your DNS.</p>
+<p>In Microsoft 365: Admin portal → Exchange → Protection → DKIM → Enable and rotate keys.</p>
 </div>
 
 <h3>DMARC</h3>
 
-<p>DMARC es el policía que decide qué pasa cuando SPF o DKIM fallan. Sin DMARC, los atacantes pueden enviar correos falsos aunque tú tengas SPF y DKIM.</p>
+<p>DMARC is the policy that decides what happens when SPF or DKIM fail. Without DMARC, attackers can spoof your domain even if you have SPF and DKIM.</p>
 
-<p>Una política DMARC típica:</p>
+<p>A typical DMARC policy:</p>
 
 <pre>v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com</pre>
 
-<p><strong>Qué buscar:</strong></p>
+<p><strong>What to look for:</strong></p>
 <ul>
-<li>✅ <strong>Pasa:</strong> Tienes DMARC con política definida. La herramienta te mostrará la política activa.</li>
-<li>⚠️ <strong>Monitorización</strong> (<code>p=none</code>): DMARC existe pero no aplica ninguna acción. Es útil para empezar, pero no protege activamente.</li>
-<li>❌ <strong>No encontrado:</strong> Sin DMARC, no tienes protección contra spoofing.</li>
+<li>✅ <strong>Pass:</strong> DMARC is configured with a policy. The tool displays the active policy.</li>
+<li>⚠️ <strong>Monitoring</strong> (<code>p=none</code>): DMARC exists but enforces nothing. Useful for initial testing, but does not actively protect.</li>
+<li>❌ <strong>Not found:</strong> No DMARC record. No spoofing protection.</li>
 </ul>
 
 <table>
-<tr><th>Política</th><th>Significado</th><th>Cuándo usarla</th></tr>
-<tr><td><code>p=none</code></td><td>Solo monitoriza, no bloquea nada</td><td>Primeros días, para asegurarte de que no hay falsos positivos</td></tr>
-<tr><td><code>p=quarantine</code></td><td>Correos sospechosos van a spam</td><td>Transición, después de monitorizar unos días</td></tr>
-<tr><td><code>p=reject</code></td><td>Correos que no pasan SPF/DKIM son rechazados</td><td>Objetivo final. Protección completa</td></tr>
+<tr><th>Policy</th><th>Meaning</th><th>When to Use</th></tr>
+<tr><td><code>p=none</code></td><td>Monitor only, no blocking</td><td>First few days to ensure no false positives</td></tr>
+<tr><td><code>p=quarantine</code></td><td>Suspicious emails go to spam</td><td>Transition phase after monitoring</td></tr>
+<tr><td><code>p=reject</code></td><td>Emails failing SPF/DKIM are rejected</td><td>Goal state. Full protection</td></tr>
 </table>
 
 <div class="card">
-<h3>🔧 Cómo implementar DMARC progresivamente</h3>
+<h3>🔧 How to Implement DMARC Gradually</h3>
 <ol>
-<li><strong>Semana 1:</strong> <code>v=DMARC1; p=none; rua=mailto:dmarc@tudominio.com</code> — solo observa</li>
-<li><strong>Semana 2:</strong> Revisa los informes DMARC (los recibes en el email de rua). Si todo es correcto, sube a <code>p=quarantine</code></li>
-<li><strong>Semana 3:</strong> Cambia a <code>p=reject</code> — protección completa contra spoofing</li>
+<li><strong>Week 1:</strong> <code>v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com</code> — observe only</li>
+<li><strong>Week 2:</strong> Review DMARC reports (sent to the rua email). If clean, escalate to <code>p=quarantine</code></li>
+<li><strong>Week 3:</strong> Move to <code>p=reject</code> — full spoofing protection</li>
 </ol>
 </div>
 
 <h3>BIMI (Bonus)</h3>
 
-<p>BIMI muestra el logo de tu marca junto a los correos verificados en Gmail y Apple Mail. La herramienta también lo comprueba.</p>
+<p>BIMI displays your brand logo next to verified emails in Gmail and Apple Mail. The tool checks this too.</p>
 
-<p>Para tener BIMI necesitas:</p>
+<p>Requirements for BIMI:</p>
 <ul>
-<li>DMARC en <code>p=reject</code> o <code>p=quarantine</code></li>
-<li>Un logo en formato SVG alojado en tu dominio</li>
-<li>Un certificado VMC (Verified Mark Certificate) opcional</li>
+<li>DMARC set to <code>p=reject</code> or <code>p=quarantine</code></li>
+<li>Logo in SVG format hosted on your domain</li>
+<li>Optional VMC (Verified Mark Certificate)</li>
 </ul>
 
-<h2>Ejemplo completo: resultados reales</h2>
+<h2>Complete Example</h2>
 
-<p>Estos son resultados de ejemplo para un dominio bien configurado:</p>
+<p>Here is what results look like for a well-configured domain:</p>
 
 <pre>📧 Email Security Report — example.com
 
 ╔════════════════════════════════════╗
-║ SPF:  ✅ Pasa                      ║
+║ SPF:  ✅ Pass                      ║
 ║       v=spf1 include:_spf.google.com ~all ║
 ╠════════════════════════════════════╣
-║ DKIM: ✅ Válido (selector: google) ║
+║ DKIM: ✅ Valid (selector: google)  ║
 ║       RSA 2048 bits                ║
 ╠════════════════════════════════════╣
-║ DMARC: ✅ Pasa (p=reject)          ║
+║ DMARC: ✅ Pass (p=reject)          ║
 ║       rua: mailto:dmarc@example.com║
 ╠════════════════════════════════════╣
-║ BIMI: ✅ Logo encontrado           ║
+║ BIMI: ✅ Logo found                ║
 ║       selectors: google,_domainkey ║
 ╚════════════════════════════════════╝
 📊 Grade: A+</pre>
 
-<p>La nota global (<strong>Grade</strong>) resume el estado de los tres mecanismos. Una A o A+ significa que los tres están correctamente configurados.</p>
+<p>The overall <strong>Grade</strong> summarizes the state of all three mechanisms. An A or A+ means all three are properly configured.</p>
 
-<h2>Preguntas frecuentes</h2>
+<h2>FAQ</h2>
 
-<h3>¿Cada cuánto debo revisar mi configuración?</h3>
-<p>Al menos una vez al mes. Los proveedores de correo cambian sus servidores (Google, Microsoft) y tus registros pueden quedar desactualizados. También después de cambiar de proveedor de email o de hosting.</p>
+<h3>How often should I check my configuration?</h3>
+<p>At least once a month. Email providers change their servers (Google, Microsoft) and your records may become outdated. Also check after changing email providers or hosting.</p>
 
-<h3>¿Puedo tener SPF sin DMARC?</h3>
-<p>Sí, pero no es recomendable. DMARC es el único mecanismo que le dice al servidor receptor qué hacer cuando SPF o DKIM fallan. Sin DMARC, cada servidor decide por su cuenta — y muchos entregan el correo fraudulento igualmente.</p>
+<h3>Can I have SPF without DMARC?</h3>
+<p>Yes, but it is not recommended. DMARC is the only mechanism that tells the receiver what to do when SPF or DKIM fails. Without it, each server decides independently — and many will still deliver fraudulent email.</p>
 
-<h3>¿Qué significa "too many DNS lookups" en SPF?</h3>
-<p>El estándar permite un máximo de 10 consultas DNS por SPF. Cada <code>include:</code>, <code>redirect=</code>, o <code>mx</code> cuenta como una. Si tienes más de 10, los servidores pueden ignorar el SPF por completo. Revisa si puedes consolidar o eliminar includes redundantes.</p>
+<h3>What does "too many DNS lookups" mean in SPF?</h3>
+<p>The standard allows a maximum of 10 DNS lookups per SPF check. Each <code>include:</code>, <code>redirect=</code>, or <code>mx</code> counts as one. If you exceed 10, servers may ignore your SPF entirely.</p>
 
-<h3>¿El checker almacena mi dominio?</h3>
-<p>No. Todo el análisis se ejecuta en tu navegador mediante consultas DNS-over-HTTPS. No se envía ningún dato a nuestros servidores. Puedes verificarlo abriendo las herramientas de desarrollador (F12 → Red) mientras haces la comprobación.</p>
+<h3>Does the checker store my domain?</h3>
+<p>No. All analysis runs in your browser via DNS-over-HTTPS. No data is sent to any server. Verify this by opening developer tools (F12 → Network tab) while running a check.</p>
 
-<h2>Conclusión</h2>
+<h2>Conclusion</h2>
 
-<p>SPF, DKIM y DMARC son la base de la seguridad del correo electrónico. Configurarlos correctamente protege tu dominio contra suplantación, mejora la entregabilidad de tus correos y es un requisito para cualquier organización que use email profesional.</p>
+<p>SPF, DKIM, and DMARC are the foundation of email security. Configuring them correctly protects your domain against spoofing, improves deliverability, and is a requirement for any organization using professional email.</p>
 
-<p>Usa el <a href="../tools/email-security.html">Email Security Checker</a> para verificar tu dominio ahora — tarda menos de un minuto y es completamente privado.</p>
+<p>Use the <a href="../tools/email-security.html">Email Security Checker</a> to test your domain now — it takes under a minute and is completely private.</p>
 
 <div class="cta-box">
-<p>🔍 Comprueba tu dominio ahora:</p>
+<p>🔍 Check your domain now:</p>
 <a href="../tools/email-security.html" class="cta-btn" target="_blank">Email Security Checker →</a>
 </div>
 
 <hr style="border:none;border-top:1px solid var(--border);margin:2rem 0">
 
-<p style="font-size:0.78rem;color:var(--text2)">Publicado el 24 de mayo de 2026 · Guía práctica · SecuriTool</p>
+<p style="font-size:0.78rem;color:var(--text2)">Published May 24, 2026 · Practical Guide · SecuriTool</p>
 
 </div>
 
