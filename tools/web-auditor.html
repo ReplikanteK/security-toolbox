@@ -428,7 +428,29 @@ async function runAudit() {
     resp.headers.forEach(function(v,k) { bodyHdrs[k.toLowerCase()] = v; });
   } catch(e) { /* body fetch failed */ }
 
-  // ── WAF Detection (from body + proxy headers) ──
+  // ── WAF signatures ──
+const WAF_SIGNATURES = [
+  { name: 'Cloudflare', nsPattern: /cloudflare\.com$/i, cnamePattern: /cloudflare\.com$/i, body: ['__cfduid', '__cf_bm', 'cf-ray', 'cf-request-id'] },
+  { name: 'AWS WAF / CloudFront', cnamePattern: /cloudfront\.net$/i, nsPattern: /awsdns-/i, body: ['x-amz-cf-id', 'x-amz-cf-pop', 'awswaf'] },
+  { name: 'Akamai', nsPattern: /akam(ai)?\.net$/i, cnamePattern: /(akam(ai)?\.net|edgesuite\.net|akamaiedge\.net)$/i, body: ['akamai', 'x-akamai-'] },
+  { name: 'Fastly', nsPattern: /fastly\.net$/i, cnamePattern: /fastly\.net$/i, body: ['x-fastly-', 'fastly-origin'] },
+  { name: 'Sucuri / CloudProxy', nsPattern: /sucuri\.net$/i, body: ['sucuri', 'x-sucuri-'] },
+  { name: 'ModSecurity', body: ['Mod_Security', 'mod_security', 'ModSecurity'] },
+  { name: 'Wordfence', body: ['wordfence', 'wfwaf'] },
+  { name: 'Barracuda', nsPattern: /barracuda\.com$/i, body: ['barracuda'] },
+  { name: 'Imperva / Incapsula', nsPattern: /incap(dns|t)?\.(net|com)$/i, body: ['incap_ses', 'visid_incap', '_incap'] },
+  { name: 'F5 BIG-IP ASM', body: ['BigIP', 'TS65f6', 'x-wa-'] },
+  { name: 'Fortinet FortiWeb', body: ['FortiWeb', 'x-fortiweb'] },
+  { name: 'Radware AppWall', body: ['radware', 'appwall'] },
+  { name: 'StackPath', nsPattern: /stackpathdns\.com$/i, body: ['stackpath'] },
+  { name: 'Voxility', body: ['voxility'] },
+  { name: 'Reblaze', body: ['reblaze'] },
+  { name: 'Comodo CyberDefense', body: ['comodo'] },
+  { name: 'SiteGround', nsPattern: /siteground\.net$/i, body: ['siteground'] },
+  { name: 'Microsoft Azure WAF', nsPattern: /azure-dns\.(com|net|org)$/i, body: ['x-azure-waf', 'azure'] },
+];
+
+// ── WAF Detection (from body + proxy headers) ──
   markProgress('waf', 'running');
   try {
     var bodySample = body.substring(0, 5000);
@@ -439,6 +461,11 @@ async function runAudit() {
       if (sig.nsPattern && report.dns && report.dns.NS) {
         for (var ni = 0; ni < report.dns.NS.length; ni++) {
           if (sig.nsPattern.test(report.dns.NS[ni])) { match = true; break; }
+        }
+      }
+      if (!match && sig.cnamePattern && report.dns && report.dns.CNAME) {
+        for (var ci = 0; ci < report.dns.CNAME.length; ci++) {
+          if (sig.cnamePattern.test(report.dns.CNAME[ci])) { match = true; break; }
         }
       }
       if (!match) {

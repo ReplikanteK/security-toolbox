@@ -4,34 +4,29 @@ Free online security tools for bug bounty hunters and developers. Privacy-first 
 
 **→ https://replikantek.github.io/security-toolbox/**
 
-## Tools (28)
+## Tools (26)
 
 ### ⭐ Flagship
 - **Web Auditor** — Full security audit: DNS, SSL/TLS, security headers (A+ grade), CORS, WAF, tech stack detection, cookie analysis, CSP deep evaluation, TTFB performance, HTTP methods, redirect chain. Generates PDF-ready report with prioritized recommendations.
 
-### 🔍 Reconnaissance (9)
+### 🔍 Reconnaissance (6)
 - **DNS Lookup** — A, AAAA, MX, NS, TXT, CNAME via DNS-over-HTTPS
-- **HTTP Probe** — Status codes, security headers, HSTS/CSP analysis
 - **Subdomain Scanner** — 500-word wordlist + DNS resolution
 - **Port Scanner** — 38 common ports via HTTP/S probes
-- **SSL/TLS Checker** — Certificate, HSTS, header analysis
-- **Redirect Chain** — Open redirect detection, protocol downgrades
 - **Takeover Checker** — Subdomain takeover detection (20+ services)
-- **WAF Detector** — WAF/CDN fingerprinting
-- **HTTP Methods** — Risky method detection (PUT, DELETE, TRACE)
+- **GraphQL Introspection** — Schema discovery (types, queries, mutations)
+- **Web Auditor** — Full security audit (see Flagship)
 
-### 📊 Analysis (11)
+### 📊 Analysis (9)
 - **Web Auditor** — See flagship above
 - **JWT Decoder** — Decode headers, payloads, claims
 - **JWT Attacker** — alg:none, kid injection, secret cracking, algorithm confusion
 - **Hash Identifier** — Identify 40+ hash types by pattern
 - **CVE Search** — Search by ID or keyword via CIRCL API
 - **CVSS Calculator** — v3.1 base score calculation
-- **CORS Checker** — Origin reflection, credential misconfigs
 - **Cookie Analyzer** — Secure/HttpOnly/SameSite analysis
-- **GraphQL Introspection** — Schema discovery (types, queries, mutations)
-- **Security Headers Grader** — A+ to F grading with breakdown
 - **CSP Evaluator** — Deep Content-Security-Policy analysis
+- **Email Security Checker** — SPF, DKIM, DMARC, BIMI analysis
 
 ### ⚙️ Developer Tools (5)
 - **Regex Tester** — Live testing with security presets
@@ -40,12 +35,15 @@ Free online security tools for bug bounty hunters and developers. Privacy-first 
 - **Base64 Tool** — Encode/decode + auto-detect in text
 - **URL Extractor** — Extract, parse, filter URLs from text
 
-### 🔒 Crypto & Encoding (2)
+### 🔒 Crypto & Encoding (3)
 - **Entropy Checker** — Shannon entropy + key strength
 - **Hash Compare** — Multi-algorithm hash computation
+- **JWT Playground** — Live JWT creation, signing, and verification
 
-### 🧪 Testing & Payloads (1)
+### 🧪 Testing & Payloads (3)
 - **Payload Builder** — XSS, SQLi, SSTI, SSRF, traversal, CMD injection presets
+- **CSRF Generator** — Generate CSRF PoC forms for testing
+- **CSP Hash Generator** — Generate CSP hashes for inline scripts/styles
 
 ## Tech
 
