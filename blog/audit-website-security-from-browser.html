@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to Audit a Website Security from Your Browser — SecuriTool Blog</title>
+<meta name="description" content="Step-by-step guide to auditing website security from your browser without installing any tools. Check SSL, headers, WAF, and more with a free client-side scanner.">
+<meta property="og:title" content="How to Audit a Website Security from Your Browser">
+<meta property="og:description" content="Learn to audit any website's security posture from your browser: SSL, security headers, WAF detection, HTTP methods, and more. Zero installation required.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://securitool.js.org/blog/audit-website-security-from-browser.html">
+<link rel="stylesheet" href="../css/style.css">
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\u{1F319}':'\u{2600}\u{FE0F}'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
+<script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<link rel="canonical" href="https://securitool.js.org/blog/audit-website-security-from-browser.html">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"How to Audit a Website Security from Your Browser","description":"Step-by-step guide to auditing website security from your browser without installing any tools.","datePublished":"2026-05-26","author":{"@type":"Person","name":"ReplikanteK"},"publisher":{"@type":"Organization","name":"SecuriTool"}}
+</script>
+<style>
+.blog-post { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+.blog-post h1 { font-size: 1.6rem; margin-bottom: 0.3rem; }
+.blog-post .meta { font-size: 0.78rem; color: var(--text2); margin-bottom: 1.5rem; }
+.blog-post .meta span { display: inline-block; margin-right: 1rem; }
+.blog-post h2 { font-size: 1.15rem; margin: 2rem 0 0.6rem; color: var(--accent); }
+.blog-post h3 { font-size: 0.95rem; margin: 1.5rem 0 0.4rem; }
+.blog-post p { font-size: 0.88rem; line-height: 1.75; color: var(--text2); margin-bottom: 1rem; }
+.blog-post ul, .blog-post ol { font-size: 0.88rem; line-height: 1.75; color: var(--text2); margin-bottom: 1rem; padding-left: 1.3rem; }
+.blog-post li { margin-bottom: 0.4rem; }
+.blog-post code { font-size: 0.82rem; background: var(--bg3); padding: 0.15rem 0.4rem; border-radius: 3px; }
+.blog-post pre { font-size: 0.82rem; background: var(--bg3); padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.5; border: 1px solid var(--border); }
+.blog-post .cta-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; margin: 1.5rem 0; text-align: center; }
+.blog-post .cta-box p { margin: 0 0 0.5rem; font-size: 0.9rem; }
+.blog-post .cta-btn { display: inline-block; padding: 0.6rem 1.5rem; background: var(--accent); color: #000; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; }
+.blog-post .cta-btn:hover { opacity: 0.9; }
+.blog-post .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+.blog-post .card h3 { margin-top: 0; }
+.blog-post table { width: 100%; font-size: 0.82rem; border-collapse: collapse; margin: 1rem 0; }
+.blog-post th, .blog-post td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+.blog-post th { background: var(--bg3); color: var(--text); font-weight: 600; }
+</style>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0a0e17">
+</head>
+<body>
+
+<header>
+  <a href="../" class="logo" style="text-decoration:none">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="%2300d4aa" d="M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z"/><path fill="%2300d4aa" d="M15 10l-3 5h2v5l3-5h-2z"/></svg>
+    <span>Securi</span>Tool
+  </a>
+  <span class="logo-sub">free security tools</span>
+  <nav>
+    <a href="../#tools">Tools</a>
+    <a href="../blog/">Blog</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <button id="theme-toggle">☀️</button><script>(function(){var b=document.getElementById("theme-toggle");if(b)b.textContent=document.documentElement.getAttribute("data-theme")?"🌙":"☀️"})()</script>
+  </nav>
+</header>
+
+<div class="blog-post">
+<h1>How to Audit a Website Security from Your Browser</h1>
+<div class="meta"><span>May 26, 2026</span><span>9 min read</span></div>
+
+<p>You do not need a dedicated security scanner or a command-line tool to assess a website's security posture. With a browser and a client-side auditing tool, you can run a comprehensive check in under a minute — no data leaves your machine.</p>
+
+<p>This guide walks through the key security checks you can perform using the <a href="../tools/web-auditor.html">Web Auditor</a> from SecuriTool, and how to interpret each result.</p>
+
+<div class="cta-box">
+<p>Open the Web Auditor in another tab while you read:</p>
+<a href="../tools/web-auditor.html" class="cta-btn" target="_blank">Web Auditor →</a>
+</div>
+
+<h2>What a Browser-Based Audit Covers</h2>
+
+<p>A thorough browser-based audit checks these layers of a website's security:</p>
+
+<table>
+<tr><th>Layer</th><th>What It Checks</th><th>Risk If Missing</th></tr>
+<tr><td><strong>SSL/TLS</strong></td><td>Valid certificate, expiry date, issuer</td><td>Man-in-the-middle, phishing</td></tr>
+<tr><td><strong>Security Headers</strong></td><td>HSTS, CSP, X-Frame-Options, X-Content-Type-Options, etc.</td><td>Clickjacking, XSS, MIME sniffing</td></tr>
+<tr><td><strong>WAF Detection</strong></td><td>Presence of Cloudflare, Akamai, Imperva, etc.</td><td>Missing layer-7 protection</td></tr>
+<tr><td><strong>HTTP Methods</strong></td><td>Allowed methods (GET, POST, PUT, DELETE, etc.)</td><td>Unauthorized modifications</td></tr>
+<tr><td><strong>CSP</strong></td><td>Content Security Policy directives</td><td>Script injection, data exfiltration</td></tr>
+<tr><td><strong>CORS</strong></td><td>Cross-Origin Resource Sharing policy</td><td>Data theft via cross-origin requests</td></tr>
+</table>
+
+<h2>Step 1: Open the Web Auditor</h2>
+
+<p>Go to the <a href="../tools/web-auditor.html">Web Auditor</a> page. You will see an input field labeled "Enter URL to audit".</p>
+
+<p>The entire scan runs client-side: the tool fetches headers and certificate info via DNS and proxy-free requests. Your target URL is never sent to an external server.</p>
+
+<h2>Step 2: Enter a Target URL</h2>
+
+<p>Type the full URL of the website you want to audit (for example, <code>https://example.com</code>) and click "Audit". Results appear in sections within seconds.</p>
+
+<h2>Step 3: Interpret Each Section</h2>
+
+<h3>SSL / TLS Certificate</h3>
+
+<p>The first section shows the certificate validity and chain:</p>
+
+<pre>Certificate Information
+  Subject: *.example.com
+  Issuer:  Let's Encrypt Authority X3
+  Valid:   2026-05-01 to 2026-07-30
+  Status:  ✅ Valid</pre>
+
+<p><strong>What to look for:</strong></p>
+<ul>
+<li>✅ <strong>Valid:</strong> Certificate is current and properly issued.</li>
+<li>⚠️ <strong>Expiring soon:</strong> Less than 30 days remaining. Renew immediately.</li>
+<li>❌ <strong>Expired:</strong> Visitors will see browser warnings. Critical.</li>
+<li>❌ <strong>Self-signed:</strong> Only acceptable in development. Invalid for production.</li>
+</ul>
+
+<h3>Security Headers</h3>
+
+<p>Security headers are HTTP response headers that tell the browser how to behave. The Web Auditor checks for the most important ones:</p>
+
+<table>
+<tr><th>Header</th><th>What It Prevents</th><th>Ideal Value</th></tr>
+<tr><td><code>Strict-Transport-Security</code></td><td>SSL stripping, downgrade attacks</td><td><code>max-age=31536000; includeSubDomains</code></td></tr>
+<tr><td><code>X-Frame-Options</code></td><td>Clickjacking</td><td><code>DENY</code> or <code>SAMEORIGIN</code></td></tr>
+<tr><td><code>X-Content-Type-Options</code></td><td>MIME type sniffing</td><td><code>nosniff</code></td></tr>
+<tr><td><code>Referrer-Policy</code></td><td>Referrer leakage</td><td><code>strict-origin-when-cross-origin</code></td></tr>
+<tr><td><code>Permissions-Policy</code></td><td>API abuse (camera, mic, geolocation)</td><td>Restrictive defaults</td></tr>
+</table>
+
+<div class="card">
+<h3>Quick Fix Guide</h3>
+<p><strong>Missing HSTS?</strong> Add this to your web server config:</p>
+<pre>Strict-Transport-Security: max-age=31536000; includeSubDomains; preload</pre>
+<p><strong>Missing X-Frame-Options?</strong> Prevent clickjacking:</p>
+<pre>X-Frame-Options: DENY</pre>
+<p><strong>Missing X-Content-Type-Options?</strong> Stop MIME sniffing:</p>
+<pre>X-Content-Type-Options: nosniff</pre>
+</div>
+
+<h3>WAF Detection</h3>
+
+<p>The Web Auditor attempts to identify the Web Application Firewall in front of the target. A WAF filters malicious traffic before it reaches the origin server.</p>
+
+<p><strong>What to look for:</strong></p>
+<ul>
+<li>✅ <strong>WAF detected:</strong> Cloudflare, Akamai, CloudFront, Sucuri, etc. The tool shows the specific vendor if identifiable.</li>
+<li>⚠️ <strong>Uncertain:</strong> Signs point to a reverse proxy but not a specific WAF vendor.</li>
+<li>❌ <strong>None detected:</strong> No WAF identified. The site may be exposed to layer-7 attacks.</li>
+</ul>
+
+<h3>HTTP Methods</h3>
+
+<p>This section shows which HTTP verbs the server accepts:</p>
+
+<pre>Allowed Methods
+  ✅ GET     — Standard retrieval
+  ✅ HEAD    — Header-only retrieval
+  ❌ POST   — Disabled or limited
+  ❌ PUT    — Disabled
+  ❌ DELETE — Disabled
+  ❌ PATCH  — Disabled</pre>
+
+<p><strong>What to look for:</strong></p>
+<ul>
+<li>🚨 <strong>PUT/DELETE/PATCH enabled:</strong> These should be restricted unless the server explicitly uses them (REST APIs). Unrestricted write methods allow file uploads and modifications.</li>
+<li>⚠️ <strong>TRACE enabled:</strong> Can be used for Cross-Site Tracing (XST) attacks.</li>
+<li>✅ <strong>Only GET and HEAD:</strong> Safe baseline for static sites.</li>
+</ul>
+
+<h3>Content Security Policy (CSP)</h3>
+
+<p>CSP is a browser security mechanism that restricts which resources can load on a page. The Web Auditor extracts and displays the full CSP header.</p>
+
+<pre>Content-Security-Policy:
+  default-src 'self';
+  script-src 'self' https://analytics.example.com;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data:;</pre>
+
+<p><strong>What to look for:</strong></p>
+<ul>
+<li>🚨 <code>'unsafe-inline'</code> in <code>script-src</code>: Allows arbitrary inline scripts. Risk of XSS.</li>
+<li>🚨 <code>'unsafe-eval'</code>: Allows <code>eval()</code>. Should be removed unless required.</li>
+<li>⚠️ Missing <code>object-src 'none'</code>: Prevents Flash and plugin-based attacks.</li>
+<li>✅ <code>default-src 'self'</code> with specific allowlists: Strong posture.</li>
+</ul>
+
+<h2>Complete Audit Example</h2>
+
+<p>Here is what a well-configured website looks like:</p>
+
+<pre>Web Audit Report — https://example.com
+
+SSL:        ✅ Valid (Let's Encrypt, 87 days remaining)
+HSTS:       ✅ max-age=31536000; includeSubDomains; preload
+XFO:        ✅ DENY
+CTO:        ✅ nosniff
+CSP:        ✅ Present (10 directives)
+WAF:        ✅ Cloudflare
+Methods:    ✅ GET, HEAD only
+CORS:       ✅ Not configured (default restrictive)
+
+🔒 Grade: A</pre>
+
+<h2>What the Tool Cannot Check</h2>
+
+<p>Because the Web Auditor runs in a browser, it has some <strong>limitations</strong> to keep in mind:</p>
+
+<ul>
+<li><strong>Server-side vulnerabilities:</strong> SQL injection, authentication bypass, business logic flaws require active testing with dedicated tools.</li>
+<li><strong>Internal network checks:</strong> The auditor cannot access private IP ranges or localhost endpoints.</li>
+<li><strong>WebSocket security:</strong> WebSocket connections are not tested from the browser.</li>
+</ul>
+
+<p>Use the Web Auditor as a <strong>first pass</strong> — it catches configuration-level issues quickly. For deeper testing, combine it with manual checks using curl, Burp Suite, or specialized scanners.</p>
+
+<h2>Conclusion</h2>
+
+<p>A browser-based website audit is a fast, zero-install way to assess a site's security baseline. SSL validity, security headers, WAF presence, CSP, and HTTP methods cover the most common configuration gaps that attackers exploit.</p>
+
+<p>Run your first audit now:</p>
+
+<div class="cta-box">
+<p>Check any website:</p>
+<a href="../tools/web-auditor.html" class="cta-btn" target="_blank">Web Auditor →</a>
+</div>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:2rem 0">
+
+<p style="font-size:0.78rem;color:var(--text2)">Published May 26, 2026 · Practical Guide · SecuriTool</p>
+
+</div>
+
+<footer>
+  <div class="links">
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
+    <a href="../">All Tools</a>
+  </div>
+  <p>Open source &middot; All client-side &middot; Privacy-first</p>
+  <p class="note">Built from real security research &mdash; free forever.<br><span style="font-size:0.75rem;opacity:.6">&copy; 2026 ReplikanteK &middot; MIT License</span></p>
+</footer>
+
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
+
+</body>
+</html>
