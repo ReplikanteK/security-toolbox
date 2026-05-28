@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to Identify Hash Types: A Step-by-Step Guide — SecuriTool Blog</title>
+<meta name="description" content="Step-by-step guide to identifying hash types by format, length, and prefix. Covers MD5, SHA-1, SHA-256, bcrypt, Argon2, NTLM, and 40+ hash types.">
+<meta property="og:title" content="How to Identify Hash Types: A Step-by-Step Guide">
+<meta property="og:description" content="Learn to identify hash types like MD5, SHA-256, bcrypt, and more using a free hash identifier tool. No installation required.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://securitool.js.org/blog/identify-hash-types.html">
+<link rel="stylesheet" href="../css/style.css">
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\u{1F319}':'\u{2600}\u{FE0F}'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
+<script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<link rel="canonical" href="https://securitool.js.org/blog/identify-hash-types.html">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"How to Identify Hash Types: A Step-by-Step Guide","description":"Step-by-step guide to identifying hash types by format, length, and prefix.","datePublished":"2026-05-28","author":{"@type":"Person","name":"ReplikanteK"},"publisher":{"@type":"Organization","name":"SecuriTool"}}
+</script>
+<style>
+.blog-post { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+.blog-post h1 { font-size: 1.6rem; margin-bottom: 0.3rem; }
+.blog-post .meta { font-size: 0.78rem; color: var(--text2); margin-bottom: 1.5rem; }
+.blog-post .meta span { display: inline-block; margin-right: 1rem; }
+.blog-post h2 { font-size: 1.15rem; margin: 2rem 0 0.6rem; color: var(--accent); }
+.blog-post h3 { font-size: 0.95rem; margin: 1.5rem 0 0.4rem; }
+.blog-post p { font-size: 0.88rem; line-height: 1.75; color: var(--text2); margin-bottom: 1rem; }
+.blog-post ul, .blog-post ol { font-size: 0.88rem; line-height: 1.75; color: var(--text2); margin-bottom: 1rem; padding-left: 1.3rem; }
+.blog-post li { margin-bottom: 0.4rem; }
+.blog-post code { font-size: 0.82rem; background: var(--bg3); padding: 0.15rem 0.4rem; border-radius: 3px; }
+.blog-post pre { font-size: 0.82rem; background: var(--bg3); padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.5; border: 1px solid var(--border); }
+.blog-post .cta-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; margin: 1.5rem 0; text-align: center; }
+.blog-post .cta-box p { margin: 0 0 0.5rem; font-size: 0.9rem; }
+.blog-post .cta-btn { display: inline-block; padding: 0.6rem 1.5rem; background: var(--accent); color: #000; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; }
+.blog-post .cta-btn:hover { opacity: 0.9; }
+.blog-post .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+.blog-post .card h3 { margin-top: 0; }
+.blog-post table { width: 100%; font-size: 0.82rem; border-collapse: collapse; margin: 1rem 0; }
+.blog-post th, .blog-post td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+.blog-post th { background: var(--bg3); color: var(--text); font-weight: 600; }
+</style>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0a0e17">
+</head>
+<body>
+
+<header>
+  <a href="../" class="logo" style="text-decoration:none">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="%2300d4aa" d="M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z"/><path fill="%2300d4aa" d="M15 10l-3 5h2v5l3-5h-2z"/></svg>
+    <span>Securi</span>Tool
+  </a>
+  <span class="logo-sub">free security tools</span>
+  <nav>
+    <a href="../#tools">Tools</a>
+    <a href="../blog/">Blog</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <button id="theme-toggle">☀️</button><script>(function(){var b=document.getElementById("theme-toggle");if(b)b.textContent=document.documentElement.getAttribute("data-theme")?"🌙":"☀️"})()</script>
+  </nav>
+</header>
+
+<div class="blog-post">
+<h1>How to Identify Hash Types: A Step-by-Step Guide</h1>
+<div class="meta"><span>May 28, 2026</span><span>8 min read</span></div>
+
+<p>When you encounter an unfamiliar string of characters during a penetration test or a CTF challenge, the first question is always: <em>what type of hash is this?</em> Identifying the hash type determines which cracking tool to use, what attack vectors apply, and how much effort it will take to reverse it.</p>
+
+<p>This guide shows you how to identify 40+ hash types by analyzing their length, character set, and prefix patterns using the <a href="../tools/hash-identifier.html">Hash Identifier</a> from SecuriTool — all in your browser, no data sent to any server.</p>
+
+<div class="cta-box">
+<p>Open the Hash Identifier in another tab while you read:</p>
+<a href="../tools/hash-identifier.html" class="cta-btn" target="_blank">Hash Identifier →</a>
+</div>
+
+<h2>How Hash Identification Works</h2>
+
+<p>Hash identification relies on three characteristics:</p>
+
+<table>
+<tr><th>Clue</th><th>What It Tells You</th><th>Example</th></tr>
+<tr><td><strong>Length</strong></td><td>Number of characters in the hex/base64 string</td><td>32 chars → MD4/MD5/NTLM</td></tr>
+<tr><td><strong>Character set</strong></td><td>Hex (0-9a-f), Base64 (A-Za-z0-9+/), or custom</td><td>Hex 40 chars → SHA-1</td></tr>
+<tr><td><strong>Prefix / Format</strong></td><td>Special markers like <code>$2y$</code>, <code>$6$</code>, <code>{SSHA}</code></td><td><code>$2y$</code> → bcrypt</td></tr>
+</table>
+
+<p>The Hash Identifier applies pattern matching across all three dimensions and returns a confidence score for each possible match.</p>
+
+<h2>Step 1: Paste the Hash</h2>
+
+<p>Go to the <a href="../tools/hash-identifier.html">Hash Identifier</a> page. Paste your unknown string into the text area and click <strong>Identify</strong>.</p>
+
+<p>The tool processes everything client-side — your hash never leaves your browser.</p>
+
+<h2>Step 2: Read the Results</h2>
+
+<p>The output lists possible matches sorted by confidence score, with a visual progress bar:</p>
+
+<pre>→ bcrypt (60 chars) ████████░░ 86%
+  Unix SHA-512 (crypt) (106 chars) ██████░░░░ 62%
+  SHA-512 (128 chars) █████░░░░░ 50%</pre>
+
+<p>The arrow marks the best match. The percentage reflects how well the hash matches all detection criteria (length, regex pattern, and prefix).</p>
+
+<h2>Step 3: Identify by Length</h2>
+
+<p>Hash length is the fastest way to narrow down possibilities. Here is a quick reference:</p>
+
+<table>
+<tr><th>Length (hex)</th><th>Likely Hash Types</th><th>Use Case</th></tr>
+<tr><td><code>8</code></td><td>CRC32, Adler32</td><td>Checksums, error detection</td></tr>
+<tr><td><code>16</code></td><td>MySQL ≤ 4.1</td><td>Legacy MySQL password hashes</td></tr>
+<tr><td><code>32</code></td><td>MD4, MD5, NTLM, LM, RIPEMD-128</td><td>Legacy auth, Windows passwords</td></tr>
+<tr><td><code>40</code></td><td>SHA-1, RIPEMD-160, PBKDF2-HMAC-SHA1</td><td>Git commits, SSL certs, legacy APIs</td></tr>
+<tr><td><code>56</code></td><td>SHA-224, SHA3-224, SHA-512/224</td><td>FIPS compliance, blockchain</td></tr>
+<tr><td><code>64</code></td><td>SHA-256, SHA3-256, RIPEMD-256, GOST 256, PBKDF2-HMAC-SHA256</td><td>Modern applications, TLS, Bitcoin</td></tr>
+<tr><td><code>96</code></td><td>SHA-384, SHA3-384</td><td>High-security, gov standards</td></tr>
+<tr><td><code>128</code></td><td>SHA-512, SHA3-512, Whirlpool, GOST 512</td><td>Maximum security, DNSSEC</td></tr>
+</table>
+
+<h2>Step 4: Identify by Prefix</h2>
+
+<p>Password hashing algorithms use distinctive prefixes that make them instantly recognizable:</p>
+
+<table>
+<tr><th>Prefix</th><th>Hash Type</th><th>Format Example</th></tr>
+<tr><td><code>$2y$</code>, <code>$2a$</code>, <code>$2b$</code></td><td>bcrypt</td><td><code>$2y$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy</code></td></tr>
+<tr><td><code>$6$</code></td><td>Unix SHA-512 crypt</td><td><code>$6$rounds=1000$salt$hash</code></td></tr>
+<tr><td><code>$5$</code></td><td>Unix SHA-256 crypt</td><td><code>$5$rounds=5000$salt$hash</code></td></tr>
+<tr><td><code>$1$</code></td><td>Unix MD5 crypt</td><td><code>$1$salt$hash</code></td></tr>
+<tr><td><code>$argon2</code></td><td>Argon2</td><td><code>$argon2id$v=19$m=65536,t=3,p=4$...$...</code></td></tr>
+<tr><td><code>$SHA$</code></td><td>bcrypt (SHA-256 variant)</td><td><code>$SHA$salt$hash</code></td></tr>
+<tr><td><code>scrypt:</code></td><td>scrypt</td><td><code>scrypt:16384:8:1$...$...</code></td></tr>
+<tr><td><code>*</code> (leading asterisk)</td><td>MySQL 5+</td><td><code>*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF4</code></td></tr>
+<tr><td><code>0x</code></td><td>Ethereum address</td><td><code>0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18</code></td></tr>
+</table>
+
+<h2>Step 5: Read a Real-World Example</h2>
+
+<p>Let us identify this hash:</p>
+
+<pre>$2y$12$LJ3m4ys3Lk0TSwHnbfOMiOXPm1Qm0M0v0M.0M0M0M0M0M0M0M0M0M0</pre>
+
+<p><strong>Step 1:</strong> Length is 60 characters — too short for SHA-512 (128), too long for MD5 (32).</p>
+
+<p><strong>Step 2:</strong> Contains <code>$2y$</code> prefix followed by two cost digits <code>12$</code>.</p>
+
+<p><strong>Step 3:</strong> Uses <code>A-Za-z0-9./</code> character set (Base64 variant).</p>
+
+<p><strong>Result:</strong> bcrypt with cost factor 12. Used by most modern web frameworks for password storage (Rails, Django, Node.js, PHP).</p>
+
+<div class="card">
+<h3>Quick Reference: Common Hash Patterns</h3>
+
+<p><strong>Password hashes (modern):</strong><br>
+<code>$2y$10$...</code> → bcrypt · <code>$argon2id$...</code> → Argon2id · <code>$6$...</code> → SHA-512 crypt</p>
+
+<p><strong>Windows authentication:</strong><br>
+32-char hex → NTLM (<code>aad3b435b51404eeaad3b435b51404ee</code>)<br>
+32-char uppercase hex → LM hash</p>
+
+<p><strong>Web frameworks:</strong><br>
+32-char hex → MD5 (WordPress, Joomla, vBulletin legacy)<br>
+40-char hex → SHA-1 (GitHub, Docker hub)</p>
+
+<p><strong>Blockchain / Crypto:</strong><br>
+64-char hex → SHA-256 (Bitcoin)<br>
+<code>1</code> or <code>3</code> followed by 25-34 chars → Bitcoin address<br>
+<code>0x</code> + 40 hex → Ethereum address</p>
+</div>
+
+<h2>When Lengths Overlap</h2>
+
+<p>Some hash lengths map to multiple types. A 32-character hex string could be MD4, MD5, NTLM, LM, or RIPEMD-128. Here is how to disambiguate:</p>
+
+<ul>
+<li><strong>MD5 vs NTLM:</strong> Both are 32 hex chars. NTLM hashes are Windows domain hashes, typically extracted from a Domain Controller or SAM file. MD5 is used in Linux <code>/etc/shadow</code> (old), WordPress, and Joomla.</li>
+<li><strong>SHA-1 vs RIPEMD-160:</strong> Both 40 hex chars. SHA-1 is far more common. RIPEMD-160 appears in Bitcoin address hashing (combined with SHA-256).</li>
+<li><strong>CRC32 vs Adler32:</strong> Both 8 hex chars. CRC32 is more common in ZIP files and network protocols. Adler32 appears in zlib compression.</li>
+</ul>
+
+<p>The Hash Identifier handles overlapping cases by scoring multiple factors: exact length match, regex pattern match, and a bonus for combined matching. The highest score is your best guess.</p>
+
+<h2>What the Tool Cannot Do</h2>
+
+<p>Hash identification is pattern-based, so there are limitations:</p>
+
+<ul>
+<li><strong>Salted hashes</strong> look identical to unsalted ones — the tool cannot detect if a salt was used.</li>
+<li><strong>Custom algorithms</strong> with no public pattern will not match any known type.</li>
+<li><strong>Encoded data</strong> (Base64, hex) may match multiple generic patterns — context matters.</li>
+<li><strong>Collisions</strong>: an MD5 hash and an NTLM hash can be identical in format. The tool cannot distinguish them without knowing the source.</li>
+</ul>
+
+<p>Always combine tool output with contextual knowledge: Where did you find the hash? What system generated it? What format does the application expect?</p>
+
+<h2>Conclusion</h2>
+
+<p>Hash identification is a fundamental skill for security researchers, penetration testers, and CTF players. By analyzing length, prefix, and character set, you can narrow down 40+ hash types in seconds.</p>
+
+<p>The Hash Identifier gives you an instant, client-side match with confidence scoring — no data leaves your machine, no terminal commands needed.</p>
+
+<p>Try it with your own hashes:</p>
+
+<div class="cta-box">
+<p>Identify any hash:</p>
+<a href="../tools/hash-identifier.html" class="cta-btn" target="_blank">Hash Identifier →</a>
+</div>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:2rem 0">
+
+<p style="font-size:0.78rem;color:var(--text2)">Published May 28, 2026 · Practical Guide · SecuriTool</p>
+
+</div>
+
+<footer>
+  <div class="links">
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
+    <a href="../">All Tools</a>
+  </div>
+  <p>Open source · All client-side · Privacy-first</p>
+  <p class="note">Built from real security research — free forever.<br><span style="font-size:0.75rem;opacity:.6">© 2026 ReplikanteK · MIT License</span></p>
+</footer>
+
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
+
+</body>
+</html>
