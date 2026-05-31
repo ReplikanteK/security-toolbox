@@ -9,8 +9,39 @@
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/token-counter.html">
+  <meta property="og:title" content="Token Counter — SecuriTool">
+  <meta property="og:description" content="Count LLM tokens for OpenAI, Anthropic, and other models. Estimate API costs before sending requests.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/token-counter.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Token Counter — SecuriTool">
+  <meta name="twitter:description" content="Count LLM tokens for OpenAI, Anthropic, and other models. Estimate API costs before sending requests.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Token Counter",
+  "url": "https://securitool.js.org/tools/token-counter.html",
+  "description": "Count LLM tokens for OpenAI, Anthropic, and other models. Estimate API costs before sending requests.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "Multi-model tokenization, cost estimation, character/word/token counts, API pricing calculator",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -44,6 +75,26 @@
   <div id="tc-output" class="output">Enter text and click Count</div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Token Counter?</h3>
+  <p>Count LLM tokens for OpenAI, Anthropic, and other models. Estimate API costs before sending requests.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>Why count tokens?</dt>
+    <dd>LLM APIs charge per token. Counting tokens before sending helps avoid unexpected costs and stay within context limits.</dd>
+    <dt>Which models are supported?</dt>
+    <dd>GPT-4, GPT-4o, GPT-3.5-turbo, Claude 3, Claude 2, Llama, and other major models with accurate tokenization.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="regex-tester.html">Regex Tester</a></li>
+      <li><a href="hex-converter.html">Hex Converter</a></li>
+      <li><a href="base64-tool.html">Base64 Tool</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

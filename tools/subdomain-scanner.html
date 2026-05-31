@@ -9,8 +9,39 @@
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/subdomain-scanner.html">
+  <meta property="og:title" content="Subdomain Scanner — SecuriTool">
+  <meta property="og:description" content="Discover subdomains using wordlist-based DNS resolution. Find hidden services, staging environments, and forgotten admin panels.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/subdomain-scanner.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Subdomain Scanner — SecuriTool">
+  <meta name="twitter:description" content="Discover subdomains using wordlist-based DNS resolution. Find hidden services, staging environments, and forgotten admin panels.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Subdomain Scanner",
+  "url": "https://securitool.js.org/tools/subdomain-scanner.html",
+  "description": "Discover subdomains using wordlist-based DNS resolution. Find hidden services, staging environments, and forgotten admin panels.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "Wordlist-based enumeration, DNS resolution, concurrent scanning, result export, configurable wordlist",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -56,6 +87,26 @@
   <div id="sd-counter" style="font-size:.75rem;color:var(--text2);margin-top:.3rem"></div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Subdomain Scanner?</h3>
+  <p>Discover subdomains using wordlist-based DNS resolution. Find hidden services, staging environments, and forgotten admin panels.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>How does subdomain scanning work?</dt>
+    <dd>The tool tries common subdomain names (admin, staging, dev, api) with DNS resolution. If a DNS record exists, the subdomain is found.</dd>
+    <dt>What can I find with subdomains?</dt>
+    <dd>Staging environments (staging.example.com), admin panels (admin.example.com), API endpoints (api.example.com), and forgotten services.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="port-scanner.html">Port Scanner</a></li>
+      <li><a href="dns-lookup.html">DNS Lookup</a></li>
+      <li><a href="takeover-checker.html">Takeover Checker</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

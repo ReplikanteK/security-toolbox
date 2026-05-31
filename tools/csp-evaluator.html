@@ -9,6 +9,14 @@
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/csp-evaluator.html">
+  <meta property="og:title" content="CSP Evaluator — SecuriTool">
+  <meta property="og:description" content="Analyze Content-Security-Policy headers for weaknesses. Find unsafe-inline, wildcard sources, and missing directives.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/csp-evaluator.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="CSP Evaluator — SecuriTool">
+  <meta name="twitter:description" content="Analyze Content-Security-Policy headers for weaknesses. Find unsafe-inline, wildcard sources, and missing directives.">
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is CSP analysis?","acceptedAnswer":{"@type":"Answer","text":"Content-Security-Policy (CSP) analysis examines a website's CSP headers to detect security weaknesses like unsafe-inline scripts, wildcard sources, missing nonces, and unprotected form actions. A strong CSP prevents XSS and data injection attacks."}},{"@type":"Question","name":"How does the CSP Evaluator work?","acceptedAnswer":{"@type":"Answer","text":"Paste your Content-Security-Policy header string into the input box and click Evaluate. The tool parses all directives (script-src, default-src, base-uri, form-action, etc.) and flags dangerous configurations, missing protections, and provides prioritized recommendations."}},{"@type":"Question","name":"What CSP issues does this tool detect?","acceptedAnswer":{"@type":"Answer","text":"It detects: unsafe-inline and unsafe-eval in script-src, wildcard (*) sources, missing base-uri (allowing base tag injection), missing form-action (phishing risk), missing object-src restriction, HTTP sources instead of HTTPS, data: URI usage, and missing frame-ancestors for clickjacking protection."}}]}
   </script>
@@ -47,6 +55,26 @@
   <div id="csp-output" class="output">Paste a CSP policy and click Evaluate.</div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is CSP Evaluator?</h3>
+  <p>Analyze Content-Security-Policy headers for weaknesses. Find unsafe-inline, wildcard sources, and missing directives.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>What is CSP?</dt>
+    <dd>Content-Security-Policy is an HTTP header that restricts which resources a browser can load. It's the primary defense against XSS attacks.</dd>
+    <dt>What does 'unsafe-inline' mean?</dt>
+    <dd>unsafe-inline allows inline scripts and styles, which weakens CSP significantly. It should be replaced with nonce-based or hash-based policies.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="csp-hash-generator.html">CSP Hash Generator</a></li>
+      <li><a href="policy-generator.html">Policy Generator</a></li>
+      <li><a href="csrf-generator.html">CSRF PoC Generator</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

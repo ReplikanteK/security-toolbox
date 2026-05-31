@@ -27,8 +27,39 @@
 </style>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/csrf-generator.html">
+  <meta property="og:title" content="CSRF PoC Generator — SecuriTool">
+  <meta property="og:description" content="Generate HTML proof-of-concept forms for testing CSRF vulnerabilities. Create auto-submitting forms with custom parameters.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/csrf-generator.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="CSRF PoC Generator — SecuriTool">
+  <meta name="twitter:description" content="Generate HTML proof-of-concept forms for testing CSRF vulnerabilities. Create auto-submitting forms with custom parameters.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "CSRF PoC Generator",
+  "url": "https://securitool.js.org/tools/csrf-generator.html",
+  "description": "Generate HTML proof-of-concept forms for testing CSRF vulnerabilities. Create auto-submitting forms with custom parameters.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "Auto-submit forms, custom HTTP methods, hidden field injection, cookie inclusion options",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -105,6 +136,26 @@
   <button class="copy-btn" onclick="copyPoC()">📋 Copy to clipboard</button>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is CSRF PoC Generator?</h3>
+  <p>Generate HTML proof-of-concept forms for testing CSRF vulnerabilities. Create auto-submitting forms with custom parameters.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>What is CSRF?</dt>
+    <dd>Cross-Site Request Forgery tricks a logged-in user's browser into making unintended requests. An attacker can change settings, make purchases, or transfer funds.</dd>
+    <dt>How do I test for CSRF?</dt>
+    <dd>Generate a PoC form, host it on an attacker-controlled page, and check if the target accepts the request when a logged-in user visits.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="jwt-attacker.html">JWT Attacker</a></li>
+      <li><a href="payload-builder.html">Payload Builder</a></li>
+      <li><a href="web-auditor.html">Web Auditor</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>
@@ -164,7 +215,30 @@ function generatePoC() {
   var lines = [];
   lines.push('<!DOCTYPE html>');
   lines.push('<html>');
-  lines.push('<head><title>CSRF PoC</title></head>');
+  lines.push('<head><title>CSRF PoC</title>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "CSRF PoC Generator",
+  "url": "https://securitool.js.org/tools/csrf-generator.html",
+  "description": "Generate HTML proof-of-concept forms for testing CSRF vulnerabilities. Create auto-submitting forms with custom parameters.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "Auto-submit forms, custom HTTP methods, hidden field injection, cookie inclusion options",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
+</head>');
   lines.push('<body>');
 
   if (method === 'GET') {

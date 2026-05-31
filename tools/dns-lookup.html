@@ -9,8 +9,39 @@
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/dns-lookup.html">
+  <meta property="og:title" content="DNS Lookup — SecuriTool">
+  <meta property="og:description" content="Perform DNS lookups for any domain. Query A, AAAA, MX, NS, TXT, and CNAME records via DNS-over-HTTPS for privacy.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/dns-lookup.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="DNS Lookup — SecuriTool">
+  <meta name="twitter:description" content="Perform DNS lookups for any domain. Query A, AAAA, MX, NS, TXT, and CNAME records via DNS-over-HTTPS for privacy.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "DNS Lookup",
+  "url": "https://securitool.js.org/tools/dns-lookup.html",
+  "description": "Perform DNS lookups for any domain. Query A, AAAA, MX, NS, TXT, and CNAME records via DNS-over-HTTPS for privacy.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "A/AAAA records, MX mail servers, NS nameservers, TXT records (SPF/DKIM/DMARC), DNS-over-HTTPS",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -60,6 +91,26 @@
   <div id="dns-output" class="output">Enter a domain and click Lookup</div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is DNS Lookup?</h3>
+  <p>Perform DNS lookups for any domain. Query A, AAAA, MX, NS, TXT, and CNAME records via DNS-over-HTTPS for privacy.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>What DNS record types can I query?</dt>
+    <dd>A (IPv4), AAAA (IPv6), MX (mail), NS (nameservers), TXT (SPF/DKIM/DMARC/verification), CNAME (aliases), SOA (authority).</dd>
+    <dt>Why DNS-over-HTTPS?</dt>
+    <dd>DNS-over-HTTPS encrypts your DNS queries, preventing ISP snooping and DNS manipulation. Your DNS queries stay private.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="email-security.html">Email Security</a></li>
+      <li><a href="subdomain-scanner.html">Subdomain Scanner</a></li>
+      <li><a href="port-scanner.html">Port Scanner</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

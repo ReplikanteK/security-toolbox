@@ -29,8 +29,39 @@
 </style>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/payload-builder.html">
+  <meta property="og:title" content="Payload Builder — SecuriTool">
+  <meta property="og:description" content="Build attack payloads for XSS, SQLi, SSTI, SSRF, path traversal, and command injection. Customizable with encoding options.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/payload-builder.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Payload Builder — SecuriTool">
+  <meta name="twitter:description" content="Build attack payloads for XSS, SQLi, SSTI, SSRF, path traversal, and command injection. Customizable with encoding options.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Payload Builder",
+  "url": "https://securitool.js.org/tools/payload-builder.html",
+  "description": "Build attack payloads for XSS, SQLi, SSTI, SSRF, path traversal, and command injection. Customizable with encoding options.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "XSS payloads, SQL injection, SSTI templates, SSRF vectors, path traversal, encoding options",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -61,6 +92,26 @@
   <div id="pb-output"></div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Payload Builder?</h3>
+  <p>Build attack payloads for XSS, SQLi, SSTI, SSRF, path traversal, and command injection. Customizable with encoding options.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>What payload types are available?</dt>
+    <dd>XSS (script tags, event handlers), SQLi (UNION, blind, time-based), SSTI (Jinja2, Twig), SSRF (internal IPs), path traversal (../), command injection (;, |).</dd>
+    <dt>How do I use these for testing?</dt>
+    <dd>Inject payloads into input fields, URL parameters, and headers. Use browser dev tools to observe if the payload executes.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="csrf-generator.html">CSRF PoC Generator</a></li>
+      <li><a href="jwt-attacker.html">JWT Attacker</a></li>
+      <li><a href="regex-tester.html">Regex Tester</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

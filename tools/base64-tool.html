@@ -9,8 +9,39 @@
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/base64-tool.html">
+  <meta property="og:title" content="Base64 Tool — SecuriTool">
+  <meta property="og:description" content="Encode and decode Base64 strings instantly. Supports standard and URL-safe Base64 encoding for JWTs, URLs, and data transfer.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/base64-tool.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Base64 Tool — SecuriTool">
+  <meta name="twitter:description" content="Encode and decode Base64 strings instantly. Supports standard and URL-safe Base64 encoding for JWTs, URLs, and data transfer.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Base64 Tool",
+  "url": "https://securitool.js.org/tools/base64-tool.html",
+  "description": "Encode and decode Base64 strings instantly. Supports standard and URL-safe Base64 encoding for JWTs, URLs, and data transfer.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "Standard Base64 encoding, URL-safe Base64 for JWTs, one-click copy, client-side processing",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -62,6 +93,26 @@
   <div id="b64-output" class="output">Enter data and click Convert</div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Base64 Tool?</h3>
+  <p>Encode and decode Base64 strings instantly. Supports standard and URL-safe Base64 encoding for JWTs, URLs, and data transfer.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>What is Base64?</dt>
+    <dd>Base64 is an encoding scheme that represents binary data as ASCII text. It's used in JWTs, email attachments, data URLs, and API authentication tokens.</dd>
+    <dt>What's the difference between standard and URL-safe Base64?</dt>
+    <dd>URL-safe Base64 replaces '+' with '-' and '/' with '_' to be safe in URLs and filenames. JWTs use URL-safe Base64.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="jwt-decoder.html">JWT Decoder</a></li>
+      <li><a href="hex-converter.html">Hex Converter</a></li>
+      <li><a href="url-extractor.html">URL Extractor</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

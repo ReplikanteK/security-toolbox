@@ -26,8 +26,39 @@
 </style>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/policy-generator.html">
+  <meta property="og:title" content="Policy Generator — SecuriTool">
+  <meta property="og:description" content="Generate CSP, CORS, and HSTS security policies for Apache, Nginx, and Express. Copy-paste ready configuration files.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/policy-generator.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Policy Generator — SecuriTool">
+  <meta name="twitter:description" content="Generate CSP, CORS, and HSTS security policies for Apache, Nginx, and Express. Copy-paste ready configuration files.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Policy Generator",
+  "url": "https://securitool.js.org/tools/policy-generator.html",
+  "description": "Generate CSP, CORS, and HSTS security policies for Apache, Nginx, and Express. Copy-paste ready configuration files.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "CSP policy generation, CORS configuration, HSTS headers, Apache/Nginx/Express output, strict-dynamic support",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -193,6 +224,26 @@
 .action-btn:hover { opacity: .85; }
 </style>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Policy Generator?</h3>
+  <p>Generate CSP, CORS, and HSTS security policies for Apache, Nginx, and Express. Copy-paste ready configuration files.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>What policy should I start with?</dt>
+    <dd>Start with a report-only CSP to see what would be blocked without breaking your site. Then move to enforcing mode.</dd>
+    <dt>What is strict-dynamic?</dt>
+    <dd>strict-dynamic allows scripts loaded by trusted scripts to also execute. It's the modern way to handle inline scripts in CSP.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="csp-evaluator.html">CSP Evaluator</a></li>
+      <li><a href="csp-hash-generator.html">CSP Hash Generator</a></li>
+      <li><a href="email-security.html">Email Security</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

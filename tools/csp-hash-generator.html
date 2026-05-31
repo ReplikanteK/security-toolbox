@@ -21,8 +21,39 @@
 </style>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/csp-hash-generator.html">
+  <meta property="og:title" content="CSP Hash Generator — SecuriTool">
+  <meta property="og:description" content="Generate SHA-256 and SHA-384 hashes for inline scripts and styles to use in Content-Security-Policy headers.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/csp-hash-generator.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="CSP Hash Generator — SecuriTool">
+  <meta name="twitter:description" content="Generate SHA-256 and SHA-384 hashes for inline scripts and styles to use in Content-Security-Policy headers.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "CSP Hash Generator",
+  "url": "https://securitool.js.org/tools/csp-hash-generator.html",
+  "description": "Generate SHA-256 and SHA-384 hashes for inline scripts and styles to use in Content-Security-Policy headers.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "SHA-256 and SHA-384 hash generation, CSP-compatible output, nonce alternatives, client-side processing",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -80,6 +111,26 @@
   </div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is CSP Hash Generator?</h3>
+  <p>Generate SHA-256 and SHA-384 hashes for inline scripts and styles to use in Content-Security-Policy headers.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>Why use hashes instead of unsafe-inline?</dt>
+    <dd>Hashes allow specific inline scripts while blocking all others. This maintains CSP protection without refactoring all inline code.</dd>
+    <dt>How do I add the hash to my CSP?</dt>
+    <dd>Add the generated hash to your Content-Security-Policy header in the script-src or style-src directive.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="csp-evaluator.html">CSP Evaluator</a></li>
+      <li><a href="policy-generator.html">Policy Generator</a></li>
+      <li><a href="hash-identifier.html">Hash Identifier</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

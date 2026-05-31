@@ -9,8 +9,39 @@
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/url-extractor.html">
+  <meta property="og:title" content="URL Extractor — SecuriTool">
+  <meta property="og:description" content="Extract and filter URLs from any text. Filter by domain, scheme, and path for security analysis and recon.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/url-extractor.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="URL Extractor — SecuriTool">
+  <meta name="twitter:description" content="Extract and filter URLs from any text. Filter by domain, scheme, and path for security analysis and recon.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "URL Extractor",
+  "url": "https://securitool.js.org/tools/url-extractor.html",
+  "description": "Extract and filter URLs from any text. Filter by domain, scheme, and path for security analysis and recon.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "Domain filtering, scheme filtering, path extraction, deduplication, sort by frequency, client-side processing",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -60,6 +91,26 @@
   <div id="url-output" class="output">Enter text and click Extract</div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is URL Extractor?</h3>
+  <p>Extract and filter URLs from any text. Filter by domain, scheme, and path for security analysis and recon.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>When do I need URL extraction?</dt>
+    <dd>Analyzing server logs, parsing breach data, extracting endpoints from documentation, finding API URLs in JavaScript bundles.</dd>
+    <dt>What filters are available?</dt>
+    <dd>Filter by domain (example.com), scheme (http/https/ftp), path pattern, and deduplicate results.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="subdomain-scanner.html">Subdomain Scanner</a></li>
+      <li><a href="dns-lookup.html">DNS Lookup</a></li>
+      <li><a href="regex-tester.html">Regex Tester</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

@@ -138,6 +138,14 @@
 </style>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/web-auditor.html">
+  <meta property="og:title" content="Web Auditor — SecuriTool">
+  <meta property="og:description" content="Full website security audit: DNS, email security, SRI, mixed content, form security, iframe analysis, tech stack detection, and more.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/web-auditor.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Web Auditor — SecuriTool">
+  <meta name="twitter:description" content="Full website security audit: DNS, email security, SRI, mixed content, form security, iframe analysis, tech stack detection, and more.">
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What does a web security audit check?","acceptedAnswer":{"@type":"Answer","text":"A web security audit checks DNS records (A, AAAA, MX, NS, TXT, CNAME), email security (SPF, DKIM, DMARC, BIMI), Subresource Integrity (SRI), mixed content warnings, form security (action TLS, password autocomplete, CSRF tokens), iframe sandbox/allow attributes, base tag injection, HTML comments for sensitive data leaks, Content-Security-Policy meta tags, technology stack detection, and page metadata (title, OG tags)."}},{"@type":"Question","name":"How does the Web Auditor work?","acceptedAnswer":{"@type":"Answer","text":"Enter any URL and click Run Audit. The tool queries DNS-over-HTTPS for network-level data, then fetches the page HTML via a privacy proxy for body-based security checks. Results are displayed in a prioritized report with a security score from A+ to F."}},{"@type":"Question","name":"Is the Web Auditor safe to use?","acceptedAnswer":{"@type":"Answer","text":"Yes. The Web Auditor runs entirely in your browser. DNS queries use Cloudflare DNS-over-HTTPS (encrypted). The HTML fetch goes through a privacy proxy that only retrieves the page body. No data is stored on any server."}}]}
   </script>
@@ -177,6 +185,26 @@
   <div id="audit-status" class="output" style="margin-top:1.5rem">Enter a URL and click Run Audit. The audit checks DNS, email security, SRI, mixed content, form security, iframes, base tag, HTML comments, tech stack, and page meta. Results include a full report with prioritized recommendations. Use the Print button to export as PDF.</div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Web Auditor?</h3>
+  <p>Full website security audit: DNS, email security, SRI, mixed content, form security, iframe analysis, tech stack detection, and more.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>What does the Web Auditor check?</dt>
+    <dd>12 categories: DNS, email security, SRI, mixed content, form security, iframe analysis, base tag, HTML comments, tech stack, page metadata, and more.</dd>
+    <dt>Is my data sent to any server?</dt>
+    <dd>No. All analysis runs client-side in your browser. DNS lookups go through DNS-over-HTTPS for privacy.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="email-security.html">Email Security</a></li>
+      <li><a href="csp-evaluator.html">CSP Evaluator</a></li>
+      <li><a href="cookie-analyzer.html">Cookie Analyzer</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

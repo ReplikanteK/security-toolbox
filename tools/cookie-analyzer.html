@@ -9,8 +9,39 @@
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/cookie-analyzer.html">
+  <meta property="og:title" content="Cookie Analyzer — SecuriTool">
+  <meta property="og:description" content="Analyze browser cookies for security flags: Secure, HttpOnly, SameSite. Identify session cookies missing critical protections.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/cookie-analyzer.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Cookie Analyzer — SecuriTool">
+  <meta name="twitter:description" content="Analyze browser cookies for security flags: Secure, HttpOnly, SameSite. Identify session cookies missing critical protections.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Cookie Analyzer",
+  "url": "https://securitool.js.org/tools/cookie-analyzer.html",
+  "description": "Analyze browser cookies for security flags: Secure, HttpOnly, SameSite. Identify session cookies missing critical protections.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "Secure flag detection, HttpOnly analysis, SameSite policy check, session cookie identification",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -48,6 +79,26 @@ tracking=yes; Expires=Wed, 21 Oct 2026 07:28:00 GMT</textarea>
   <div id="cookie-output" class="output">Paste cookies above and click Analyze.</div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Cookie Analyzer?</h3>
+  <p>Analyze browser cookies for security flags: Secure, HttpOnly, SameSite. Identify session cookies missing critical protections.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>What is the Secure flag?</dt>
+    <dd>The Secure flag ensures a cookie is only sent over HTTPS connections. Without it, cookies can be intercepted on HTTP.</dd>
+    <dt>Why is HttpOnly important?</dt>
+    <dd>HttpOnly prevents JavaScript from accessing the cookie, blocking XSS attacks from stealing session tokens.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="jwt-decoder.html">JWT Decoder</a></li>
+      <li><a href="csp-evaluator.html">CSP Evaluator</a></li>
+      <li><a href="web-auditor.html">Web Auditor</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

@@ -26,6 +26,14 @@
 </style>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/email-security.html">
+  <meta property="og:title" content="Email Security Checker — SecuriTool">
+  <meta property="og:description" content="Check SPF, DKIM, DMARC, and BIMI records for any domain. Get a security grade from A+ to F with fix recommendations.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/email-security.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Email Security Checker — SecuriTool">
+  <meta name="twitter:description" content="Check SPF, DKIM, DMARC, and BIMI records for any domain. Get a security grade from A+ to F with fix recommendations.">
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is email security checking?","acceptedAnswer":{"@type":"Answer","text":"Email security checking verifies SPF (Sender Policy Framework), DKIM (DomainKeys Identified Mail), DMARC (Domain-based Message Authentication), and BIMI (Brand Indicators for Message Identification) DNS records to assess domain spoofing protection and email authentication."}},{"@type":"Question","name":"What do SPF, DKIM, DMARC, and BIMI mean?","acceptedAnswer":{"@type":"Answer","text":"SPF specifies which servers can send email from your domain. DKIM provides cryptographic email signing. DMARC tells receiving servers how to handle unauthenticated email. BIMI attaches brand logos to authenticated emails. Together, they prevent email spoofing and phishing."}},{"@type":"Question","name":"How is the email security grade calculated?","acceptedAnswer":{"@type":"Answer","text":"The grade (A+ to F) is calculated based on SPF strictness (-all vs ~all), DMARC policy enforcement (reject, quarantine, or none), DKIM selector presence, and BIMI configuration. Missing SPF or DMARC automatically results in a failing grade."}}]}
   </script>
@@ -269,6 +277,26 @@ async function runEmailCheck() {
 }
 </script>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Email Security Checker?</h3>
+  <p>Check SPF, DKIM, DMARC, and BIMI records for any domain. Get a security grade from A+ to F with fix recommendations.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>What is SPF?</dt>
+    <dd>Sender Policy Framework (SPF) specifies which mail servers can send email for your domain. Prevents email spoofing.</dd>
+    <dt>What does DMARC do?</dt>
+    <dd>DMARC tells receiving servers what to do with emails that fail SPF or DKIM checks: quarantine, reject, or monitor.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="dns-lookup.html">DNS Lookup</a></li>
+      <li><a href="csp-evaluator.html">CSP Evaluator</a></li>
+      <li><a href="web-auditor.html">Web Auditor</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

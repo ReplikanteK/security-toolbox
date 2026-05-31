@@ -9,8 +9,39 @@
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/hex-converter.html">
+  <meta property="og:title" content="Hex Converter — SecuriTool">
+  <meta property="og:description" content="Convert between hex, decimal, binary, ASCII, and Base64. Essential for analyzing binary data, memory dumps, and network packets.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/hex-converter.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Hex Converter — SecuriTool">
+  <meta name="twitter:description" content="Convert between hex, decimal, binary, ASCII, and Base64. Essential for analyzing binary data, memory dumps, and network packets.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Hex Converter",
+  "url": "https://securitool.js.org/tools/hex-converter.html",
+  "description": "Convert between hex, decimal, binary, ASCII, and Base64. Essential for analyzing binary data, memory dumps, and network packets.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "Hex to decimal, binary to hex, ASCII conversion, Base64 encoding, bidirectional conversion",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -58,6 +89,26 @@
   <div id="conv-output" class="output">Enter a value and click Convert</div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Hex Converter?</h3>
+  <p>Convert between hex, decimal, binary, ASCII, and Base64. Essential for analyzing binary data, memory dumps, and network packets.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>When do I need hex conversion?</dt>
+    <dd>When analyzing memory dumps, network packets, file headers, encrypted data, or comparing binary data with expected values.</dd>
+    <dt>What is hex encoding?</dt>
+    <dd>Hexadecimal (base-16) represents binary data using 0-9 and a-f. Each hex digit = 4 bits. Common in cryptography and networking.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="base64-tool.html">Base64 Tool</a></li>
+      <li><a href="regex-tester.html">Regex Tester</a></li>
+      <li><a href="url-extractor.html">URL Extractor</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

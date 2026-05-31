@@ -18,8 +18,39 @@
 </style>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/regex-tester.html">
+  <meta property="og:title" content="Regex Tester — SecuriTool">
+  <meta property="og:description" content="Test regular expressions in real-time with security-focused presets. Includes patterns for XSS, SQLi, path traversal, and more.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/regex-tester.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Regex Tester — SecuriTool">
+  <meta name="twitter:description" content="Test regular expressions in real-time with security-focused presets. Includes patterns for XSS, SQLi, path traversal, and more.">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#0a0e17">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Regex Tester",
+  "url": "https://securitool.js.org/tools/regex-tester.html",
+  "description": "Test regular expressions in real-time with security-focused presets. Includes patterns for XSS, SQLi, path traversal, and more.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "featureList": "Live testing, security presets, match highlighting, capture groups, common vulnerability patterns",
+  "creator": {
+    "@type": "Organization",
+    "name": "ReplikanteK",
+    "url": "https://github.com/ReplikanteK"
+  }
+}
+</script>
 </head>
 <body>
 
@@ -79,6 +110,26 @@
   <div id="regex-info" class="match-info"></div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Regex Tester?</h3>
+  <p>Test regular expressions in real-time with security-focused presets. Includes patterns for XSS, SQLi, path traversal, and more.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>What security patterns are included?</dt>
+    <dd>XSS detection, SQL injection patterns, path traversal, command injection, email validation, URL validation, JWT format, and more.</dd>
+    <dt>How do I use regex for security?</dt>
+    <dd>Test input validation regex against known attack payloads. If the regex doesn't match, the validation is bypassable.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="payload-builder.html">Payload Builder</a></li>
+      <li><a href="url-extractor.html">URL Extractor</a></li>
+      <li><a href="hex-converter.html">Hex Converter</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>

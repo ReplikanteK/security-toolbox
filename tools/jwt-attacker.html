@@ -9,6 +9,14 @@
 <script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\uD83C\uDF19':'\u2600\uFE0F'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
 <script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   <link rel="canonical" href="https://securitool.js.org/tools/jwt-attacker.html">
+  <meta property="og:title" content="JWT Attacker — SecuriTool">
+  <meta property="og:description" content="Test JWT security with 5 attack classes: alg:none bypass, kid injection, secret brute-force, algorithm confusion, and key injection.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://securitool.js.org/tools/jwt-attacker.html">
+  <meta property="og:site_name" content="SecuriTool">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="JWT Attacker — SecuriTool">
+  <meta name="twitter:description" content="Test JWT security with 5 attack classes: alg:none bypass, kid injection, secret brute-force, algorithm confusion, and key injection.">
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What JWT attacks can I test?","acceptedAnswer":{"@type":"Answer","text":"The JWT Attacker supports 5 attack classes: alg:none (algorithm none bypass), kid injection (SQL injection/OS command in key ID header), secret cracking (brute-force common JWT secrets), algorithm confusion (RS256 to HS256 key misuse), and weak secret detection."}},{"@type":"Question","name":"How does the JWT algorithm confusion attack work?","acceptedAnswer":{"@type":"Answer","text":"Algorithm confusion exploits servers that trust the JWT header's alg field. If the server uses RS256 (asymmetric) but accepts HS256 (symmetric), an attacker can forge tokens using the public RSA key as an HMAC secret, since the public key is often discoverable."}}]}
   </script>
@@ -48,6 +56,26 @@
   <div id="jwt-output" class="output">Paste a JWT token and click Run Attacks.</div>
 </div>
 
+
+<section class="tool-info" style="max-width:720px;margin:2rem auto;padding:0 1rem;font-size:.85rem;color:var(--text2);line-height:1.7">
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is JWT Attacker?</h3>
+  <p>Test JWT security with 5 attack classes: alg:none bypass, kid injection, secret brute-force, algorithm confusion, and key injection.</p>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <dl style="margin:0;padding:0">
+    <dt>What is alg:none attack?</dt>
+    <dd>Setting the JWT algorithm to 'none' bypasses signature verification entirely. The server accepts any token without checking the signature.</dd>
+    <dt>How do I brute-force JWT secrets?</dt>
+    <dd>The tool tries common passwords against the HMAC signature. Weak secrets like 'secret' or 'password' are cracked instantly.</dd>
+  </dl>
+  
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+      <li><a href="jwt-decoder.html">JWT Decoder</a></li>
+      <li><a href="jwt-playground.html">JWT Playground</a></li>
+      <li><a href="entropy-checker.html">Entropy Checker</a></li>
+  </ul>
+</section>
 <footer>
   <div class="footer-links">
     <a href="../about.html">About</a>
