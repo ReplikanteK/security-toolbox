@@ -60,28 +60,27 @@
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is CSP Evaluator?</h3>
   <p>Analyze Content-Security-Policy headers for weaknesses. Find unsafe-inline, wildcard sources, and missing directives.</p>
   
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Security Guide</h3>
   <dl style="margin:0;padding:0">
-    <dt>What is CSP?</dt>
-    <dd>Content-Security-Policy is an HTTP header that restricts which resources a browser can load. It's the primary defense against XSS attacks.</dd>
-    <dt>What does 'unsafe-inline' mean?</dt>
-    <dd>unsafe-inline allows inline scripts and styles, which weakens CSP significantly. It should be replaced with nonce-based or hash-based policies.</dd>
+    <dt>Content-Security-Policy (CSP)</dt>
+    <dd>Start with report-only policy to test before enforcing → <a href="policy-generator.html">Policy Generator</a></dd>
+    <dt>unsafe-inline removal</dt>
+    <dd>Replace <code>unsafe-inline</code> with nonces or hashes → <a href="csp-hash-generator.html">CSP Hash Generator</a></dd>
+    <dt>default-src restriction</dt>
+    <dd>Restrict <code>default-src</code> to <code>'self'</code> to block untrusted origins</dd>
+    <dt>Violation reporting</dt>
+    <dd>Add <code>report-to</code> or <code>report-uri</code> to monitor violations in production</dd>
+    <dt>Wildcard removal</dt>
+    <dd>Remove <code>*</code> wildcards — they allow any origin, defeating CSP</dd>
+    <dt>Base URI and form-action</dt>
+    <dd>Set <code>base-uri 'self'</code> and <code>form-action 'self'</code> → <a href="policy-generator.html">Policy Generator</a></dd>
   </dl>
-  
+
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
   <ul style="margin:0;padding-left:1.2rem">
       <li><a href="csp-hash-generator.html">CSP Hash Generator</a></li>
       <li><a href="policy-generator.html">Policy Generator</a></li>
       <li><a href="csrf-generator.html">CSRF PoC Generator</a></li>
-  </ul>
-
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Quick Fix</h3>
-  <ul style="margin:0;padding-left:1.2rem">
-    <li>Remove <code>unsafe-inline</code>, use nonces/hashes instead → <a href="csp-hash-generator.html">CSP Hash Generator</a></li>
-    <li>Restrict <code>default-src</code> to <code>'self'</code></li>
-    <li>Add <code>report-uri</code> for violation monitoring</li>
-    <li>Remove wildcard sources (<code>*</code>) from all directives</li>
-    <li>Set <code>base-uri 'self'</code> and <code>form-action 'self'</code></li>
   </ul>
 </section>
 <footer>

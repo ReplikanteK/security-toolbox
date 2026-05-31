@@ -282,28 +282,25 @@ async function runEmailCheck() {
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Email Security Checker?</h3>
   <p>Check SPF, DKIM, DMARC, and BIMI records for any domain. Get a security grade from A+ to F with fix recommendations.</p>
   
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Security Guide</h3>
   <dl style="margin:0;padding:0">
-    <dt>What is SPF?</dt>
-    <dd>Sender Policy Framework (SPF) specifies which mail servers can send email for your domain. Prevents email spoofing.</dd>
-    <dt>What does DMARC do?</dt>
-    <dd>DMARC tells receiving servers what to do with emails that fail SPF or DKIM checks: quarantine, reject, or monitor.</dd>
+    <dt>SPF (Sender Policy Framework)</dt>
+    <dd>Add SPF TXT record with <code>-all</code> (not <code>~all</code>) for strict enforcement → <a href="dns-lookup.html">DNS Lookup</a></dd>
+    <dt>DKIM (DomainKeys Identified Mail)</dt>
+    <dd>Configure DKIM signing and publish the public key in DNS</dd>
+    <dt>DMARC policy</dt>
+    <dd>Set <code>p=quarantine</code> or <code>p=reject</code> — never leave as <code>p=none</code> → <a href="web-auditor.html">Web Auditor</a></dd>
+    <dt>BIMI (Brand Indicators)</dt>
+    <dd>Requires DMARC p=quarantine or reject + SVG logo + VMC certificate</dd>
+    <dt>DMARC reporting</dt>
+    <dd>Monitor <code>rua=</code> reports to identify spoofing and misconfigured mail sources</dd>
   </dl>
-  
+
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
   <ul style="margin:0;padding-left:1.2rem">
       <li><a href="dns-lookup.html">DNS Lookup</a></li>
       <li><a href="csp-evaluator.html">CSP Evaluator</a></li>
       <li><a href="web-auditor.html">Web Auditor</a></li>
-  </ul>
-
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Quick Fix</h3>
-  <ul style="margin:0;padding-left:1.2rem">
-    <li>Add SPF TXT record with <code>-all</code> (not <code>~all</code>)</li>
-    <li>Configure DKIM signing for your mail provider</li>
-    <li>Add DMARC policy: <code>p=quarantine</code> or <code>p=reject</code></li>
-    <li>Enable BIMI for brand visibility in supported clients</li>
-    <li>Monitor DMARC reports via <code>rua=</code> tag</li>
   </ul>
 </section>
 <footer>

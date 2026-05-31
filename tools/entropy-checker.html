@@ -80,28 +80,25 @@
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Entropy Checker?</h3>
   <p>Calculate Shannon entropy for tokens, passwords, and secrets. Detect weak passwords and predictable tokens.</p>
   
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Security Guide</h3>
   <dl style="margin:0;padding:0">
-    <dt>What is Shannon entropy?</dt>
-    <dd>Shannon entropy measures the randomness of a string. Higher entropy = more random = harder to guess. A truly random string has maximum entropy.</dd>
-    <dt>What entropy is good for a password?</dt>
-    <dd>For passwords: < 3.0 = weak, 3.0-4.0 = moderate, 4.0+ = strong. For tokens and API keys: 4.0+ is recommended.</dd>
+    <dt>Shannon entropy</dt>
+    <dd>Higher entropy = more random = harder to guess — verify tokens and API keys</dd>
+    <dt>Password strength thresholds</dt>
+    <dd>&lt;3.0 bits/char = weak, 3.0-4.0 = moderate, 4.0+ = strong</dd>
+    <dt>Secret generation</dt>
+    <dd>Use 16+ random characters — avoid dictionary words → <a href="hash-compare.html">Hash Compare</a></dd>
+    <dt>Multi-factor authentication</dt>
+    <dd>Enable MFA on all accounts — even strong passwords can be phished</dd>
+    <dt>Password storage</dt>
+    <dd>Hash with bcrypt/Argon2 — never store plaintext → <a href="hash-identifier.html">Hash Identifier</a></dd>
   </dl>
-  
+
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
   <ul style="margin:0;padding-left:1.2rem">
       <li><a href="hash-identifier.html">Hash Identifier</a></li>
       <li><a href="hash-compare.html">Hash Compare</a></li>
       <li><a href="jwt-attacker.html">JWT Attacker</a></li>
-  </ul>
-
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Quick Fix</h3>
-  <ul style="margin:0;padding-left:1.2rem">
-    <li>Use 16+ random characters for all secrets</li>
-    <li>Avoid dictionary words and predictable patterns</li>
-    <li>Use a password manager to generate and store secrets</li>
-    <li>Enable MFA on all accounts</li>
-    <li>Store password hashes with bcrypt or argon2 → <a href="hash-compare.html">Hash Compare</a></li>
   </ul>
 </section>
 <footer>

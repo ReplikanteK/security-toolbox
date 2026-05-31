@@ -61,28 +61,25 @@
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is JWT Attacker?</h3>
   <p>Test JWT security with 5 attack classes: alg:none bypass, kid injection, secret brute-force, algorithm confusion, and key injection.</p>
   
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Security Guide</h3>
   <dl style="margin:0;padding:0">
-    <dt>What is alg:none attack?</dt>
-    <dd>Setting the JWT algorithm to 'none' bypasses signature verification entirely. The server accepts any token without checking the signature.</dd>
-    <dt>How do I brute-force JWT secrets?</dt>
-    <dd>The tool tries common passwords against the HMAC signature. Weak secrets like 'secret' or 'password' are cracked instantly.</dd>
+    <dt>alg:none bypass</dt>
+    <dd>Reject <code>alg:none</code> on server side — bypasses signature verification → <a href="jwt-decoder.html">JWT Decoder</a></dd>
+    <dt>Secret brute-force</dt>
+    <dd>Use 16+ random characters and rotate regularly → <a href="entropy-checker.html">Entropy Checker</a></dd>
+    <dt>Algorithm confusion</dt>
+    <dd>Prefer RS256/ES256 over HS256 to prevent public-key-as-HMAC-secret forgery</dd>
+    <dt>kid header injection</dt>
+    <dd>Validate and sanitize <code>kid</code> — it can enable path traversal or SQL injection</dd>
+    <dt>Token expiry</dt>
+    <dd>Validate <code>exp</code> claim and reject expired tokens — missing expiry = permanent access</dd>
   </dl>
-  
+
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
   <ul style="margin:0;padding-left:1.2rem">
       <li><a href="jwt-decoder.html">JWT Decoder</a></li>
       <li><a href="jwt-playground.html">JWT Playground</a></li>
       <li><a href="entropy-checker.html">Entropy Checker</a></li>
-  </ul>
-
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Quick Fix</h3>
-  <ul style="margin:0;padding-left:1.2rem">
-    <li>Reject <code>alg:none</code> on the server side</li>
-    <li>Validate <code>exp</code> claim and reject expired tokens</li>
-    <li>Prefer RS256/ES256 over HS256 for asymmetric signing</li>
-    <li>Validate and sanitize the <code>kid</code> parameter</li>
-    <li>Rotate HMAC secrets regularly → <a href="entropy-checker.html">Entropy Checker</a></li>
   </ul>
 </section>
 <footer>

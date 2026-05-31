@@ -141,28 +141,27 @@
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is CSRF PoC Generator?</h3>
   <p>Generate HTML proof-of-concept forms for testing CSRF vulnerabilities. Create auto-submitting forms with custom parameters.</p>
   
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Security Guide</h3>
   <dl style="margin:0;padding:0">
-    <dt>What is CSRF?</dt>
-    <dd>Cross-Site Request Forgery tricks a logged-in user's browser into making unintended requests. An attacker can change settings, make purchases, or transfer funds.</dd>
-    <dt>How do I test for CSRF?</dt>
-    <dd>Generate a PoC form, host it on an attacker-controlled page, and check if the target accepts the request when a logged-in user visits.</dd>
+    <dt>Cross-Site Request Forgery (CSRF)</dt>
+    <dd>Use CSRF tokens on all state-changing forms — validate on every request → <a href="web-auditor.html">Web Auditor</a></dd>
+    <dt>CSRF tokens</dt>
+    <dd>Add unique, unpredictable tokens to all state-changing forms</dd>
+    <dt>SameSite cookies</dt>
+    <dd>Set <code>SameSite=Lax</code> or <code>Strict</code> on session cookies</dd>
+    <dt>Origin/Referer validation</dt>
+    <dd>Validate <code>Origin</code> and <code>Referer</code> headers server-side</dd>
+    <dt>Sensitive action protection</dt>
+    <dd>Require re-auth for sensitive actions (password/email change, fund transfer)</dd>
+    <dt>Custom request headers</dt>
+    <dd>Use custom headers for AJAX/API — browsers block cross-origin custom headers</dd>
   </dl>
-  
+
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
   <ul style="margin:0;padding-left:1.2rem">
       <li><a href="jwt-attacker.html">JWT Attacker</a></li>
       <li><a href="payload-builder.html">Payload Builder</a></li>
       <li><a href="web-auditor.html">Web Auditor</a></li>
-  </ul>
-
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Quick Fix</h3>
-  <ul style="margin:0;padding-left:1.2rem">
-    <li>Add CSRF tokens to all state-changing forms → <a href="web-auditor.html">Web Auditor</a></li>
-    <li>Set <code>SameSite=Lax</code> or <code>SameSite=Strict</code> on cookies</li>
-    <li>Validate <code>Origin</code> and <code>Referer</code> headers</li>
-    <li>Require re-authentication for sensitive actions</li>
-    <li>Use custom headers for AJAX/API requests</li>
   </ul>
 </section>
 <footer>

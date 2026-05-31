@@ -81,28 +81,25 @@
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Port Scanner?</h3>
   <p>Scan common ports on any host to identify open services. Tests 38 ports including HTTP, SSH, FTP, database, and mail.</p>
   
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Security Guide</h3>
   <dl style="margin:0;padding:0">
-    <dt>What ports are scanned?</dt>
-    <dd>Common ports: 21 (FTP), 22 (SSH), 25 (SMTP), 53 (DNS), 80 (HTTP), 443 (HTTPS), 3306 (MySQL), 5432 (PostgreSQL), 6379 (Redis), and 29 more.</dd>
-    <dt>Why scan ports?</dt>
-    <dd>Open ports reveal attack surface. An exposed Redis (6379) or MongoDB (27017) can lead to data theft or RCE.</dd>
+    <dt>Open port risks</dt>
+    <dd>Close unused ports — exposed Redis/MongoDB leads to data theft or RCE</dd>
+    <dt>Firewall rules</dt>
+    <dd>Use deny-by-default policies and whitelist specific ports/IPs → <a href="policy-generator.html">Policy Generator</a></dd>
+    <dt>Service binding</dt>
+    <dd>Bind databases, caches, admin panels to localhost (127.0.0.1) only</dd>
+    <dt>Brute-force protection</dt>
+    <dd>Enable fail2ban for SSH and login ports to auto-ban repeated failures</dd>
+    <dt>Admin port access</dt>
+    <dd>Use VPN/SSH tunneling for RDP/WinRM — never expose directly → <a href="subdomain-scanner.html">Subdomain Scanner</a></dd>
   </dl>
-  
+
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
   <ul style="margin:0;padding-left:1.2rem">
       <li><a href="subdomain-scanner.html">Subdomain Scanner</a></li>
       <li><a href="dns-lookup.html">DNS Lookup</a></li>
       <li><a href="takeover-checker.html">Takeover Checker</a></li>
-  </ul>
-
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Quick Fix</h3>
-  <ul style="margin:0;padding-left:1.2rem">
-    <li>Close unused ports and disable unnecessary services</li>
-    <li>Configure firewall rules to allow only required traffic</li>
-    <li>Bind internal services to localhost only</li>
-    <li>Enable fail2ban for brute-force protection</li>
-    <li>Use a VPN for admin/management ports → <a href="subdomain-scanner.html">Subdomain Scanner</a></li>
   </ul>
 </section>
 <footer>

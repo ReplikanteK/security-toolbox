@@ -80,28 +80,25 @@
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">What is Takeover Checker?</h3>
   <p>Detect subdomain takeover vulnerabilities. Check for unclaimed services on AWS S3, GitHub Pages, Heroku, and 20+ providers.</p>
   
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">FAQ</h3>
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Security Guide</h3>
   <dl style="margin:0;padding:0">
-    <dt>What is subdomain takeover?</dt>
-    <dd>When a subdomain points to a service (like Heroku) but the service is no longer claimed, an attacker can claim it and serve content on your subdomain.</dd>
-    <dt>Which providers are checked?</dt>
-    <dd>AWS S3, GitHub Pages, Heroku, Azure, Shopify, Tumblr, WordPress.com, Fastly, Pantheon, Surge, and 10+ more.</dd>
+    <dt>Subdomain takeover</dt>
+    <dd>Claim orphaned services (Heroku/S3/GitHub Pages) before attackers do</dd>
+    <dt>CNAME cleanup</dt>
+    <dd>Delete unclaimed CNAME records immediately → <a href="subdomain-scanner.html">Subdomain Scanner</a></dd>
+    <dt>Service claims</dt>
+    <dd>Claim orphaned services on AWS S3, GitHub Pages, Heroku, etc. before attackers</dd>
+    <dt>DNS monitoring</dt>
+    <dd>Monitor CNAME changes — unexpected changes may indicate takeover attempts</dd>
+    <dt>Automated management</dt>
+    <dd>Use external-dns to prevent stale records → <a href="dns-lookup.html">DNS Lookup</a></dd>
   </dl>
-  
+
   <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Related Tools</h3>
   <ul style="margin:0;padding-left:1.2rem">
       <li><a href="subdomain-scanner.html">Subdomain Scanner</a></li>
       <li><a href="dns-lookup.html">DNS Lookup</a></li>
       <li><a href="port-scanner.html">Port Scanner</a></li>
-  </ul>
-
-  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Quick Fix</h3>
-  <ul style="margin:0;padding-left:1.2rem">
-    <li>Delete unclaimed CNAME records immediately</li>
-    <li>Claim orphaned services on the respective platform</li>
-    <li>Set up DNS monitoring for unexpected changes</li>
-    <li>Use external-dns or similar for automated DNS management</li>
-    <li>Regularly scan with <a href="subdomain-scanner.html">Subdomain Scanner</a></li>
   </ul>
 </section>
 <footer>
