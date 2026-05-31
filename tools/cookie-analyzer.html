@@ -98,6 +98,15 @@ tracking=yes; Expires=Wed, 21 Oct 2026 07:28:00 GMT</textarea>
       <li><a href="csp-evaluator.html">CSP Evaluator</a></li>
       <li><a href="web-auditor.html">Web Auditor</a></li>
   </ul>
+
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Quick Fix</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+    <li>Add <code>Secure</code> flag to all cookies → <a href="web-auditor.html">Web Auditor</a></li>
+    <li>Enable <code>HttpOnly</code> on session cookies → <a href="csp-evaluator.html">CSP Evaluator</a></li>
+    <li>Set <code>SameSite=Lax</code> as minimum policy</li>
+    <li>Use short expiry or session-only cookies</li>
+    <li>Regenerate session IDs after login</li>
+  </ul>
 </section>
 <footer>
   <div class="footer-links">

@@ -75,6 +75,15 @@
       <li><a href="jwt-playground.html">JWT Playground</a></li>
       <li><a href="entropy-checker.html">Entropy Checker</a></li>
   </ul>
+
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Quick Fix</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+    <li>Reject <code>alg:none</code> on the server side</li>
+    <li>Validate <code>exp</code> claim and reject expired tokens</li>
+    <li>Prefer RS256/ES256 over HS256 for asymmetric signing</li>
+    <li>Validate and sanitize the <code>kid</code> parameter</li>
+    <li>Rotate HMAC secrets regularly → <a href="entropy-checker.html">Entropy Checker</a></li>
+  </ul>
 </section>
 <footer>
   <div class="footer-links">

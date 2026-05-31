@@ -74,6 +74,15 @@
       <li><a href="policy-generator.html">Policy Generator</a></li>
       <li><a href="csrf-generator.html">CSRF PoC Generator</a></li>
   </ul>
+
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Quick Fix</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+    <li>Remove <code>unsafe-inline</code>, use nonces/hashes instead → <a href="csp-hash-generator.html">CSP Hash Generator</a></li>
+    <li>Restrict <code>default-src</code> to <code>'self'</code></li>
+    <li>Add <code>report-uri</code> for violation monitoring</li>
+    <li>Remove wildcard sources (<code>*</code>) from all directives</li>
+    <li>Set <code>base-uri 'self'</code> and <code>form-action 'self'</code></li>
+  </ul>
 </section>
 <footer>
   <div class="footer-links">

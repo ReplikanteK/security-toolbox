@@ -296,6 +296,15 @@ async function runEmailCheck() {
       <li><a href="csp-evaluator.html">CSP Evaluator</a></li>
       <li><a href="web-auditor.html">Web Auditor</a></li>
   </ul>
+
+  <h3 style="font-size:1rem;color:var(--text);margin:1.5rem 0 .5rem">Quick Fix</h3>
+  <ul style="margin:0;padding-left:1.2rem">
+    <li>Add SPF TXT record with <code>-all</code> (not <code>~all</code>)</li>
+    <li>Configure DKIM signing for your mail provider</li>
+    <li>Add DMARC policy: <code>p=quarantine</code> or <code>p=reject</code></li>
+    <li>Enable BIMI for brand visibility in supported clients</li>
+    <li>Monitor DMARC reports via <code>rua=</code> tag</li>
+  </ul>
 </section>
 <footer>
   <div class="footer-links">
