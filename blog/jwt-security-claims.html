@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Is a JWT and How to Inspect Its Security Claims — SecuriTool Blog</title>
+<meta name="description" content="Learn what a JWT token is, how to decode it, and how to spot security misconfigurations in the header and payload claims. Step-by-step guide with real examples.">
+<meta property="og:title" content="What Is a JWT and How to Inspect Its Security Claims">
+<meta property="og:description" content="Decode JWT tokens and spot security misconfigurations — alg:none, missing expiration, weak secrets. Free client-side tool.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://securitool.js.org/blog/jwt-security-claims.html">
+<link rel="stylesheet" href="../css/style.css">
+<script>(function(){var k='st-theme';function s(l){document.documentElement.setAttribute('data-theme',l?'light':'');try{localStorage.setItem(k,l?'1':'')}catch(e){}var b=document.getElementById('theme-toggle');if(b)b.textContent=l?'\u{1F319}':'\u{2600}\u{FE0F}'}function t(){s(!document.documentElement.getAttribute('data-theme'))}var v=(function(){try{return localStorage.getItem(k)}catch(e){}})();if(v==='1'||(v===null&&!window.matchMedia('(prefers-color-scheme:dark)').matches))s(true);document.addEventListener('click',function(e){if(e.target.id==='theme-toggle'){e.preventDefault();t()}});})();</script>
+<script data-goatcounter="https://replikantek.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<link rel="canonical" href="https://securitool.js.org/blog/jwt-security-claims.html">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"What Is a JWT and How to Inspect Its Security Claims","description":"Learn what a JWT token is, how to decode it, and how to spot security misconfigurations in the header and payload claims.","datePublished":"2026-05-31","author":{"@type":"Person","name":"ReplikanteK"},"publisher":{"@type":"Organization","name":"SecuriTool"}}
+</script>
+<style>
+.blog-post { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+.blog-post h1 { font-size: 1.6rem; margin-bottom: 0.3rem; }
+.blog-post .meta { font-size: 0.78rem; color: var(--text2); margin-bottom: 1.5rem; }
+.blog-post .meta span { display: inline-block; margin-right: 1rem; }
+.blog-post h2 { font-size: 1.15rem; margin: 2rem 0 0.6rem; color: var(--accent); }
+.blog-post h3 { font-size: 0.95rem; margin: 1.5rem 0 0.4rem; }
+.blog-post p { font-size: 0.88rem; line-height: 1.75; color: var(--text2); margin-bottom: 1rem; }
+.blog-post ul, .blog-post ol { font-size: 0.88rem; line-height: 1.75; color: var(--text2); margin-bottom: 1rem; padding-left: 1.3rem; }
+.blog-post li { margin-bottom: 0.4rem; }
+.blog-post code { font-size: 0.82rem; background: var(--bg3); padding: 0.15rem 0.4rem; border-radius: 3px; }
+.blog-post pre { font-size: 0.82rem; background: var(--bg3); padding: 1rem; border-radius: 6px; overflow-x: auto; line-height: 1.5; border: 1px solid var(--border); }
+.blog-post .cta-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; margin: 1.5rem 0; text-align: center; }
+.blog-post .cta-box p { margin: 0 0 0.5rem; font-size: 0.9rem; }
+.blog-post .cta-btn { display: inline-block; padding: 0.6rem 1.5rem; background: var(--accent); color: #000; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; }
+.blog-post .cta-btn:hover { opacity: 0.9; }
+.blog-post .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; margin: 1rem 0; }
+.blog-post .card h3 { margin-top: 0; }
+.blog-post table { width: 100%; font-size: 0.82rem; border-collapse: collapse; margin: 1rem 0; }
+.blog-post th, .blog-post td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+.blog-post th { background: var(--bg3); color: var(--text); font-weight: 600; }
+</style>
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#0a0e17">
+</head>
+<body>
+
+<header>
+  <a href="../" class="logo" style="text-decoration:none">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="%2300d4aa" d="M16 2L4 9v7c0 6 5 12 12 14 7-2 12-8 12-14V9zm0 24.4C11 25 7 20.3 7 16v-5.3l9-5 9 5V16c0 4.3-4 9-9 10.4z"/><path fill="%2300d4aa" d="M15 10l-3 5h2v5l3-5h-2z"/></svg>
+    <span>Securi</span>Tool
+  </a>
+  <span class="logo-sub">free security tools</span>
+  <nav>
+    <a href="../#tools">Tools</a>
+    <a href="../blog/">Blog</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox">GitHub</a>
+    <button id="theme-toggle">☀️</button><script>(function(){var b=document.getElementById("theme-toggle");if(b)b.textContent=document.documentElement.getAttribute("data-theme")?"🌙":"☀️"})()</script>
+  </nav>
+</header>
+
+<div class="blog-post">
+<h1>What Is a JWT and How to Inspect Its Security Claims</h1>
+<div class="meta"><span>May 31, 2026</span><span>10 min read</span></div>
+
+<p>JSON Web Tokens (JWTs) are everywhere — API authentication, single sign-on, session management. But most developers never look inside them. That is a mistake. A misconfigured JWT can give an attacker full access to any account, bypass signature verification entirely, or escalate privileges with a single header change.</p>
+
+<p>This guide explains what a JWT is, how to decode it, and what security claims to inspect. You will learn to spot the misconfigurations that matter — using the <a href="../tools/jwt-decoder.html">JWT Decoder</a> from SecuriTool, all client-side.</p>
+
+<div class="cta-box">
+<p>Open the JWT Decoder in another tab while you read:</p>
+<a href="../tools/jwt-decoder.html" class="cta-btn" target="_blank">JWT Decoder →</a>
+</div>
+
+<h2>What Is a JWT?</h2>
+
+<p>A JWT is a compact, URL-safe token format defined in <a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC 7519</a>. It carries claims (statements) about an entity — typically a user — and is signed so the recipient can verify it was issued by a trusted source.</p>
+
+<p>A JWT looks like this:</p>
+
+<pre>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</pre>
+
+<p>Three Base64-encoded parts separated by dots:</p>
+
+<table>
+<tr><th>Part</th><th>Contains</th><th>Example Content</th></tr>
+<tr><td><strong>Header</strong></td><td>Algorithm and token type</td><td><code>{"alg":"HS256","typ":"JWT"}</code></td></tr>
+<tr><td><strong>Payload</strong></td><td>Claims (user data, permissions, timestamps)</td><td><code>{"sub":"1234567890","admin":true}</code></td></tr>
+<tr><td><strong>Signature</strong></td><td>Cryptographic verification</td><td>HMAC-SHA256(header + payload, secret)</td></tr>
+</table>
+
+<h2>Why Inspect JWT Security Claims?</h2>
+
+<p>JWTs are only as secure as their configuration. The most common vulnerabilities come from the header and payload claims — not from broken cryptography. Security researchers look for:</p>
+
+<table>
+<tr><th>Claim</th><th>Risk if Misconfigured</th><th>Impact</th></tr>
+<tr><td><code>alg</code></td><td><code>none</code> bypasses signature verification entirely</td><td>Full authentication bypass</td></tr>
+<tr><td><code>kid</code></td><td>Path injection or SQL injection via key ID</td><td>Code execution, data leak</td></tr>
+<tr><td><code>jwk</code> / <code>jku</code></td><td>Attacker supplies their own signing key</td><td>Token forgery</td></tr>
+<tr><td><code>exp</code></td><td>Missing expiration = token valid forever</td><td>Permanent session hijack</td></tr>
+<tr><td><code>iss</code> / <code>aud</code></td><td>Missing validation = cross-tenant token reuse</td><td>Account takeover across tenants</td></tr>
+<tr><td><code>role</code> / <code>admin</code></td><td>Server trusts client-provided privilege claims</td><td>Privilege escalation</td></tr>
+</table>
+
+<h2>Step-by-Step: Decode a JWT</h2>
+
+<ol>
+<li>Copy any JWT from an <code>Authorization: Bearer</code> header, cookie, or URL parameter.</li>
+<li>Paste it into the <a href="../tools/jwt-decoder.html">JWT Decoder</a> at securitool.js.org.</li>
+<li>Read the decoded header and payload instantly.</li>
+<li>Check the critical claims listed above.</li>
+</ol>
+
+<p>Everything happens client-side. No token data leaves your browser.</p>
+
+<h2>Header Claims: What to Check</h2>
+
+<h3>The <code>alg</code> claim</h3>
+
+<p>The algorithm claim tells the server how to verify the token. This is the most attacked JWT field.</p>
+
+<pre>{
+  "alg": "HS256",
+  "typ": "JWT"
+}</pre>
+
+<p><strong>Red flags:</strong></p>
+
+<ul>
+<li><code>alg: "none"</code> — Signature verification completely disabled. The server accepts any token without checking the signature. This is the most critical JWT vulnerability.</li>
+<li><code>alg: "HS256"</code> with a public key in <code>jwk</code> — Algorithm confusion. The server expects RSA but the attacker signs with HMAC using the public key as the secret.</li>
+<li><code>alg</code> switches between RSA and HMAC across different endpoints — inconsistent verification.</li>
+</ul>
+
+<h3>The <code>kid</code> claim</h3>
+
+<p>Key ID tells the server which key to use for verification. It is often used as a file path or database lookup.</p>
+
+<pre>{
+  "alg": "RS256",
+  "kid": "key-2024"
+}</pre>
+
+<p><strong>Red flags:</strong></p>
+
+<ul>
+<li>Path traversal: <code>"kid": "../../dev/null"</code> — trick the server into using <code>/dev/null</code> (empty key) for verification.</li>
+<li>SQL injection: <code>"kid": "key' OR '1'='1"</code> — manipulate the key lookup query.</li>
+<li>Command injection: <code>"kid": "|ls -la"</code> — if the server passes kid to a shell command.</li>
+</ul>
+
+<h3>The <code>jwk</code> and <code>jku</code> claims</h3>
+
+<p>These claims tell the server where to find the signing key. An attacker can point them to their own key server.</p>
+
+<pre>{
+  "alg": "RS256",
+  "jku": "https://attacker.com/keys.json"
+}</pre>
+
+<p><strong>Attack:</strong> The server fetches the attacker's public key and uses it to verify the attacker's token — which was signed with the attacker's private key.</p>
+
+<h2>Payload Claims: What to Check</h2>
+
+<h3>Missing expiration (<code>exp</code>)</h3>
+
+<pre>{
+  "sub": "user123",
+  "iat": 1516239022
+}</pre>
+
+<p>If there is no <code>exp</code> claim, the token never expires. An attacker who steals it has permanent access.</p>
+
+<h3>Missing issuer/audience validation</h3>
+
+<pre>{
+  "sub": "user123",
+  "name": "John Doe"
+}</pre>
+
+<p>Without <code>iss</code> (issuer) and <code>aud</code> (audience), a token issued by Service A can be used to access Service B. This is critical in microservice architectures.</p>
+
+<h3>Privilege claims</h3>
+
+<pre>{
+  "sub": "user123",
+  "admin": true,
+  "role": "superadmin"
+}</pre>
+
+<p>If the server trusts these client-provided claims without checking its own database, an attacker can modify the payload and escalate privileges.</p>
+
+<div class="card">
+<h3>Common JWT Attack Patterns</h3>
+
+<table>
+<tr><th>Attack</th><th>How It Works</th><th>Detection</th></tr>
+<tr><td><strong>alg:none</strong></td><td>Remove signature, set <code>alg: "none"</code></td><td>Server accepts unsigned tokens</td></tr>
+<tr><td><strong>Key confusion</strong></td><td>Use RSA public key as HMAC secret</td><td>Algorithm switches between RSA and HMAC</td></tr>
+<tr><td><strong>Kid injection</strong></td><td>Path traversal in <code>kid</code> parameter</td><td>Test <code>../../etc/passwd</code></td></tr>
+<tr><td><strong>Weak secret</strong></td><td>Brute-force HMAC secret with wordlists</td><td>Common passwords like <code>secret</code>, <code>password</code></td></tr>
+<tr><td><strong>JKU redirect</strong></td><td>Point <code>jku</code> to attacker-controlled URL</td><td>Server fetches external key</td></tr>
+</table>
+</div>
+
+<h2>Real-World Example</h2>
+
+<p>Decode this token:</p>
+
+<pre>eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.</pre>
+
+<p><strong>Header:</strong> <code>{"alg":"none","typ":"JWT"}</code> — the <code>none</code> algorithm means no signature verification.</p>
+
+<p><strong>Payload:</strong> <code>{"sub":"1234567890","name":"John Doe","admin":true}</code> — admin flag set to true.</p>
+
+<p><strong>Signature:</strong> Empty string after the second dot.</p>
+
+<p><strong>Verdict:</strong> This token bypasses all authentication. Any server that does not explicitly reject <code>alg: none</code> will accept it as valid.</p>
+
+<h2>What the Tool Cannot Do</h2>
+
+<ul>
+<li><strong>Cannot verify signatures</strong> — the decoder shows the decoded content but does not validate whether the signature is correct. You need the server's public key or secret for that.</li>
+<li><strong>Cannot detect server-side misconfigurations</strong> — if the server accepts <code>alg: none</code>, you can only find out by testing against the actual API.</li>
+<li><strong>Cannot decrypt encrypted JWTs (JWE)</strong> — JWE tokens are encrypted, not just signed. The decoder will show the encrypted envelope.</li>
+</ul>
+
+<h2>Conclusion</h2>
+
+<p>JWT security is not about broken cryptography — it is about misconfigured claims. A single missing <code>exp</code> or a permissive <code>alg: none</code> can compromise an entire authentication system.</p>
+
+<p>By decoding every JWT you encounter and checking the critical claims, you can spot vulnerabilities that most developers miss.</p>
+
+<p>Try it with your own tokens:</p>
+
+<div class="cta-box">
+<p>Decode any JWT:</p>
+<a href="../tools/jwt-decoder.html" class="cta-btn" target="_blank">JWT Decoder →</a>
+</div>
+
+<div class="cta-box">
+<p>Test for attacks (alg:none, kid injection, secret cracking):</p>
+<a href="../tools/jwt-attacker.html" class="cta-btn" target="_blank">JWT Attacker →</a>
+</div>
+
+<hr style="border:none;border-top:1px solid var(--border);margin:2rem 0">
+
+<p style="font-size:0.78rem;color:var(--text2)">Published May 31, 2026 · Practical Guide · SecuriTool</p>
+
+</div>
+
+<footer>
+  <div class="links">
+    <a href="../about.html">About</a>
+    <a href="../privacy.html">Privacy</a>
+    <a href="https://github.com/ReplikanteK/security-toolbox/blob/main/LICENSE">License</a>
+    <a href="../">All Tools</a>
+  </div>
+  <p>Open source · All client-side · Privacy-first</p>
+  <p class="note">Built from real security research — free forever.<br><span style="font-size:0.75rem;opacity:.6">© 2026 ReplikanteK · MIT License</span></p>
+</footer>
+
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("../sw.js")}</script>
+
+</body>
+</html>
