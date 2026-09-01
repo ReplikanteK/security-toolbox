@@ -17,7 +17,6 @@
   <url><loc>https://securitool.js.org/tools/graphql-introspect.html</loc><priority>0.6</priority></url>
   <url><loc>https://securitool.js.org/tools/dns-lookup.html</loc><priority>0.6</priority></url>
   <url><loc>https://securitool.js.org/tools/port-scanner.html</loc><priority>0.6</priority></url>
-
   <url><loc>https://securitool.js.org/tools/hash-identifier.html</loc><priority>0.5</priority></url>
   <url><loc>https://securitool.js.org/tools/hash-compare.html</loc><priority>0.5</priority></url>
   <url><loc>https://securitool.js.org/tools/entropy-checker.html</loc><priority>0.5</priority></url>
@@ -32,6 +31,10 @@
   <url><loc>https://securitool.js.org/tools/policy-generator.html</loc><priority>0.7</priority></url>
   <url><loc>https://securitool.js.org/tools/csp-hash-generator.html</loc><priority>0.6</priority></url>
   <url><loc>https://securitool.js.org/blog/</loc><priority>0.7</priority></url>
+  <url><loc>https://securitool.js.org/blog/jwt-security-claims.html</loc><priority>0.7</priority></url>
+  <url><loc>https://securitool.js.org/blog/identify-hash-types.html</loc><priority>0.7</priority></url>
+  <url><loc>https://securitool.js.org/blog/audit-website-security-from-browser.html</loc><priority>0.7</priority></url>
+  <url><loc>https://securitool.js.org/blog/check-email-security-spf-dkim-dmarc.html</loc><priority>0.7</priority></url>
   <url><loc>https://securitool.js.org/blog/when-ai-finds-what-humans-missed.html</loc><priority>0.7</priority></url>
   <url><loc>https://securitool.js.org/blog/hidden-cost-free-security-tools.html</loc><priority>0.7</priority></url>
   <url><loc>https://securitool.js.org/humans.txt</loc><priority>0.2</priority></url>
